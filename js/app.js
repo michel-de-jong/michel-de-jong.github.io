@@ -263,4 +263,488 @@ class ROICalculatorApp {
                 
             case 'montecarlo':
                 // Set volatility based on current rendement
-                const mcVolatility = document.getElementByI
+                const mcVolatility = document.getElementById('mcVolatility');
+                if (mcVolatility && !mcVolatility.hasAttribute('data-user-modified')) {
+                    mcVolatility.value = Math.max(1, Math.abs(inputs.rendement) * 0.3).toFixed(1);
+                }
+                break;
+        }
+    }
+    
+    // Main calculation
+    calculate() {
+        try {
+            calculator.calculate();
+            this.updateKPIs();
+            this.updateCharts();
+        } catch (error) {
+            console.error('Calculation error:', error);
+        }
+    }
+    
+    // Update KPIs
+    updateKPIs() {
+        const results = calculator.results;
+        const showReal = calculator.inputs.showRealValues;
+        
+        // Update nominal values
+        document.getElementById('kpiTotaalVermogen').textContent = Utils.formatNumber(results.finalVermogen);
+        document.getElementById('kpiROI').textContent = results.finalROI.toFixed(1) + '%';
+        document.getElementById('kpiLeverage').textContent = results.leverageFactor.toFixed(1) + 'x';
+        document.getElementById('kpiCashReserve').textContent = Utils.formatNumber(results.finalCashReserve);
+        document.getElementById('kpiKoopkracht').textContent = Utils.formatNumber(results.koopkrachtVerlies);
+        
+        // Update real values (subtitles)
+        if (showReal) {
+            document.getElementById('kpiTotaalVermogenReeel').textContent = 
+                `Reëel: ${Utils.formatNumber(results.finalVermogenReeel)}`;
+            document.getElementById('kpiROIReeel').textContent = 
+                `Reëel: ${results.finalROIReeel.toFixed(1)}%`;
+            document.getElementById('kpiCashReserveReeel').textContent = 
+                `Reëel: ${Utils.formatNumber(results.finalCashReserveReeel)}`;
+        } else {
+            document.getElementById('kpiTotaalVermogenReeel').textContent = '';
+            document.getElementById('kpiROIReeel').textContent = '';
+            document.getElementById('kpiCashReserveReeel').textContent = '';
+        }
+    }
+    
+    // Update charts
+    updateCharts() {
+        const showReal = document.getElementById('inflatieToggle').checked;
+        chartManager.updateMainChart(calculator.data, showReal);
+    }
+    
+    // Calculate scenarios
+    calculateScenarios() {
+        const scenarios = ['best', 'base', 'worst'];
+        const results = [];
+        
+        scenarios.forEach(scenario => {
+            const rendement = parseFloat(document.getElementById(`${scenario}CaseRendement`).value) || 0;
+            const kosten = parseFloat(document.getElementById(`${scenario}CaseKosten`).value) || 0;
+            
+            const roi = calculator.calculateScenario({
+                rendement: rendement,
+                vasteKosten: kosten
+            });
+            
+            results.push(roi);
+            document.getElementById(`${scenario}CaseROI`).textContent = `ROI: ${roi.toFixed(1)}%`;
+        });
+        
+        // Update scenario chart
+        if (chartManager.charts.scenario) {
+            chartManager.charts.scenario.data.datasets[0].data = results;
+            chartManager.charts.scenario.update();
+        }
+    }
+    
+    // Run stress test
+    runStressTest() {
+        const results = calculator.runStressTest();
+        
+        const resultsHTML = results.map(r => `
+            <div class="stress-test-result">
+                <strong>${r.name}:</strong> 
+                ROI: ${r.roi.toFixed(1)}% 
+                (Impact: <span class="${r.impact < 0 ? 'negative' : 'positive'}">${r.impact > 0 ? '+' : ''}${r.impact.toFixed(1)}%</span>)
+            </div>
+        `).join('');
+        
+        document.getElementById('stressTestResults').innerHTML = resultsHTML;
+    }
+    
+    // Run Monte Carlo simulation
+    async runMonteCarlo() {
+        const loading = document.getElementById('mcLoading');
+        const results = document.getElementById('mcResults');
+        const chartContainer = document.getElementById('mcChartContainer');
+        const distContainer = document.getElementById('mcDistContainer');
+        
+        loading.classList.add('active');
+        results.style.display = 'none';
+        chartContainer.style.display = 'none';
+        distContainer.style.display = 'none';
+        
+        // Get parameters
+        const numSimulations = parseInt(document.getElementById('mcSimulations').value) || 10000;
+        const volatility = parseFloat(document.getElementById('mcVolatility').value) / 100 || 0.03;
+        const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility').value) / 100 || 0.01;
+        const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility').value) / 100 || 0.1;
+        
+        // Run simulation with delay for UI update
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const stats = calculator.runMonteCarlo(numSimulations, volatility, renteVolatility, kostenVolatility);
+        
+        // Update results
+        document.getElementById('mcMedianROI').textContent = stats.median.toFixed(1) + '%';
+        document.getElementById('mcConfidence').textContent = 
+            `${stats.p5.toFixed(1)}% - ${stats.p95.toFixed(1)}%`;
+        document.getElementById('mcLossProb').textContent = stats.lossProb.toFixed(1) + '%';
+        document.getElementById('mcVaR').textContent = Utils.formatNumber(stats.vaR5);
+        
+        // Update charts
+        chartManager.updateMonteCarloCharts(stats);
+        
+        // Show results
+        loading.classList.remove('active');
+        results.style.display = 'grid';
+        chartContainer.style.display = 'block';
+        distContainer.style.display = 'block';
+    }
+    
+    // Update waterfall chart
+    updateWaterfall() {
+        const period = document.getElementById('waterfallPeriod').value;
+        const waterfallData = calculator.getWaterfallData(period);
+        
+        if (waterfallData.totals) {
+            const totals = waterfallData.totals;
+            const inkomsten = totals.opbrengst || 0;
+            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+            const netto = inkomsten - uitgaven;
+            const conversie = inkomsten > 0 ? (netto / inkomsten) * 100 : 0;
+            
+            document.getElementById('wfInkomsten').textContent = Utils.formatNumber(inkomsten);
+            document.getElementById('wfUitgaven').textContent = Utils.formatNumber(uitgaven);
+            document.getElementById('wfNetto').textContent = Utils.formatNumber(netto);
+            document.getElementById('wfConversie').textContent = conversie.toFixed(1) + '%';
+        }
+        
+        chartManager.updateWaterfallChart(waterfallData);
+        this.updateWaterfallTable(waterfallData);
+    }
+    
+    // Update waterfall table
+    updateWaterfallTable(waterfallData) {
+        const tbody = document.getElementById('waterfallTableBody');
+        if (!tbody) return;
+        
+        let html = '';
+        let cumulative = 0;
+        
+        waterfallData.data.forEach((item, index) => {
+            if (item.type === 'start') {
+                cumulative = item.value;
+            } else if (item.type !== 'total') {
+                cumulative += item.value;
+            }
+            
+            const percentage = Math.abs(item.value / waterfallData.data[0].value * 100);
+            
+            html += `
+                <tr>
+                    <td>${item.label}</td>
+                    <td class="${item.value < 0 ? 'negative' : ''}">${Utils.formatNumber(item.value)}</td>
+                    <td>${item.type !== 'start' && item.type !== 'total' ? percentage.toFixed(1) + '%' : '-'}</td>
+                    <td>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+    }
+    
+    // Add asset to portfolio
+    addAsset() {
+        const assetList = document.getElementById('assetList');
+        const newAsset = document.createElement('div');
+        newAsset.className = 'asset-row';
+        newAsset.innerHTML = `
+            <input type="text" placeholder="Asset naam" class="asset-name">
+            <input type="number" placeholder="Bedrag (€)" class="asset-amount" min="0" step="1000">
+            <input type="number" placeholder="Rendement %" class="asset-return" step="0.1">
+            <input type="number" placeholder="Risico %" class="asset-risk" min="0" max="100" step="1">
+            <button class="btn-remove" data-action="remove">×</button>
+        `;
+        assetList.appendChild(newAsset);
+    }
+    
+    // Remove asset from portfolio
+    removeAsset(button) {
+        const row = button.closest('.asset-row');
+        if (row && document.querySelectorAll('.asset-row').length > 1) {
+            row.remove();
+        }
+    }
+    
+    // Calculate portfolio
+    calculatePortfolio() {
+        const assets = [];
+        let totalValue = 0;
+        
+        document.querySelectorAll('.asset-row').forEach(row => {
+            const name = row.querySelector('.asset-name').value || 'Asset';
+            const amount = parseFloat(row.querySelector('.asset-amount').value) || 0;
+            const returnRate = parseFloat(row.querySelector('.asset-return').value) || 0;
+            const risk = parseFloat(row.querySelector('.asset-risk').value) || 0;
+            
+            if (amount > 0) {
+                assets.push({ name, amount, returnRate, risk });
+                totalValue += amount;
+            }
+        });
+        
+        if (assets.length === 0 || totalValue === 0) return;
+        
+        // Calculate weighted returns and risk
+        let weightedReturn = 0;
+        let weightedRisk = 0;
+        
+        assets.forEach(asset => {
+            const weight = asset.amount / totalValue;
+            weightedReturn += asset.returnRate * weight;
+            weightedRisk += asset.risk * weight;
+        });
+        
+        // Update KPIs
+        document.getElementById('portfolioWaarde').textContent = Utils.formatNumber(totalValue);
+        document.getElementById('portfolioRendement').textContent = weightedReturn.toFixed(1) + '%';
+        document.getElementById('portfolioRisico').textContent = weightedRisk.toFixed(1) + '%';
+        
+        // Update chart
+        if (chartManager.charts.portfolio) {
+            chartManager.charts.portfolio.data.labels = assets.map(a => a.name);
+            chartManager.charts.portfolio.data.datasets[0].data = assets.map(a => a.amount);
+            chartManager.charts.portfolio.update();
+        }
+    }
+    
+    // Save current scenario
+    saveCurrentScenario() {
+        const scenarios = Utils.storage.get(Config.storage.scenariosKey) || [];
+        
+        const scenario = {
+            id: Utils.generateId(),
+            name: `Scenario ${scenarios.length + 1}`,
+            date: new Date().toISOString(),
+            inputs: calculator.getInputValues(),
+            results: calculator.results
+        };
+        
+        scenarios.push(scenario);
+        
+        // Limit number of scenarios
+        if (scenarios.length > Config.storage.maxScenarios) {
+            scenarios.shift();
+        }
+        
+        Utils.storage.set(Config.storage.scenariosKey, scenarios);
+        this.loadSavedScenarios();
+        
+        alert('Scenario opgeslagen!');
+    }
+    
+    // Load saved scenarios
+    loadSavedScenarios() {
+        const scenarios = Utils.storage.get(Config.storage.scenariosKey) || [];
+        const container = document.getElementById('savedScenariosList');
+        
+        if (!container) return;
+        
+        if (scenarios.length === 0) {
+            container.innerHTML = '<p>Geen opgeslagen scenario\'s gevonden.</p>';
+            return;
+        }
+        
+        const html = scenarios.map((scenario, index) => `
+            <div class="saved-scenario">
+                <div class="scenario-info">
+                    <strong>${scenario.name}</strong>
+                    <span>${new Date(scenario.date).toLocaleDateString('nl-NL')}</span>
+                    <span>ROI: ${scenario.results.finalROI.toFixed(1)}%</span>
+                </div>
+                <div class="scenario-actions">
+                    <button class="btn btn-sm btn-primary" data-load-scenario="${index}">Laden</button>
+                    <button class="btn btn-sm btn-danger" data-delete-scenario="${index}">Verwijderen</button>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = html;
+    }
+    
+    // Load specific scenario
+    loadScenario(index) {
+        const scenarios = Utils.storage.get(Config.storage.scenariosKey) || [];
+        const scenario = scenarios[index];
+        
+        if (!scenario) return;
+        
+        // Set input values
+        Object.entries(scenario.inputs).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value;
+                }
+            }
+        });
+        
+        // Switch to calculator tab and recalculate
+        this.switchTab('calculator');
+        this.calculate();
+    }
+    
+    // Delete scenario
+    deleteScenario(index) {
+        if (!confirm('Weet u zeker dat u dit scenario wilt verwijderen?')) return;
+        
+        const scenarios = Utils.storage.get(Config.storage.scenariosKey) || [];
+        scenarios.splice(index, 1);
+        Utils.storage.set(Config.storage.scenariosKey, scenarios);
+        this.loadSavedScenarios();
+    }
+    
+    // Export to Excel
+    exportToExcel() {
+        const wb = XLSX.utils.book_new();
+        
+        // Main data sheet
+        const mainData = [
+            ['ROI Calculator Export', Utils.getCurrentDateString()],
+            [],
+            ['Invoergegevens'],
+            ['Startkapitaal', calculator.inputs.startKapitaal],
+            ['Lening', calculator.inputs.lening],
+            ['Rente', calculator.inputs.renteLening + '%'],
+            ['Looptijd', calculator.inputs.looptijd + ' jaar'],
+            ['Rendement', calculator.inputs.rendement + '%'],
+            [],
+            ['Resultaten'],
+            ['Totaal Vermogen', calculator.results.finalVermogen],
+            ['ROI', calculator.results.finalROI + '%'],
+            ['Cash Reserve', calculator.results.finalCashReserve]
+        ];
+        
+        const ws1 = XLSX.utils.aoa_to_sheet(mainData);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Overzicht');
+        
+        // Yearly data sheet
+        const yearlyData = [
+            ['Jaar', 'Portfolio', 'Cash Reserve', 'Lening', 'Totaal Vermogen', 'ROI %']
+        ];
+        
+        calculator.data.jaren.forEach((jaar, i) => {
+            yearlyData.push([
+                jaar,
+                calculator.data.portfolio[i],
+                calculator.data.cashReserve[i],
+                calculator.data.lening[i],
+                calculator.data.totaalVermogen[i],
+                calculator.data.roi[i]
+            ]);
+        });
+        
+        const ws2 = XLSX.utils.aoa_to_sheet(yearlyData);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Jaarlijkse Data');
+        
+        // Save file
+        XLSX.writeFile(wb, `${Config.export.excelFilename}_${Utils.getISODateString()}.xlsx`);
+    }
+    
+    // Export to PDF
+    exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        // Title
+        pdf.setFontSize(20);
+        pdf.text('ROI Calculator Rapport', 20, 20);
+        
+        // Date
+        pdf.setFontSize(12);
+        pdf.text(Utils.getCurrentDateString(), 20, 30);
+        
+        // Input summary
+        pdf.setFontSize(14);
+        pdf.text('Invoergegevens:', 20, 50);
+        
+        pdf.setFontSize(11);
+        let y = 60;
+        const inputs = [
+            `Startkapitaal: ${Utils.formatNumber(calculator.inputs.startKapitaal)}`,
+            `Lening: ${Utils.formatNumber(calculator.inputs.lening)}`,
+            `Rente: ${calculator.inputs.renteLening}%`,
+            `Looptijd: ${calculator.inputs.looptijd} jaar`,
+            `Rendement: ${calculator.inputs.rendement}%`
+        ];
+        
+        inputs.forEach(input => {
+            pdf.text(input, 20, y);
+            y += 8;
+        });
+        
+        // Results
+        pdf.setFontSize(14);
+        pdf.text('Resultaten:', 20, y + 10);
+        
+        pdf.setFontSize(11);
+        y += 20;
+        const results = [
+            `Totaal Vermogen: ${Utils.formatNumber(calculator.results.finalVermogen)}`,
+            `ROI: ${calculator.results.finalROI.toFixed(1)}%`,
+            `Leverage Factor: ${calculator.results.leverageFactor.toFixed(1)}x`,
+            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`
+        ];
+        
+        results.forEach(result => {
+            pdf.text(result, 20, y);
+            y += 8;
+        });
+        
+        // Add chart as image
+        if (chartManager.charts.main) {
+            const chartImage = chartManager.charts.main.toBase64Image();
+            pdf.addPage();
+            pdf.text('Vermogensontwikkeling', 20, 20);
+            pdf.addImage(chartImage, 'PNG', 20, 30, 170, 100);
+        }
+        
+        // Save
+        pdf.save(`${Config.export.pdfFilename}_${Utils.getISODateString()}.pdf`);
+    }
+    
+    // Export charts
+    exportCharts() {
+        Object.entries(chartManager.charts).forEach(([name, chart]) => {
+            if (chart) {
+                chartManager.exportChart(name);
+            }
+        });
+    }
+    
+    // Load user settings
+    loadSettings() {
+        const settings = Utils.storage.get(Config.storage.settingsKey);
+        if (!settings) return;
+        
+        // Apply saved settings if needed
+        // This is a placeholder for future settings implementation
+    }
+    
+    // Save user settings
+    saveSettings() {
+        const settings = {
+            // Add settings to save
+        };
+        
+        Utils.storage.set(Config.storage.settingsKey, settings);
+    }
+    
+    // Show error message
+    showError(message) {
+        // Simple alert for now, can be replaced with better UI
+        alert(message);
+    }
+}
+
+// Initialize application when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new ROICalculatorApp();
+    app.init();
+});
