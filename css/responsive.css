@@ -18,9 +18,14 @@
 
 /* Mobile View */
 @media (max-width: 768px) {
+    /* Container adjustments */
+    .container {
+        padding: 10px;
+    }
+    
     /* Header Adjustments */
     h1 {
-        font-size: 2em;
+        font-size: 1.8em;
     }
     
     .subtitle {
@@ -29,6 +34,332 @@
     
     /* Tab Navigation */
     .tabs {
-        overflow-x: scroll;
+        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
     
+    .tab {
+        min-width: 100px;
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+        padding: 15px;
+        min-height: auto;
+    }
+    
+    /* Input Sections */
+    .input-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .section-title {
+        font-size: 1.1em;
+        margin-bottom: 15px;
+    }
+    
+    /* Form Grid - Single column on mobile */
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* Input Fields */
+    .form-group {
+        width: 100%;
+    }
+    
+    .input-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    
+    input[type="number"],
+    input[type="text"],
+    select {
+        width: 100%;
+        padding: 10px 35px 10px 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        box-sizing: border-box;
+    }
+    
+    /* Tooltip adjustments */
+    .tooltip-icon {
+        right: 8px;
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+    }
+    
+    .tooltip {
+        right: 0;
+        left: auto;
+        max-width: 200px;
+        font-size: 12px;
+    }
+    
+    /* KPI Cards */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .kpi-card {
+        padding: 15px;
+    }
+    
+    .kpi-label {
+        font-size: 12px;
+    }
+    
+    .kpi-value {
+        font-size: 20px;
+    }
+    
+    .kpi-subtitle {
+        font-size: 11px;
+    }
+    
+    /* Chart Container */
+    .chart-container {
+        padding: 10px;
+        height: 300px;
+        margin-top: 20px;
+    }
+    
+    .chart-container.tall {
+        height: 350px;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 8px 16px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Scenario Grid */
+    .scenario-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .scenario-card {
+        padding: 15px;
+    }
+    
+    /* Monte Carlo Controls */
+    .monte-carlo-controls {
+        padding: 15px;
+    }
+    
+    .simulation-results {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .result-card {
+        padding: 15px;
+    }
+    
+    .result-card h4 {
+        font-size: 14px;
+    }
+    
+    .result-value {
+        font-size: 18px;
+    }
+    
+    /* Waterfall Period Selector */
+    .cashflow-period-selector {
+        margin-bottom: 15px;
+    }
+    
+    .cashflow-period-selector select {
+        width: 100%;
+    }
+    
+    /* Cashflow Table */
+    .cashflow-table {
+        font-size: 12px;
+        overflow-x: auto;
+        display: block;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 8px;
+        white-space: nowrap;
+    }
+    
+    /* Portfolio Builder */
+    .asset-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .asset-row input {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .btn-remove {
+        width: 100%;
+        padding: 8px;
+    }
+    
+    /* Export Grid */
+    .export-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .export-card {
+        padding: 20px;
+    }
+    
+    .export-icon {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+    
+    /* Saved Scenarios */
+    .saved-scenario {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .scenario-info {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .scenario-actions {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .scenario-actions button {
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    /* Inflatie toggle */
+    .inflatie-toggle {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    .toggle-switch {
+        width: 44px;
+        height: 22px;
+    }
+    
+    .toggle-slider:before {
+        height: 14px;
+        width: 14px;
+        left: 4px;
+        bottom: 4px;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+    }
+    
+    /* Loading spinner */
+    .loading {
+        padding: 30px;
+    }
+    
+    .spinner {
+        width: 30px;
+        height: 30px;
+        border-width: 3px;
+    }
+    
+    /* Stress test results */
+    .stress-test-result {
+        font-size: 13px;
+        padding: 8px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5em;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+    }
+    
+    .tab {
+        min-width: 90px;
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .simulation-results {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Make sure inputs don't overflow */
+    input[type="number"],
+    input[type="text"],
+    select {
+        max-width: 100%;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Print styles */
+@media print {
+    .tabs,
+    .btn,
+    .toggle-switch,
+    .tooltip-icon {
+        display: none;
+    }
+    
+    .tab-pane {
+        display: block !important;
+        page-break-after: always;
+    }
+    
+    .chart-container {
+        height: 400px !important;
+    }
+}
