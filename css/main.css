@@ -173,6 +173,7 @@ h1 {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border: 1px solid #e0e0e0;
+    overflow: hidden; /* Prevent content overflow */
 }
 
 .section-title {
@@ -194,6 +195,7 @@ h1 {
 
 .form-group {
     margin-bottom: 0;
+    min-width: 0; /* Allow shrinking */
 }
 
 label {
@@ -205,6 +207,7 @@ label {
 
 .input-wrapper {
     position: relative;
+    width: 100%;
 }
 
 input[type="number"],
@@ -218,6 +221,7 @@ select {
     transition: border-color var(--transition-normal);
     font-family: inherit;
     background-color: var(--white-color);
+    box-sizing: border-box; /* Include padding in width calculation */
 }
 
 input[type="number"]:focus,
