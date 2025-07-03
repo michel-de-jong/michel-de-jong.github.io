@@ -37,119 +37,141 @@
         <main class="tab-content">
             <!-- Tab 1: Basis Calculator -->
             <section id="calculator" class="tab-pane active" role="tabpanel">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="startKapitaal">Startkapitaal (€)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="startKapitaal" value="100000" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="startKapitaal-tooltip">Het eigen vermogen dat u inbrengt bij aanvang van de investering</span>
+                <!-- Kapitaal Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">💰 Kapitaal</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="startKapitaal">Startkapitaal (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="startKapitaal" value="100000" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="startKapitaal-tooltip">Het eigen vermogen dat u inbrengt bij aanvang van de investering</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="lening">Lening (€)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="lening" value="200000" min="0" step="1000" aria-describedby="lening-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="lening-tooltip">Het geleende bedrag voor leverage. Let op: verhoogt risico maar ook potentieel rendement</span>
+                </div>
+                
+                <!-- Lening Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">🏦 Lening</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="lening">Lening (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="lening" value="200000" min="0" step="1000" aria-describedby="lening-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="lening-tooltip">Het geleende bedrag voor leverage. Let op: verhoogt risico maar ook potentieel rendement</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="renteLening">Rente Lening (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="renteLening" value="4.5" min="0" max="20" step="0.1" aria-describedby="renteLening-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="renteLening-tooltip">Jaarlijkse rente op de lening. Rentekosten zijn aftrekbaar voor VPB</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="leningLooptijd">Looptijd Lening (jaren)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="leningLooptijd" value="10" min="1" max="30" step="1" aria-describedby="leningLooptijd-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="leningLooptijd-tooltip">Aflostermijn van de lening (kan afwijken van investeringsperiode)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="aflossingsType">Aflossingstype</label>
+                            <div class="input-wrapper">
+                                <select id="aflossingsType" aria-describedby="aflossingsType-tooltip">
+                                    <option value="annuitair">Annuïtair</option>
+                                    <option value="lineair">Lineair</option>
+                                    <option value="aflossingsvrij">Aflossingsvrij</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="aflossingsType-tooltip">Annuïtair: gelijke maandbedragen. Lineair: gelijke aflossing. Aflossingsvrij: alleen rente</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="renteLening">Rente Lening (%)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="renteLening" value="4.5" min="0" max="20" step="0.1" aria-describedby="renteLening-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="renteLening-tooltip">Jaarlijkse rente op de lening. Rentekosten zijn aftrekbaar voor VPB</span>
+                </div>
+                
+                <!-- Investering Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">📈 Investering</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="looptijd">Looptijd Investering (jaren)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="looptijd" value="10" min="1" max="30" step="1" aria-describedby="looptijd-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="looptijd-tooltip">Totale periode waarover de investering wordt doorgerekend</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rendementType">Rendement Type</label>
+                            <div class="input-wrapper">
+                                <select id="rendementType" aria-describedby="rendementType-tooltip">
+                                    <option value="maandelijks">Maandelijks</option>
+                                    <option value="jaarlijks">Jaarlijks</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="rendementType-tooltip">Kies of u het rendement per maand of per jaar wilt opgeven</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rendement">Verwacht Rendement (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="rendement" value="0.8" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="rendement-tooltip">Verwacht rendement op totale investering (eigen vermogen + lening)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="herinvestering">Herinvestering (% van winst)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="herinvestering" value="80" min="0" max="100" step="5" aria-describedby="herinvestering-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="herinvestering-tooltip">Percentage van winst dat wordt geherinvesteerd. Rest gaat naar cash reserve</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="herinvesteringDrempel">Herinvestering Drempel (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="herinvesteringDrempel" value="1000" min="0" step="100" aria-describedby="herinvesteringDrempel-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="herinvesteringDrempel-tooltip">Minimaal bedrag voor herinvestering. Kleinere bedragen blijven in cash</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="looptijd">Looptijd Investering (jaren)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="looptijd" value="10" min="1" max="30" step="1" aria-describedby="looptijd-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="looptijd-tooltip">Totale periode waarover de investering wordt doorgerekend</span>
+                </div>
+                
+                <!-- Kosten & Inflatie Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">💸 Kosten & Inflatie</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="vasteKosten">Vaste Kosten per Jaar (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="vasteKosten" value="5000" min="0" step="100" aria-describedby="vasteKosten-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="vasteKosten-tooltip">Jaarlijkse vaste kosten zoals beheer, administratie, accountant</span>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="leningLooptijd">Looptijd Lening (jaren)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="leningLooptijd" value="10" min="1" max="30" step="1" aria-describedby="leningLooptijd-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="leningLooptijd-tooltip">Aflostermijn van de lening (kan afwijken van investeringsperiode)</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rendementType">Rendement Type</label>
-                        <div class="input-wrapper">
-                            <select id="rendementType" aria-describedby="rendementType-tooltip">
-                                <option value="maandelijks">Maandelijks</option>
-                                <option value="jaarlijks">Jaarlijks</option>
-                            </select>
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="rendementType-tooltip">Kies of u het rendement per maand of per jaar wilt opgeven</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rendement">Verwacht Rendement (%)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="rendement" value="0.8" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="rendement-tooltip">Verwacht rendement op totale investering (eigen vermogen + lening)</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="aflossingsType">Aflossingstype</label>
-                        <div class="input-wrapper">
-                            <select id="aflossingsType" aria-describedby="aflossingsType-tooltip">
-                                <option value="annuitair">Annuïtair</option>
-                                <option value="lineair">Lineair</option>
-                                <option value="aflossingsvrij">Aflossingsvrij</option>
-                            </select>
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="aflossingsType-tooltip">Annuïtair: gelijke maandbedragen. Lineair: gelijke aflossing. Aflossingsvrij: alleen rente</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="herinvestering">Herinvestering (% van winst)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="herinvestering" value="80" min="0" max="100" step="5" aria-describedby="herinvestering-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="herinvestering-tooltip">Percentage van winst dat wordt geherinvesteerd. Rest gaat naar cash reserve</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="vasteKosten">Vaste Kosten per Jaar (€)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="vasteKosten" value="5000" min="0" step="100" aria-describedby="vasteKosten-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="vasteKosten-tooltip">Jaarlijkse vaste kosten zoals beheer, administratie, accountant</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="herinvesteringDrempel">Herinvestering Drempel (€)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="herinvesteringDrempel" value="1000" min="0" step="100" aria-describedby="herinvesteringDrempel-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="herinvesteringDrempel-tooltip">Minimaal bedrag voor herinvestering. Kleinere bedragen blijven in cash</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="inflatie">Inflatie (% per jaar)</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="inflatie" value="2.5" min="0" max="10" step="0.1" aria-describedby="inflatie-tooltip">
-                            <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                            <span class="tooltip" id="inflatie-tooltip">Jaarlijkse inflatie voor reële waarde berekeningen</span>
+                        
+                        <div class="form-group">
+                            <label for="inflatie">Inflatie (% per jaar)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="inflatie" value="2.5" min="0" max="10" step="0.1" aria-describedby="inflatie-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="inflatie-tooltip">Jaarlijkse inflatie voor reële waarde berekeningen</span>
+                            </div>
                         </div>
                     </div>
                 </div>

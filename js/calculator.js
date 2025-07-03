@@ -76,11 +76,14 @@ class ROICalculator {
         
         // Calculate monthly payment based on type
         let maandAflossing = 0;
+        let maandelijkseAflossing = 0;
         
-        if (aflossingsType === 'annuitair' && loanMonths > 0) {
-            maandAflossing = Utils.calculateAnnuity(lening, renteLening, loanMonths);
-        } else if (aflossingsType === 'lineair' && loanMonths > 0) {
-            maandAflossing = lening / loanMonths;
+        if (lening > 0 && loanMonths > 0) {
+            if (aflossingsType === 'annuitair') {
+                maandAflossing = Utils.calculateAnnuity(lening, renteLening, loanMonths);
+            } else if (aflossingsType === 'lineair') {
+                maandelijkseAflossing = lening / loanMonths;
+            }
         }
         
         // Month by month simulation
@@ -91,29 +94,25 @@ class ROICalculator {
             // Calculate interest and payment only if loan is still active
             let maandRente = 0;
             let actualPayment = 0;
+            let principalPayment = 0;
             
-            if (month < loanMonths && leningBedrag > 0) {
+            if (month > 0 && month <= loanMonths && leningBedrag > 0) {
                 maandRente = leningBedrag * (renteLening / 100 / 12);
                 
                 if (aflossingsType === 'annuitair') {
-                    actualPayment = maandAflossing;
+                    actualPayment = Math.min(maandAflossing, leningBedrag + maandRente);
+                    principalPayment = actualPayment - maandRente;
                 } else if (aflossingsType === 'lineair') {
-                    actualPayment = maandAflossing + maandRente;
+                    principalPayment = Math.min(maandelijkseAflossing, leningBedrag);
+                    actualPayment = principalPayment + maandRente;
                 } else if (aflossingsType === 'aflossingsvrij') {
                     actualPayment = maandRente;
-                }
-                
-                // Ensure we don't pay more than the remaining loan
-                if (aflossingsType !== 'aflossingsvrij') {
-                    const principalPayment = actualPayment - maandRente;
-                    if (principalPayment > leningBedrag) {
-                        actualPayment = leningBedrag + maandRente;
-                    }
+                    principalPayment = 0;
                 }
             }
             
             // Net result before reinvestment
-            const nettoResultaat = maandOpbrengst - actualPayment - maandKosten;
+            const nettoResultaat = month > 0 ? maandOpbrengst - actualPayment - maandKosten : 0;
             
             // Store monthly data for waterfall
             if (month > 0) {
@@ -121,7 +120,7 @@ class ROICalculator {
                     month: month,
                     opbrengst: maandOpbrengst,
                     rente: maandRente,
-                    aflossing: actualPayment - maandRente,
+                    aflossing: principalPayment,
                     kosten: maandKosten,
                     netto: nettoResultaat,
                     portfolio: portfolioWaarde,
@@ -130,34 +129,35 @@ class ROICalculator {
                 });
             }
             
-            // Handle negative returns
-            if (nettoResultaat < 0) {
-                // First use cash reserve
-                if (cashReserve >= Math.abs(nettoResultaat)) {
-                    cashReserve += nettoResultaat;
+            // Handle cash flows (skip month 0)
+            if (month > 0) {
+                if (nettoResultaat < 0) {
+                    // First use cash reserve
+                    if (cashReserve >= Math.abs(nettoResultaat)) {
+                        cashReserve += nettoResultaat;
+                    } else {
+                        // Then sell portfolio
+                        const tekort = Math.abs(nettoResultaat) - cashReserve;
+                        cashReserve = 0;
+                        portfolioWaarde = Math.max(0, portfolioWaarde - tekort);
+                    }
                 } else {
-                    // Then sell portfolio
-                    const tekort = Math.abs(nettoResultaat) - cashReserve;
-                    cashReserve = 0;
-                    portfolioWaarde = Math.max(0, portfolioWaarde - tekort);
+                    // Positive return: split between reinvestment and cash
+                    const herinvesteringBedrag = nettoResultaat * (herinvestering / 100);
+                    
+                    // Check reinvestment threshold
+                    if (herinvesteringBedrag >= herinvesteringDrempel) {
+                        portfolioWaarde += herinvesteringBedrag;
+                        cashReserve += nettoResultaat - herinvesteringBedrag;
+                    } else {
+                        cashReserve += nettoResultaat;
+                    }
                 }
-            } else {
-                // Positive return: split between reinvestment and cash
-                const herinvesteringBedrag = nettoResultaat * (herinvestering / 100);
                 
-                // Check reinvestment threshold
-                if (herinvesteringBedrag >= herinvesteringDrempel) {
-                    portfolioWaarde += herinvesteringBedrag;
-                    cashReserve += nettoResultaat - herinvesteringBedrag;
-                } else {
-                    cashReserve += nettoResultaat;
+                // Update loan amount
+                if (month <= loanMonths && leningBedrag > 0) {
+                    leningBedrag = Math.max(0, leningBedrag - principalPayment);
                 }
-            }
-            
-            // Update loan amount
-            if (month < loanMonths && aflossingsType !== 'aflossingsvrij' && leningBedrag > 0) {
-                const principalPayment = actualPayment - maandRente;
-                leningBedrag = Math.max(0, leningBedrag - principalPayment);
             }
             
             // Store yearly data
@@ -169,15 +169,17 @@ class ROICalculator {
                 this.data.portfolio.push(portfolioWaarde);
                 this.data.cashReserve.push(cashReserve);
                 this.data.lening.push(leningBedrag);
-                this.data.totaalVermogen.push(portfolioWaarde + cashReserve - leningBedrag);
+                
+                const totaalVermogen = portfolioWaarde + cashReserve - leningBedrag;
+                this.data.totaalVermogen.push(totaalVermogen);
                 
                 // Calculate real values (inflation adjusted)
                 this.data.portfolioReeel.push(portfolioWaarde / inflatieFactor);
                 this.data.cashReserveReeel.push(cashReserve / inflatieFactor);
-                this.data.totaalVermogenReeel.push((portfolioWaarde + cashReserve - leningBedrag) / inflatieFactor);
+                this.data.totaalVermogenReeel.push(totaalVermogen / inflatieFactor);
                 
-                const roi = ((portfolioWaarde + cashReserve - leningBedrag - startKapitaal) / startKapitaal) * 100;
-                const roiReeel = (((portfolioWaarde + cashReserve - leningBedrag) / inflatieFactor - startKapitaal) / startKapitaal) * 100;
+                const roi = ((totaalVermogen - startKapitaal) / startKapitaal) * 100;
+                const roiReeel = jaar > 0 ? (((totaalVermogen / inflatieFactor) - startKapitaal) / startKapitaal) * 100 : 0;
                 
                 this.data.roi.push(roi);
                 this.data.roiReeel.push(roiReeel);
@@ -201,7 +203,7 @@ class ROICalculator {
         
         const finalVermogen = finalPortfolio + finalCashReserve - finalLening;
         const finalROI = ((finalVermogen - startKapitaal) / startKapitaal) * 100;
-        const leverageFactor = (startKapitaal + lening) / startKapitaal;
+        const leverageFactor = lening > 0 ? (startKapitaal + lening) / startKapitaal : 1;
         
         const inflatieFactor = Math.pow(1 + inflatie / 100, looptijd);
         const finalVermogenReeel = finalVermogen / inflatieFactor;
@@ -264,6 +266,10 @@ class ROICalculator {
     
     // Get waterfall data for specific period
     getWaterfallData(period) {
+        if (this.data.monthlyData.length === 0) {
+            return { data: [], totals: {} };
+        }
+        
         if (period === 'totaal') {
             // Aggregate all data
             const totals = this.data.monthlyData.reduce((acc, month) => {
@@ -274,6 +280,8 @@ class ROICalculator {
                 return acc;
             }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0 });
             
+            const finalValue = this.data.totaalVermogen[this.data.totaalVermogen.length - 1];
+            
             return {
                 data: [
                     { label: 'Start Kapitaal', value: this.inputs.startKapitaal, type: 'start' },
@@ -282,7 +290,7 @@ class ROICalculator {
                     { label: 'Rente Kosten', value: -totals.rente, type: 'negative' },
                     { label: 'Aflossingen', value: -totals.aflossing, type: 'negative' },
                     { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' },
-                    { label: 'Eindwaarde', value: 0, type: 'total' }
+                    { label: 'Eindwaarde', value: finalValue, type: 'total' }
                 ],
                 totals
             };
@@ -291,6 +299,10 @@ class ROICalculator {
             const year = parseInt(period.replace('jaar', ''));
             const startMonth = (year - 1) * 12;
             const endMonth = Math.min(year * 12, this.data.monthlyData.length);
+            
+            if (startMonth >= this.data.monthlyData.length) {
+                return { data: [], totals: {} };
+            }
             
             const yearData = this.data.monthlyData.slice(startMonth, endMonth);
             const yearTotals = yearData.reduce((acc, month) => {
@@ -301,9 +313,11 @@ class ROICalculator {
                 return acc;
             }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0 });
             
-            const startValue = startMonth > 0 
-                ? this.data.monthlyData[startMonth - 1].portfolio + this.data.monthlyData[startMonth - 1].cashReserve - this.data.monthlyData[startMonth - 1].lening
+            const startValue = year > 0 && this.data.totaalVermogen[year - 1] !== undefined
+                ? this.data.totaalVermogen[year - 1]
                 : this.inputs.startKapitaal;
+            
+            const endValue = this.data.totaalVermogen[year] || startValue;
             
             return {
                 data: [
@@ -312,7 +326,7 @@ class ROICalculator {
                     { label: 'Rente Kosten', value: -yearTotals.rente, type: 'negative' },
                     { label: 'Aflossingen', value: -yearTotals.aflossing, type: 'negative' },
                     { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' },
-                    { label: 'Eind Saldo', value: 0, type: 'total' }
+                    { label: 'Eind Saldo', value: endValue, type: 'total' }
                 ],
                 totals: yearTotals
             };
@@ -322,9 +336,15 @@ class ROICalculator {
     // Calculate scenario
     calculateScenario(overrides) {
         const originalInputs = { ...this.inputs };
-        Object.assign(this.inputs, overrides);
         
-        const result = this.calculate();
+        // Store current form values
+        const currentValues = this.getInputValues();
+        
+        // Apply overrides
+        Object.assign(this.inputs, currentValues, overrides);
+        
+        // Calculate with new values
+        this.calculate();
         const roi = this.results.finalROI;
         
         // Restore original inputs
@@ -335,6 +355,10 @@ class ROICalculator {
     
     // Run stress test
     runStressTest() {
+        // Store current calculation
+        const originalResults = { ...this.results };
+        const baseROI = originalResults.finalROI;
+        
         const scenarios = [
             { name: 'Rente stijging +2%', change: { renteLening: this.inputs.renteLening + 2 } },
             { name: 'Rendement daling -30%', change: { rendement: this.inputs.rendement * 0.7 } },
@@ -347,11 +371,14 @@ class ROICalculator {
             }}
         ];
         
-        const results = scenarios.map(scenario => ({
-            name: scenario.name,
-            roi: this.calculateScenario(scenario.change),
-            impact: this.calculateScenario(scenario.change) - this.results.finalROI
-        }));
+        const results = scenarios.map(scenario => {
+            const roi = this.calculateScenario(scenario.change);
+            return {
+                name: scenario.name,
+                roi: roi,
+                impact: roi - baseROI
+            };
+        });
         
         // Restore original calculation
         this.calculate();
@@ -362,15 +389,20 @@ class ROICalculator {
     // Monte Carlo simulation
     runMonteCarlo(numSimulations, volatility, renteVolatility, kostenVolatility) {
         const results = [];
-        const baseInputs = { ...this.inputs };
+        const baseInputs = this.getInputValues();
         
         for (let i = 0; i < numSimulations; i++) {
             // Generate random variations using normal distribution
-            const rendement = baseInputs.rendement + (Utils.randomNormal() * volatility * baseInputs.rendement);
-            const rente = Math.max(0, baseInputs.renteLening + (Utils.randomNormal() * renteVolatility * baseInputs.renteLening));
-            const kosten = Math.max(0, baseInputs.vasteKosten + (Utils.randomNormal() * kostenVolatility));
+            const rendementVariation = Utils.randomNormal() * volatility * 100;
+            const renteVariation = Utils.randomNormal() * renteVolatility * 100;
+            const kostenVariation = Utils.randomNormal() * kostenVolatility;
+            
+            const rendement = baseInputs.rendement + rendementVariation;
+            const rente = Math.max(0, baseInputs.renteLening + renteVariation);
+            const kosten = Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation));
             
             // Apply variations
+            this.inputs = { ...baseInputs };
             this.inputs.rendement = rendement;
             this.inputs.renteLening = rente;
             this.inputs.vasteKosten = kosten;
@@ -386,7 +418,7 @@ class ROICalculator {
             });
         }
         
-        // Restore original inputs
+        // Restore original inputs and recalculate
         this.inputs = baseInputs;
         this.calculate();
         
@@ -399,7 +431,7 @@ class ROICalculator {
             median: Utils.statistics.median(results.map(r => r.roi)),
             p5: Utils.statistics.percentile(results.map(r => r.roi), 5),
             p95: Utils.statistics.percentile(results.map(r => r.roi), 95),
-            lossProb: results.filter(r => r.roi < 0).length / numSimulations * 100,
+            lossProb: (results.filter(r => r.roi < 0).length / numSimulations) * 100,
             vaR5: Utils.statistics.percentile(results.map(r => r.finalValue - baseInputs.startKapitaal), 5),
             results: results
         };

@@ -166,16 +166,34 @@ h1 {
     }
 }
 
+/* Input Sections */
+.input-section {
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid #e0e0e0;
+}
+
+.section-title {
+    font-size: 1.2em;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
 /* Form Styling */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
 }
 
 .form-group {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0;
 }
 
 label {
@@ -380,6 +398,11 @@ select:focus {
 
 .btn-danger:hover {
     background: #c82333;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 14px;
 }
 
 /* Toggle Switch */
