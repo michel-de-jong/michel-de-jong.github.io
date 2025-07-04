@@ -1,4 +1,4 @@
-// Main Application Logic for ROI Calculator - IMPROVED VERSION
+// Main Application Logic for ROI Calculator - IMPROVED VERSION WITH CONFIG INITIALIZATION
 
 class ROICalculatorApp {
     constructor() {
@@ -15,6 +15,9 @@ class ROICalculatorApp {
             
             // Wait for libraries to load
             await this.waitForLibraries();
+            
+            // Load defaults from config FIRST
+            this.loadConfigDefaults();
             
             // Load additional tabs
             this.loadAdditionalTabs();
@@ -40,6 +43,64 @@ class ROICalculatorApp {
         } catch (error) {
             console.error('Error initializing application:', error);
             this.showError('Er is een fout opgetreden bij het laden van de applicatie. Ververs de pagina.');
+        }
+    }
+    
+    // Load default values from config into form fields
+    loadConfigDefaults() {
+        const defaults = Config.defaults;
+        
+        // Set all default values
+        Object.entries(defaults).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value;
+                }
+            }
+        });
+        
+        // Initialize private tax options visibility
+        this.updatePrivateTaxOptions();
+        
+        console.log('Default values loaded from config');
+    }
+    
+    // Update visibility of private tax options
+    updatePrivateTaxOptions() {
+        const belastingType = document.getElementById('belastingType')?.value;
+        const priveOptions = document.getElementById('priveOptions');
+        const priveSubType = document.getElementById('priveSubType')?.value;
+        
+        if (!priveOptions) return;
+        
+        if (belastingType === 'prive') {
+            priveOptions.style.display = 'grid';
+            this.updateBoxSpecificOptions(priveSubType);
+        } else {
+            priveOptions.style.display = 'none';
+        }
+    }
+    
+    // Update box-specific options (Box 1 vs Box 3)
+    updateBoxSpecificOptions(subType) {
+        const box1Options = document.getElementById('box1Options');
+        const box3Options = document.getElementById('box3Options');
+        const box3TariefGroup = document.getElementById('box3TariefGroup');
+        const box3VrijstellingGroup = document.getElementById('box3VrijstellingGroup');
+        
+        if (subType === 'box1') {
+            if (box1Options) box1Options.style.display = 'block';
+            if (box3Options) box3Options.style.display = 'none';
+            if (box3TariefGroup) box3TariefGroup.style.display = 'none';
+            if (box3VrijstellingGroup) box3VrijstellingGroup.style.display = 'none';
+        } else if (subType === 'box3') {
+            if (box1Options) box1Options.style.display = 'none';
+            if (box3Options) box3Options.style.display = 'block';
+            if (box3TariefGroup) box3TariefGroup.style.display = 'block';
+            if (box3VrijstellingGroup) box3VrijstellingGroup.style.display = 'block';
         }
     }
     
@@ -80,7 +141,15 @@ class ROICalculatorApp {
         // Calculator inputs
         const calculatorInputs = document.querySelectorAll('#calculator input, #calculator select');
         calculatorInputs.forEach(input => {
-            input.addEventListener('change', () => this.calculate());
+            input.addEventListener('change', () => {
+                // Handle special cases for tax options
+                if (input.id === 'belastingType') {
+                    this.updatePrivateTaxOptions();
+                } else if (input.id === 'priveSubType') {
+                    this.updateBoxSpecificOptions(input.value);
+                }
+                this.calculate();
+            });
             input.addEventListener('input', Utils.debounce(() => this.calculate(), Config.performance.debounceDelay));
         });
         
@@ -622,6 +691,9 @@ class ROICalculatorApp {
             }
         });
         
+        // Update private tax options visibility
+        this.updatePrivateTaxOptions();
+        
         // Switch to calculator tab and recalculate
         this.switchTab('calculator');
         this.calculate();
@@ -637,26 +709,34 @@ class ROICalculatorApp {
         this.loadSavedScenarios();
     }
     
-    // Export to Excel
+    // Export to Excel - ENHANCED WITH TAX INFO
     exportToExcel() {
         const wb = XLSX.utils.book_new();
         
         // Main data sheet
+        const inputs = calculator.inputs;
+        const belastingInfo = inputs.belastingType === 'prive' 
+            ? `${inputs.belastingType} (${inputs.priveSubType})`
+            : inputs.belastingType;
+            
         const mainData = [
             ['ROI Calculator Export', Utils.getCurrentDateString()],
             [],
             ['Invoergegevens'],
-            ['Startkapitaal', calculator.inputs.startKapitaal],
-            ['Lening', calculator.inputs.lening],
-            ['Rente', calculator.inputs.renteLening + '%'],
-            ['Looptijd', calculator.inputs.looptijd + ' jaar'],
-            ['Rendement', calculator.inputs.rendement + '%'],
-            ['Belasting Type', calculator.inputs.belastingType || 'VPB'],
+            ['Startkapitaal', inputs.startKapitaal],
+            ['Lening', inputs.lening],
+            ['Rente', inputs.renteLening + '%'],
+            ['Looptijd', inputs.looptijd + ' jaar'],
+            ['Rendement', inputs.rendement + '%'],
+            ['Belasting Type', belastingInfo],
+            ['Herinvestering', inputs.herinvestering + '%'],
+            ['Vaste Kosten', inputs.vasteKosten],
             [],
             ['Resultaten'],
             ['Totaal Vermogen', calculator.results.finalVermogen],
             ['ROI', calculator.results.finalROI + '%'],
-            ['Cash Reserve', calculator.results.finalCashReserve]
+            ['Cash Reserve', calculator.results.finalCashReserve],
+            ['Leverage Factor', calculator.results.leverageFactor + 'x']
         ];
         
         const ws1 = XLSX.utils.aoa_to_sheet(mainData);
@@ -704,16 +784,22 @@ class ROICalculatorApp {
         
         pdf.setFontSize(11);
         let y = 60;
-        const inputs = [
-            `Startkapitaal: ${Utils.formatNumber(calculator.inputs.startKapitaal)}`,
-            `Lening: ${Utils.formatNumber(calculator.inputs.lening)}`,
-            `Rente: ${calculator.inputs.renteLening}%`,
-            `Looptijd: ${calculator.inputs.looptijd} jaar`,
-            `Rendement: ${calculator.inputs.rendement}%`,
-            `Belasting: ${calculator.inputs.belastingType || 'VPB'}`
+        const inputs = calculator.inputs;
+        const belastingInfo = inputs.belastingType === 'prive' 
+            ? `${inputs.belastingType} (${inputs.priveSubType})`
+            : inputs.belastingType;
+            
+        const inputList = [
+            `Startkapitaal: ${Utils.formatNumber(inputs.startKapitaal)}`,
+            `Lening: ${Utils.formatNumber(inputs.lening)}`,
+            `Rente: ${inputs.renteLening}%`,
+            `Looptijd: ${inputs.looptijd} jaar`,
+            `Rendement: ${inputs.rendement}%`,
+            `Belasting: ${belastingInfo}`,
+            `Herinvestering: ${inputs.herinvestering}%`
         ];
         
-        inputs.forEach(input => {
+        inputList.forEach(input => {
             pdf.text(input, 20, y);
             y += 8;
         });
