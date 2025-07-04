@@ -22,6 +22,9 @@ class ROICalculatorApp {
             // Initialize charts
             chartManager.initMainChart();
             
+            // Set default values from config
+            this.setDefaultValues();
+            
             // Set up event listeners
             this.setupEventListeners();
             
@@ -70,8 +73,90 @@ class ROICalculatorApp {
         });
     }
     
+    // Set default values from configuration
+    setDefaultValues() {
+        console.log('Setting default values from config...');
+        
+        // Set all default values from config
+        Object.entries(Config.defaults).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else if (element.type === 'select-one') {
+                    element.value = value;
+                } else {
+                    element.value = value;
+                }
+                console.log(`Set ${key} to ${value}`);
+            }
+        });
+        
+        // Trigger belasting type change to show/hide correct fields
+        const belastingType = document.getElementById('belastingType');
+        if (belastingType) {
+            belastingType.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Validate input based on config rules
+    validateInput(inputId, value) {
+        const rules = Config.validation[inputId];
+        if (!rules) return true;
+        
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) return false;
+        
+        if (rules.min !== null && numValue < rules.min) return false;
+        if (rules.max !== null && numValue > rules.max) return false;
+        
+        return true;
+    }
+    
+    // Apply validation to all inputs
+    applyValidation() {
+        Object.entries(Config.validation).forEach(([inputId, rules]) => {
+            const element = document.getElementById(inputId);
+            if (element && element.type === 'number') {
+                // Set min/max attributes
+                if (rules.min !== null) element.min = rules.min;
+                if (rules.max !== null) element.max = rules.max;
+                if (rules.step !== null) element.step = rules.step;
+                
+                // Add validation on input
+                element.addEventListener('input', (e) => {
+                    const isValid = this.validateInput(inputId, e.target.value);
+                    if (!isValid) {
+                        e.target.classList.add('invalid');
+                        // Optionally show error message
+                        const wrapper = e.target.closest('.input-wrapper');
+                        if (wrapper) {
+                            let error = wrapper.querySelector('.error-message');
+                            if (!error) {
+                                error = document.createElement('span');
+                                error.className = 'error-message';
+                                wrapper.appendChild(error);
+                            }
+                            error.textContent = `Waarde moet tussen ${rules.min || 'N/A'} en ${rules.max || 'N/A'} zijn`;
+                        }
+                    } else {
+                        e.target.classList.remove('invalid');
+                        const wrapper = e.target.closest('.input-wrapper');
+                        if (wrapper) {
+                            const error = wrapper.querySelector('.error-message');
+                            if (error) error.remove();
+                        }
+                    }
+                });
+            }
+        });
+    }
+    
     // Set up all event listeners
     setupEventListeners() {
+        // Apply validation rules first
+        this.applyValidation();
+        
         // Tab navigation
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
@@ -281,10 +366,29 @@ class ROICalculatorApp {
                 break;
                 
             case 'montecarlo':
-                // Set volatility based on current rendement
+                // Set volatility based on current rendement with config defaults
                 const mcVolatility = document.getElementById('mcVolatility');
                 if (mcVolatility && !mcVolatility.hasAttribute('data-user-modified')) {
-                    mcVolatility.value = Math.max(1, Math.abs(inputs.rendement) * 0.3).toFixed(1);
+                    // Use config default if available, otherwise calculate based on rendement
+                    const defaultVolatility = Config.monteCarlo.defaultVolatility || 
+                                           Math.max(1, Math.abs(inputs.rendement) * 0.3);
+                    mcVolatility.value = defaultVolatility.toFixed(1);
+                }
+                
+                // Set other MC defaults from config
+                const mcRenteVolatility = document.getElementById('mcRenteVolatility');
+                if (mcRenteVolatility && !mcRenteVolatility.hasAttribute('data-user-modified')) {
+                    mcRenteVolatility.value = Config.monteCarlo.defaultRenteVolatility || 1;
+                }
+                
+                const mcKostenVolatility = document.getElementById('mcKostenVolatility');
+                if (mcKostenVolatility && !mcKostenVolatility.hasAttribute('data-user-modified')) {
+                    mcKostenVolatility.value = Config.monteCarlo.defaultKostenVolatility || 10;
+                }
+                
+                const mcSimulations = document.getElementById('mcSimulations');
+                if (mcSimulations && !mcSimulations.hasAttribute('data-user-modified')) {
+                    mcSimulations.value = Config.monteCarlo.defaultSimulations;
                 }
                 break;
         }
