@@ -155,12 +155,16 @@ class ROICalculator {
                     if (cashFlowBedrag > 0) {
                         if (this.inputs.belastingType === 'zakelijk') {
                             // VPB over winst (na aftrek van rente)
-                            belasting = cashFlowBedrag * (this.inputs.vpbTarief / 100);
+                            // Use rate from config if available, otherwise use form value
+                            const vpbRate = (Config.tax?.VPB_RATE || this.inputs.vpbTarief / 100);
+                            belasting = cashFlowBedrag * vpbRate;
                         } else {
-                            // Box 3 - forfaitair rendement (gemiddeld 6% van vermogen)
-                            // Belasting over fictief rendement, niet over werkelijke winst
-                            const fictievRendement = (portfolioWaarde + cashReserve) * 0.06 / 12;
-                            belasting = fictievRendement * (this.inputs.box3Tarief / 100);
+                            // Box 3 - forfaitair rendement
+                            // Use rates from config if available
+                            const box3Rate = (Config.tax?.BOX3_RATE || this.inputs.box3Tarief / 100);
+                            const fictiefRendement = (Config.tax?.BOX3_FICTIEF || 0.0604);
+                            const fictievRendementBedrag = (portfolioWaarde + cashReserve) * fictiefRendement / 12;
+                            belasting = fictievRendementBedrag * box3Rate;
                         }
                         totaalBelastingBetaald += belasting;
                     }
