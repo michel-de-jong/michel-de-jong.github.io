@@ -487,6 +487,25 @@ input:checked + .toggle-slider:before {
     100% { transform: rotate(360deg); }
 }
 
+/* Validation Styles */
+input.invalid {
+    border-color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+input.invalid:focus {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+.error-message {
+    display: block;
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: 5px;
+    animation: fadeIn var(--transition-fast);
+}
+
 /* Utility Classes */
 .positive {
     color: var(--success-color);
