@@ -1,4 +1,4 @@
-// Main Application Logic for ROI Calculator
+// Main Application Logic for ROI Calculator - IMPROVED VERSION
 
 class ROICalculatorApp {
     constructor() {
@@ -16,9 +16,6 @@ class ROICalculatorApp {
             // Wait for libraries to load
             await this.waitForLibraries();
             
-            // Load default values first
-            this.loadDefaultValues();
-            
             // Load additional tabs
             this.loadAdditionalTabs();
             
@@ -27,9 +24,6 @@ class ROICalculatorApp {
             
             // Set up event listeners
             this.setupEventListeners();
-            
-            // Setup tax toggle
-            this.setupTaxToggle();
             
             // Load saved settings
             this.loadSettings();
@@ -46,36 +40,6 @@ class ROICalculatorApp {
         } catch (error) {
             console.error('Error initializing application:', error);
             this.showError('Er is een fout opgetreden bij het laden van de applicatie. Ververs de pagina.');
-        }
-    }
-    
-    // Load default values from config
-    loadDefaultValues() {
-        Object.entries(Config.defaults).forEach(([key, value]) => {
-            const element = document.getElementById(key);
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = value;
-                } else {
-                    element.value = value;
-                }
-            }
-        });
-    }
-    
-    // Setup tax type toggle
-    setupTaxToggle() {
-        const belastingType = document.getElementById('belastingType');
-        const box3Settings = document.querySelectorAll('.box3-setting');
-        
-        if (belastingType) {
-            belastingType.addEventListener('change', () => {
-                const isBox3 = belastingType.value === 'prive';
-                box3Settings.forEach(setting => {
-                    setting.style.display = isBox3 ? 'block' : 'none';
-                });
-                this.calculate();
-            });
         }
     }
     
@@ -116,14 +80,8 @@ class ROICalculatorApp {
         // Calculator inputs
         const calculatorInputs = document.querySelectorAll('#calculator input, #calculator select');
         calculatorInputs.forEach(input => {
-            input.addEventListener('change', () => {
-                this.calculate();
-                this.updateWaterfallYearOptions(); // Update waterfall years when looptijd changes
-            });
-            input.addEventListener('input', Utils.debounce(() => {
-                this.calculate();
-                this.updateWaterfallYearOptions();
-            }, Config.performance.debounceDelay));
+            input.addEventListener('change', () => this.calculate());
+            input.addEventListener('input', Utils.debounce(() => this.calculate(), Config.performance.debounceDelay));
         });
         
         // Inflation toggle
@@ -264,7 +222,6 @@ class ROICalculatorApp {
                             waterfallPeriod.setAttribute('data-listener-added', 'true');
                         }
                     }
-                    this.updateWaterfallYearOptions();
                     this.updateWaterfall();
                     break;
                 case 'portfolio':
@@ -279,40 +236,7 @@ class ROICalculatorApp {
         }, 50);
     }
     
-    // Update waterfall year options based on current looptijd
-    updateWaterfallYearOptions() {
-        const waterfallPeriod = document.getElementById('waterfallPeriod');
-        if (!waterfallPeriod) return;
-        
-        const looptijd = parseInt(document.getElementById('looptijd').value) || 10;
-        const currentValue = waterfallPeriod.value;
-        
-        // Clear existing options
-        waterfallPeriod.innerHTML = '';
-        
-        // Add individual year options
-        for (let jaar = 1; jaar <= looptijd; jaar++) {
-            const option = document.createElement('option');
-            option.value = `jaar${jaar}`;
-            option.textContent = `Jaar ${jaar}`;
-            waterfallPeriod.appendChild(option);
-        }
-        
-        // Add total overview option
-        const totalOption = document.createElement('option');
-        totalOption.value = 'totaal';
-        totalOption.textContent = 'Totaal Overzicht';
-        waterfallPeriod.appendChild(totalOption);
-        
-        // Restore previous selection if still valid, otherwise default to first year
-        if (Array.from(waterfallPeriod.options).some(option => option.value === currentValue)) {
-            waterfallPeriod.value = currentValue;
-        } else {
-            waterfallPeriod.value = 'jaar1';
-        }
-    }
-    
-    // Sync inputs from calculator to other tabs
+    // Sync inputs from calculator to other tabs - IMPROVED WITH TAX SYNC
     syncInputsToTab(tabName) {
         const inputs = calculator.getInputValues();
         
@@ -370,12 +294,6 @@ class ROICalculatorApp {
         document.getElementById('kpiCashReserve').textContent = Utils.formatNumber(results.finalCashReserve);
         document.getElementById('kpiKoopkracht').textContent = Utils.formatNumber(results.koopkrachtVerlies);
         
-        // Update tax KPI
-        const belastingType = calculator.inputs.belastingType || 'zakelijk';
-        const belastingBedrag = results.totaleTax || 0;
-        document.getElementById('kpiBelastingBedrag').textContent = Utils.formatNumber(belastingBedrag);
-        document.getElementById('kpiBelastingType').textContent = belastingType === 'zakelijk' ? 'VPB' : 'Box 3';
-        
         // Update real values (subtitles)
         if (showReal) {
             document.getElementById('kpiTotaalVermogenReeel').textContent = 
@@ -397,14 +315,19 @@ class ROICalculatorApp {
         chartManager.updateMainChart(calculator.data, showReal);
     }
     
-    // Calculate scenarios
+    // Calculate scenarios - IMPROVED
     calculateScenarios() {
         const scenarios = ['best', 'base', 'worst'];
         const results = [];
         
         scenarios.forEach(scenario => {
-            const rendement = parseFloat(document.getElementById(`${scenario}CaseRendement`).value) || 0;
-            const kosten = parseFloat(document.getElementById(`${scenario}CaseKosten`).value) || 0;
+            const rendementInput = document.getElementById(`${scenario}CaseRendement`);
+            const kostenInput = document.getElementById(`${scenario}CaseKosten`);
+            
+            if (!rendementInput || !kostenInput) return;
+            
+            const rendement = parseFloat(rendementInput.value) || 0;
+            const kosten = parseFloat(kostenInput.value) || 0;
             
             const roi = calculator.calculateScenario({
                 rendement: rendement,
@@ -412,11 +335,15 @@ class ROICalculatorApp {
             });
             
             results.push(roi);
-            document.getElementById(`${scenario}CaseROI`).textContent = `ROI: ${roi.toFixed(1)}%`;
+            
+            const roiElement = document.getElementById(`${scenario}CaseROI`);
+            if (roiElement) {
+                roiElement.textContent = `ROI: ${roi.toFixed(1)}%`;
+            }
         });
         
         // Update scenario chart
-        if (chartManager.charts.scenario) {
+        if (chartManager.charts.scenario && results.length === 3) {
             chartManager.charts.scenario.data.datasets[0].data = results;
             chartManager.charts.scenario.update();
         }
@@ -434,7 +361,10 @@ class ROICalculatorApp {
             </div>
         `).join('');
         
-        document.getElementById('stressTestResults').innerHTML = resultsHTML;
+        const resultsContainer = document.getElementById('stressTestResults');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = resultsHTML;
+        }
     }
     
     // Run Monte Carlo simulation
@@ -444,16 +374,18 @@ class ROICalculatorApp {
         const chartContainer = document.getElementById('mcChartContainer');
         const distContainer = document.getElementById('mcDistContainer');
         
+        if (!loading) return;
+        
         loading.classList.add('active');
-        results.style.display = 'none';
-        chartContainer.style.display = 'none';
-        distContainer.style.display = 'none';
+        if (results) results.style.display = 'none';
+        if (chartContainer) chartContainer.style.display = 'none';
+        if (distContainer) distContainer.style.display = 'none';
         
         // Get parameters
-        const numSimulations = parseInt(document.getElementById('mcSimulations').value) || 10000;
-        const volatility = parseFloat(document.getElementById('mcVolatility').value) / 100 || 0.03;
-        const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility').value) / 100 || 0.01;
-        const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility').value) / 100 || 0.1;
+        const numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 10000;
+        const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
+        const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility')?.value) / 100 || 0.01;
+        const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility')?.value) / 100 || 0.1;
         
         // Run simulation with delay for UI update
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -461,63 +393,67 @@ class ROICalculatorApp {
         const stats = calculator.runMonteCarlo(numSimulations, volatility, renteVolatility, kostenVolatility);
         
         // Update results
-        document.getElementById('mcMedianROI').textContent = stats.median.toFixed(1) + '%';
-        document.getElementById('mcConfidence').textContent = 
+        const medianElement = document.getElementById('mcMedianROI');
+        const confidenceElement = document.getElementById('mcConfidence');
+        const lossProbElement = document.getElementById('mcLossProb');
+        const varElement = document.getElementById('mcVaR');
+        
+        if (medianElement) medianElement.textContent = stats.median.toFixed(1) + '%';
+        if (confidenceElement) confidenceElement.textContent = 
             `${stats.p5.toFixed(1)}% - ${stats.p95.toFixed(1)}%`;
-        document.getElementById('mcLossProb').textContent = stats.lossProb.toFixed(1) + '%';
-        document.getElementById('mcVaR').textContent = Utils.formatNumber(stats.vaR5);
+        if (lossProbElement) lossProbElement.textContent = stats.lossProb.toFixed(1) + '%';
+        if (varElement) varElement.textContent = Utils.formatNumber(stats.vaR5);
         
         // Update charts
         chartManager.updateMonteCarloCharts(stats);
         
         // Show results
         loading.classList.remove('active');
-        results.style.display = 'grid';
-        chartContainer.style.display = 'block';
-        distContainer.style.display = 'block';
+        if (results) results.style.display = 'grid';
+        if (chartContainer) chartContainer.style.display = 'block';
+        if (distContainer) distContainer.style.display = 'block';
     }
     
     // Update waterfall chart
     updateWaterfall() {
-        const period = document.getElementById('waterfallPeriod').value;
+        const periodElement = document.getElementById('waterfallPeriod');
+        if (!periodElement) return;
+        
+        const period = periodElement.value;
         const waterfallData = calculator.getWaterfallData(period);
         
         if (waterfallData.totals) {
             const totals = waterfallData.totals;
-            const inkomsten = totals.opbrengst || 0;
-            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0) + (totals.belasting || 0);
-            const netto = inkomsten - uitgaven;
-            const conversie = inkomsten > 0 ? (netto / inkomsten) * 100 : 0;
+            const bruttoInkomsten = totals.bruttoOpbrengst || 0;
+            const belasting = totals.belasting || 0;
+            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+            const nettoInkomsten = bruttoInkomsten - belasting;
+            const netto = nettoInkomsten - uitgaven;
+            const conversie = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
             
-            document.getElementById('wfInkomsten').textContent = Utils.formatNumber(inkomsten);
-            document.getElementById('wfUitgaven').textContent = Utils.formatNumber(uitgaven);
-            document.getElementById('wfNetto').textContent = Utils.formatNumber(netto);
-            document.getElementById('wfConversie').textContent = conversie.toFixed(1) + '%';
+            const wfInkomstenElement = document.getElementById('wfInkomsten');
+            const wfUitgavenElement = document.getElementById('wfUitgaven');
+            const wfNettoElement = document.getElementById('wfNetto');
+            const wfConversieElement = document.getElementById('wfConversie');
+            
+            if (wfInkomstenElement) wfInkomstenElement.textContent = Utils.formatNumber(nettoInkomsten);
+            if (wfUitgavenElement) wfUitgavenElement.textContent = Utils.formatNumber(uitgaven);
+            if (wfNettoElement) wfNettoElement.textContent = Utils.formatNumber(netto);
+            if (wfConversieElement) wfConversieElement.textContent = conversie.toFixed(1) + '%';
         }
         
         chartManager.updateWaterfallChart(waterfallData);
         this.updateWaterfallTable(waterfallData);
     }
     
-    // Update waterfall table with improved percentage calculation
+    // Update waterfall table - IMPROVED PERCENTAGE CALCULATION
     updateWaterfallTable(waterfallData) {
         const tbody = document.getElementById('waterfallTableBody');
-        if (!tbody) return;
+        if (!tbody || !waterfallData.data.length) return;
         
         let html = '';
         let cumulative = 0;
-        
-        // Calculate total inkomsten and uitgaven for percentage calculation
-        const totalInkomsten = waterfallData.data
-            .filter(item => item.type === 'positive' || item.type === 'start')
-            .reduce((sum, item) => sum + Math.abs(item.value), 0);
-        
-        const totalUitgaven = waterfallData.data
-            .filter(item => item.type === 'negative')
-            .reduce((sum, item) => sum + Math.abs(item.value), 0);
-        
-        // Get final value for percentage calculation
-        const finalValue = waterfallData.data.find(item => item.type === 'total')?.value || 0;
+        const finalValue = waterfallData.finalValue || waterfallData.data[waterfallData.data.length - 1].value;
         
         waterfallData.data.forEach((item, index) => {
             if (item.type === 'start') {
@@ -526,22 +462,15 @@ class ROICalculatorApp {
                 cumulative += item.value;
             }
             
-            // Improved percentage calculation
-            let percentage = '';
-            if (item.type === 'positive' && totalInkomsten > 0) {
-                percentage = (Math.abs(item.value) / totalInkomsten * 100).toFixed(1) + '% van inkomsten';
-            } else if (item.type === 'negative' && totalUitgaven > 0) {
-                percentage = (Math.abs(item.value) / totalUitgaven * 100).toFixed(1) + '% van uitgaven';
-            } else if (item.type === 'start' || item.type === 'total') {
-                percentage = '-';
-            }
+            // Calculate percentage of final result instead of first item
+            const percentage = finalValue !== 0 ? Math.abs(item.value / finalValue * 100) : 0;
             
             html += `
                 <tr>
-                    <td><strong>${item.label}</strong></td>
+                    <td>${item.label}</td>
                     <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">${Utils.formatNumber(item.value)}</td>
-                    <td>${percentage}</td>
-                    <td><strong>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</strong></td>
+                    <td>${item.type !== 'start' && item.type !== 'total' ? percentage.toFixed(1) + '%' : '-'}</td>
+                    <td>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</td>
                 </tr>
             `;
         });
@@ -552,6 +481,8 @@ class ROICalculatorApp {
     // Add asset to portfolio
     addAsset() {
         const assetList = document.getElementById('assetList');
+        if (!assetList) return;
+        
         const newAsset = document.createElement('div');
         newAsset.className = 'asset-row';
         newAsset.innerHTML = `
@@ -578,10 +509,10 @@ class ROICalculatorApp {
         let totalValue = 0;
         
         document.querySelectorAll('.asset-row').forEach(row => {
-            const name = row.querySelector('.asset-name').value || 'Asset';
-            const amount = parseFloat(row.querySelector('.asset-amount').value) || 0;
-            const returnRate = parseFloat(row.querySelector('.asset-return').value) || 0;
-            const risk = parseFloat(row.querySelector('.asset-risk').value) || 0;
+            const name = row.querySelector('.asset-name')?.value || 'Asset';
+            const amount = parseFloat(row.querySelector('.asset-amount')?.value) || 0;
+            const returnRate = parseFloat(row.querySelector('.asset-return')?.value) || 0;
+            const risk = parseFloat(row.querySelector('.asset-risk')?.value) || 0;
             
             if (amount > 0) {
                 assets.push({ name, amount, returnRate, risk });
@@ -602,9 +533,13 @@ class ROICalculatorApp {
         });
         
         // Update KPIs
-        document.getElementById('portfolioWaarde').textContent = Utils.formatNumber(totalValue);
-        document.getElementById('portfolioRendement').textContent = weightedReturn.toFixed(1) + '%';
-        document.getElementById('portfolioRisico').textContent = weightedRisk.toFixed(1) + '%';
+        const portfolioWaardeElement = document.getElementById('portfolioWaarde');
+        const portfolioRendementElement = document.getElementById('portfolioRendement');
+        const portfolioRisicoElement = document.getElementById('portfolioRisico');
+        
+        if (portfolioWaardeElement) portfolioWaardeElement.textContent = Utils.formatNumber(totalValue);
+        if (portfolioRendementElement) portfolioRendementElement.textContent = weightedReturn.toFixed(1) + '%';
+        if (portfolioRisicoElement) portfolioRisicoElement.textContent = weightedRisk.toFixed(1) + '%';
         
         // Update chart
         if (chartManager.charts.portfolio) {
@@ -687,9 +622,6 @@ class ROICalculatorApp {
             }
         });
         
-        // Trigger tax toggle if needed
-        this.setupTaxToggle();
-        
         // Switch to calculator tab and recalculate
         this.switchTab('calculator');
         this.calculate();
@@ -719,13 +651,12 @@ class ROICalculatorApp {
             ['Rente', calculator.inputs.renteLening + '%'],
             ['Looptijd', calculator.inputs.looptijd + ' jaar'],
             ['Rendement', calculator.inputs.rendement + '%'],
-            ['Belasting Type', calculator.inputs.belastingType],
+            ['Belasting Type', calculator.inputs.belastingType || 'VPB'],
             [],
             ['Resultaten'],
             ['Totaal Vermogen', calculator.results.finalVermogen],
             ['ROI', calculator.results.finalROI + '%'],
-            ['Cash Reserve', calculator.results.finalCashReserve],
-            ['Totale Belasting', calculator.results.totaleTax || 0]
+            ['Cash Reserve', calculator.results.finalCashReserve]
         ];
         
         const ws1 = XLSX.utils.aoa_to_sheet(mainData);
@@ -779,7 +710,7 @@ class ROICalculatorApp {
             `Rente: ${calculator.inputs.renteLening}%`,
             `Looptijd: ${calculator.inputs.looptijd} jaar`,
             `Rendement: ${calculator.inputs.rendement}%`,
-            `Belasting: ${calculator.inputs.belastingType}`
+            `Belasting: ${calculator.inputs.belastingType || 'VPB'}`
         ];
         
         inputs.forEach(input => {
@@ -797,8 +728,7 @@ class ROICalculatorApp {
             `Totaal Vermogen: ${Utils.formatNumber(calculator.results.finalVermogen)}`,
             `ROI: ${calculator.results.finalROI.toFixed(1)}%`,
             `Leverage Factor: ${calculator.results.leverageFactor.toFixed(1)}x`,
-            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`,
-            `Totale Belasting: ${Utils.formatNumber(calculator.results.totaleTax || 0)}`
+            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`
         ];
         
         results.forEach(result => {
