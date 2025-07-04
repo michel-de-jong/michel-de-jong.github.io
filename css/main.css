@@ -274,6 +274,52 @@ select:focus {
     opacity: 1;
 }
 
+/* Private Tax Options Styling - NEW */
+#priveOptions {
+    background: rgba(23, 162, 184, 0.05);
+    border: 1px solid rgba(23, 162, 184, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+#priveOptions .form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+#priveOptions label {
+    color: var(--info-color);
+    font-weight: 600;
+}
+
+#priveOptions input,
+#priveOptions select {
+    border-color: rgba(23, 162, 184, 0.3);
+}
+
+#priveOptions input:focus,
+#priveOptions select:focus {
+    border-color: var(--info-color);
+    box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.1);
+}
+
+/* Box-specific styling */
+#box1Options {
+    border-left: 4px solid var(--warning-color);
+    padding-left: var(--spacing-md);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+#box3Options,
+#box3TariefGroup,
+#box3VrijstellingGroup {
+    border-left: 4px solid var(--purple-color);
+    padding-left: var(--spacing-md);
+    background: rgba(111, 66, 193, 0.05);
+    margin-top: var(--spacing-sm);
+}
+
 /* KPI Cards */
 .kpi-grid {
     display: grid;
@@ -488,6 +534,88 @@ input:checked + .toggle-slider:before {
     100% { transform: rotate(360deg); }
 }
 
+/* Tax Information Cards - NEW */
+.tax-info-card {
+    background: linear-gradient(135deg, rgba(30, 60, 114, 0.05) 0%, rgba(30, 60, 114, 0.1) 100%);
+    border: 1px solid rgba(30, 60, 114, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+}
+
+.tax-info-card h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: 16px;
+}
+
+.tax-info-card p {
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: var(--spacing-sm);
+}
+
+.tax-info-card ul {
+    margin-left: var(--spacing-md);
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.tax-info-card li {
+    margin-bottom: 3px;
+}
+
+/* Conditional Display Classes */
+.show-on-vpb {
+    display: none;
+}
+
+.show-on-prive {
+    display: none;
+}
+
+.show-on-box1 {
+    display: none;
+}
+
+.show-on-box3 {
+    display: none;
+}
+
+/* Active tax type visibility */
+body[data-tax-type="vpb"] .show-on-vpb {
+    display: block;
+}
+
+body[data-tax-type="prive"] .show-on-prive {
+    display: block;
+}
+
+body[data-tax-subtype="box1"] .show-on-box1 {
+    display: block;
+}
+
+body[data-tax-subtype="box3"] .show-on-box3 {
+    display: block;
+}
+
+/* Form Animations */
+.form-group {
+    transition: all var(--transition-normal);
+}
+
+.form-group.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.form-group.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
 /* Box 3 Settings Visibility */
 .box3-setting {
     transition: all var(--transition-normal);
@@ -524,3 +652,81 @@ input:checked + .toggle-slider:before {
 .mb-3 { margin-bottom: var(--spacing-md); }
 .mb-4 { margin-bottom: var(--spacing-lg); }
 .mb-5 { margin-bottom: var(--spacing-xl); }
+
+/* Enhanced Error States */
+.form-group.error input,
+.form-group.error select {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.form-group.error label {
+    color: var(--danger-color);
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Success States */
+.form-group.success input,
+.form-group.success select {
+    border-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+/* Advanced Tax Configuration Styling */
+.tax-section {
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.tax-section.active {
+    border-color: var(--primary-color);
+    background: rgba(30, 60, 114, 0.02);
+}
+
+.tax-section h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.tax-section .form-grid {
+    margin-top: var(--spacing-md);
+}
+
+/* Responsive adjustments for tax options */
+@media (max-width: 768px) {
+    #priveOptions {
+        margin-top: var(--spacing-md);
+        padding: var(--spacing-sm);
+    }
+    
+    #priveOptions .form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .tax-info-card {
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+    }
+    
+    .tax-info-card h4 {
+        font-size: 14px;
+    }
+    
+    .tax-info-card p,
+    .tax-info-card li {
+        font-size: 12px;
+    }
+}
