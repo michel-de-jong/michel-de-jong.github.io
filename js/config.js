@@ -14,12 +14,21 @@ const Config = {
         vasteKosten: 0,
         herinvesteringDrempel: 0,
         inflatie: 2.5,
-        inflatieToggle: false
+        inflatieToggle: false,
+        belastingType: 'zakelijk',
+        box3Vrijstelling: 57000,
+        box3ForfaitairRendement: 5.53,
+        box3Tarief: 31
     },
     
     // Tax Configuration
     tax: {
-        VPB_RATE: 0.258 // 25.8% Dutch corporate tax
+        VPB_RATE: 0.258, // 25.8% Dutch corporate tax
+        BOX3_VRIJSTELLING: 57000, // 2024 exemption amount
+        BOX3_FORFAITAIR_RENDEMENT: 5.53, // 2024 forfait return rate
+        BOX3_TARIEF: 31, // 2024 Box 3 tax rate
+        BOX3_HOOGVERMOGEN_DREMPEL: 1000000, // High wealth threshold
+        BOX3_HOOGVERMOGEN_RENDEMENT: 6.17 // Higher forfait rate for wealth > 1M
     },
     
     // Chart Configuration
@@ -71,7 +80,10 @@ const Config = {
         herinvestering: { min: 0, max: 100, step: 5 },
         vasteKosten: { min: 0, max: null, step: 100 },
         herinvesteringDrempel: { min: 0, max: null, step: 100 },
-        inflatie: { min: 0, max: 10, step: 0.1 }
+        inflatie: { min: 0, max: 10, step: 0.1 },
+        box3Vrijstelling: { min: 0, max: null, step: 1000 },
+        box3ForfaitairRendement: { min: 0, max: 20, step: 0.01 },
+        box3Tarief: { min: 0, max: 50, step: 0.1 }
     },
     
     // Locale Configuration
