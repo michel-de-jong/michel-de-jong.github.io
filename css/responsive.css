@@ -536,3 +536,313 @@
         page-break-inside: avoid;
     }
 }
+
+/* ==================================================
+   WATERFALL RESPONSIVE ADDITIONS - Add to existing responsive.css
+   ================================================== */
+
+/* Mobile Waterfall Enhancements */
+@media (max-width: 768px) {
+    /* Waterfall Controls Mobile Layout */
+    .waterfall-controls {
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .period-selector-group {
+        width: 100%;
+    }
+    
+    .period-selector-group label {
+        font-size: 14px;
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    .period-select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 12px 15px;
+        min-width: 100%;
+    }
+    
+    #comparePeriodsBtn {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+    }
+    
+    .view-toggle {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    /* Summary Cards Mobile */
+    .waterfall-summary {
+        gap: 12px;
+    }
+    
+    .summary-card {
+        padding: 15px;
+        gap: 12px;
+    }
+    
+    .summary-icon {
+        font-size: 24px;
+        min-width: 30px;
+    }
+    
+    .summary-label {
+        font-size: 12px;
+    }
+    
+    .summary-value {
+        font-size: 18px;
+        line-height: 1.2;
+    }
+    
+    .summary-detail {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+    
+    /* Analysis Content Mobile */
+    .waterfall-analysis {
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .waterfall-analysis h3 {
+        font-size: 1.1em;
+        margin-bottom: 15px;
+    }
+    
+    .analysis-tabs {
+        gap: 5px;
+        margin-bottom: 15px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+    }
+    
+    .analysis-tab {
+        padding: 8px 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        min-width: fit-content;
+    }
+    
+    /* Cashflow Table Mobile */
+    .cashflow-table {
+        min-width: 500px;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+        min-width: 120px;
+        font-size: 13px;
+    }
+    
+    .impact-bar {
+        width: 60px;
+        height: 16px;
+    }
+    
+    /* Trends Mobile */
+    .trends-grid {
+        gap: 15px;
+    }
+    
+    .trend-card {
+        padding: 15px;
+    }
+    
+    .trend-card h4 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .trend-card p {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    
+    .trend-stats div {
+        padding: 6px 0;
+        font-size: 13px;
+    }
+    
+    #trendChart {
+        height: 150px !important;
+    }
+    
+    /* Ratios Mobile */
+    .ratios-analysis {
+        padding: 15px;
+    }
+    
+    .ratios-analysis h4 {
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .ratios-grid {
+        gap: 10px;
+    }
+    
+    .ratio-card {
+        padding: 12px;
+    }
+    
+    .ratio-label {
+        font-size: 11px;
+        margin-bottom: 5px;
+        line-height: 1.2;
+    }
+    
+    .ratio-value {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .ratio-description {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    
+    /* Insights Mobile */
+    .waterfall-insights {
+        margin-top: 20px;
+    }
+    
+    .waterfall-insights h3 {
+        font-size: 1.1em;
+        margin-bottom: 12px;
+    }
+    
+    .insights-grid {
+        gap: 10px;
+    }
+    
+    .insight-card {
+        padding: 12px;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+    .waterfall-controls {
+        padding: 12px;
+    }
+    
+    .period-select {
+        padding: 10px 12px;
+    }
+    
+    .summary-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .summary-icon {
+        font-size: 20px;
+    }
+    
+    .summary-value {
+        font-size: 16px;
+    }
+    
+    .summary-detail {
+        font-size: 10px;
+    }
+    
+    .analysis-tab {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .cashflow-table {
+        min-width: 450px;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    .ratios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ratio-card {
+        padding: 15px;
+    }
+    
+    .ratio-value {
+        font-size: 24px;
+    }
+}
+
+/* Landscape Mobile for Waterfall */
+@media (max-width: 768px) and (orientation: landscape) {
+    .waterfall-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ratios-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    #trendChart {
+        height: 120px !important;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .period-select,
+    .analysis-tab,
+    #comparePeriodsBtn {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    .analysis-tab {
+        padding: 10px 15px;
+    }
+    
+    .period-select {
+        padding: 14px 16px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .waterfall-controls {
+        border: 2px solid currentColor;
+    }
+    
+    .summary-card {
+        border: 2px solid currentColor;
+    }
+    
+    .analysis-tab.active {
+        border: 2px solid currentColor;
+        border-bottom: none;
+    }
+    
+    .impact-bar {
+        border: 1px solid currentColor;
+    }
+}
