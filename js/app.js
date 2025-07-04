@@ -84,6 +84,25 @@ class ROICalculatorApp {
             input.addEventListener('input', Utils.debounce(() => this.calculate(), Config.performance.debounceDelay));
         });
         
+        // Belasting type toggle
+        const belastingType = document.getElementById('belastingType');
+        if (belastingType) {
+            belastingType.addEventListener('change', (e) => {
+                const vpbGroup = document.getElementById('vpbGroup');
+                const box3Group = document.getElementById('box3Group');
+                
+                if (e.target.value === 'zakelijk') {
+                    vpbGroup.style.display = 'block';
+                    box3Group.style.display = 'none';
+                } else {
+                    vpbGroup.style.display = 'none';
+                    box3Group.style.display = 'block';
+                }
+                
+                this.calculate();
+            });
+        }
+        
         // Inflation toggle
         document.getElementById('inflatieToggle').addEventListener('change', () => this.updateCharts());
         
@@ -585,6 +604,14 @@ class ROICalculatorApp {
             }
         });
         
+        // Trigger belasting type change if needed
+        if (scenario.inputs.belastingType) {
+            const belastingType = document.getElementById('belastingType');
+            if (belastingType) {
+                belastingType.dispatchEvent(new Event('change'));
+            }
+        }
+        
         // Switch to calculator tab and recalculate
         this.switchTab('calculator');
         this.calculate();
@@ -614,11 +641,16 @@ class ROICalculatorApp {
             ['Rente', calculator.inputs.renteLening + '%'],
             ['Looptijd', calculator.inputs.looptijd + ' jaar'],
             ['Rendement', calculator.inputs.rendement + '%'],
+            ['Belasting Type', calculator.inputs.belastingType === 'zakelijk' ? 'Zakelijk (VPB)' : 'Privé (Box 3)'],
+            ['Belasting Tarief', calculator.inputs.belastingType === 'zakelijk' 
+                ? calculator.inputs.vpbTarief + '% VPB' 
+                : calculator.inputs.box3Tarief + '% Box 3'],
             [],
             ['Resultaten'],
             ['Totaal Vermogen', calculator.results.finalVermogen],
             ['ROI', calculator.results.finalROI + '%'],
-            ['Cash Reserve', calculator.results.finalCashReserve]
+            ['Cash Reserve', calculator.results.finalCashReserve],
+            ['Totaal Belasting Betaald', calculator.results.totaalBelastingBetaald || 0]
         ];
         
         const ws1 = XLSX.utils.aoa_to_sheet(mainData);
@@ -671,7 +703,8 @@ class ROICalculatorApp {
             `Lening: ${Utils.formatNumber(calculator.inputs.lening)}`,
             `Rente: ${calculator.inputs.renteLening}%`,
             `Looptijd: ${calculator.inputs.looptijd} jaar`,
-            `Rendement: ${calculator.inputs.rendement}%`
+            `Rendement: ${calculator.inputs.rendement}%`,
+            `Belasting: ${calculator.inputs.belastingType === 'zakelijk' ? 'VPB' : 'Box 3'}`
         ];
         
         inputs.forEach(input => {
@@ -689,7 +722,8 @@ class ROICalculatorApp {
             `Totaal Vermogen: ${Utils.formatNumber(calculator.results.finalVermogen)}`,
             `ROI: ${calculator.results.finalROI.toFixed(1)}%`,
             `Leverage Factor: ${calculator.results.leverageFactor.toFixed(1)}x`,
-            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`
+            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`,
+            `Belasting Betaald: ${Utils.formatNumber(calculator.results.totaalBelastingBetaald || 0)}`
         ];
         
         results.forEach(result => {
