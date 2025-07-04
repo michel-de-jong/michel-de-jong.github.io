@@ -13,7 +13,8 @@ class ROICalculator {
             cashReserveReeel: [],
             totaalVermogenReeel: [],
             roiReeel: [],
-            monthlyData: []
+            monthlyData: [],
+            yearlyTax: []
         };
         
         this.inputs = {};
@@ -37,11 +38,44 @@ class ROICalculator {
             inflatie: parseFloat(document.getElementById('inflatie').value) || 0,
             showRealValues: document.getElementById('inflatieToggle').checked,
             belastingType: document.getElementById('belastingType').value || 'zakelijk',
-            vpbTarief: parseFloat(document.getElementById('vpbTarief').value) || 25.8,
-            box3Tarief: parseFloat(document.getElementById('box3Tarief').value) || 36
+            box3Vrijstelling: parseFloat(document.getElementById('box3Vrijstelling').value) || 57000,
+            box3ForfaitairRendement: parseFloat(document.getElementById('box3ForfaitairRendement').value) || 5.53,
+            box3Tarief: parseFloat(document.getElementById('box3Tarief').value) || 31
         };
         
         return this.inputs;
+    }
+    
+    // Calculate Box 3 tax based on total wealth
+    calculateBox3Tax(totalWealth) {
+        const { box3Vrijstelling, box3ForfaitairRendement, box3Tarief } = this.inputs;
+        
+        if (totalWealth <= box3Vrijstelling) {
+            return 0;
+        }
+        
+        const taxableWealth = totalWealth - box3Vrijstelling;
+        
+        // Different forfait rates for different wealth brackets
+        let forfaitair = 0;
+        if (taxableWealth <= Config.tax.BOX3_HOOGVERMOGEN_DREMPEL - box3Vrijstelling) {
+            // Standard rate for wealth up to 1M
+            forfaitair = taxableWealth * (box3ForfaitairRendement / 100);
+        } else {
+            // Mixed rate: standard up to 1M, higher rate above 1M
+            const standardPart = (Config.tax.BOX3_HOOGVERMOGEN_DREMPEL - box3Vrijstelling) * (box3ForfaitairRendement / 100);
+            const highPart = (taxableWealth - (Config.tax.BOX3_HOOGVERMOGEN_DREMPEL - box3Vrijstelling)) * (Config.tax.BOX3_HOOGVERMOGEN_RENDEMENT / 100);
+            forfaitair = standardPart + highPart;
+        }
+        
+        return forfaitair * (box3Tarief / 100);
+    }
+    
+    // Calculate VPB tax on actual returns
+    calculateVPBTax(yearlyProfit, yearlyInterestCosts) {
+        // VPB: only pay tax on profit after deducting interest costs
+        const taxableProfit = Math.max(0, yearlyProfit - yearlyInterestCosts);
+        return taxableProfit * Config.tax.VPB_RATE;
     }
     
     // Main calculation method
@@ -61,7 +95,8 @@ class ROICalculator {
             herinvestering,
             vasteKosten,
             herinvesteringDrempel,
-            inflatie
+            inflatie,
+            belastingType
         } = this.inputs;
         
         // Convert rendement to monthly if needed
@@ -73,7 +108,6 @@ class ROICalculator {
         let portfolioWaarde = startKapitaal + lening;
         let cashReserve = 0;
         let leningBedrag = lening;
-        let totaalBelastingBetaald = 0;
         const totalMonths = looptijd * 12;
         const loanMonths = leningLooptijd * 12;
         const maandKosten = vasteKosten / 12;
@@ -89,6 +123,11 @@ class ROICalculator {
                 maandelijkseAflossing = lening / loanMonths;
             }
         }
+        
+        // Track yearly data for tax calculations
+        let yearlyProfit = 0;
+        let yearlyInterestCosts = 0;
+        let yearlyFixedCosts = 0;
         
         // Month by month simulation
         for (let month = 0; month <= totalMonths; month++) {
@@ -115,8 +154,36 @@ class ROICalculator {
                 }
             }
             
-            // Net result before reinvestment
-            const nettoResultaat = month > 0 ? maandOpbrengst - actualPayment - maandKosten : 0;
+            // Accumulate yearly totals for tax calculation
+            if (month > 0) {
+                yearlyProfit += maandOpbrengst;
+                yearlyInterestCosts += maandRente;
+                yearlyFixedCosts += maandKosten;
+            }
+            
+            // Calculate tax at year end
+            let yearlyTax = 0;
+            if (month > 0 && month % 12 === 0) {
+                const currentYear = month / 12;
+                const totalWealth = portfolioWaarde + cashReserve - leningBedrag;
+                
+                if (belastingType === 'prive') {
+                    yearlyTax = this.calculateBox3Tax(totalWealth);
+                } else {
+                    yearlyTax = this.calculateVPBTax(yearlyProfit, yearlyInterestCosts);
+                }
+                
+                this.data.yearlyTax.push(yearlyTax);
+                
+                // Reset yearly counters
+                yearlyProfit = 0;
+                yearlyInterestCosts = 0;
+                yearlyFixedCosts = 0;
+            }
+            
+            // Net result before reinvestment (including tax)
+            const monthlyTax = month > 0 && month % 12 === 0 ? yearlyTax / 12 : 0;
+            const nettoResultaat = month > 0 ? maandOpbrengst - actualPayment - maandKosten - monthlyTax : 0;
             
             // Store monthly data for waterfall
             if (month > 0) {
@@ -126,7 +193,7 @@ class ROICalculator {
                     rente: maandRente,
                     aflossing: principalPayment,
                     kosten: maandKosten,
-                    belasting: 0, // Will be set below if applicable
+                    belasting: monthlyTax,
                     netto: nettoResultaat,
                     portfolio: portfolioWaarde,
                     cashReserve: cashReserve,
@@ -149,38 +216,13 @@ class ROICalculator {
                 } else {
                     // Positive return: split between reinvestment and cash
                     const herinvesteringBedrag = nettoResultaat * (herinvestering / 100);
-                    const cashFlowBedrag = nettoResultaat - herinvesteringBedrag;
-                    
-                    // Calculate tax on cash flow (not reinvested amount)
-                    let belasting = 0;
-                    if (cashFlowBedrag > 0) {
-                        if (this.inputs.belastingType === 'zakelijk') {
-                            // VPB over winst (na aftrek van rente)
-                            // Use rate from config if available, otherwise use form value
-                            const vpbRate = (Config.tax?.VPB_RATE || this.inputs.vpbTarief / 100);
-                            belasting = cashFlowBedrag * vpbRate;
-                        } else {
-                            // Box 3 - forfaitair rendement
-                            // Use rates from config if available
-                            const box3Rate = (Config.tax?.BOX3_RATE || this.inputs.box3Tarief / 100);
-                            const fictiefRendement = (Config.tax?.BOX3_FICTIEF || 0.0604);
-                            const fictievRendementBedrag = (portfolioWaarde + cashReserve) * fictiefRendement / 12;
-                            belasting = fictievRendementBedrag * box3Rate;
-                        }
-                        totaalBelastingBetaald += belasting;
-                        
-                        // Update monthly data with tax
-                        if (month > 0 && this.data.monthlyData[month - 1]) {
-                            this.data.monthlyData[month - 1].belasting = belasting;
-                        }
-                    }
                     
                     // Check reinvestment threshold
                     if (herinvesteringBedrag >= herinvesteringDrempel) {
                         portfolioWaarde += herinvesteringBedrag;
-                        cashReserve += cashFlowBedrag - belasting;
+                        cashReserve += nettoResultaat - herinvesteringBedrag;
                     } else {
-                        cashReserve += nettoResultaat - belasting;
+                        cashReserve += nettoResultaat;
                     }
                 }
                 
@@ -208,7 +250,7 @@ class ROICalculator {
                 this.data.cashReserveReeel.push(cashReserve / inflatieFactor);
                 this.data.totaalVermogenReeel.push(totaalVermogen / inflatieFactor);
                 
-                const roi = ((totaalVermogen - startKapitaal) / startKapitaal) * 100;
+                const roi = jaar > 0 ? ((totaalVermogen - startKapitaal) / startKapitaal) * 100 : 0;
                 const roiReeel = jaar > 0 ? (((totaalVermogen / inflatieFactor) - startKapitaal) / startKapitaal) * 100 : 0;
                 
                 this.data.roi.push(roi);
@@ -218,9 +260,6 @@ class ROICalculator {
         
         // Calculate final results
         this.calculateFinalResults();
-        
-        // Store total tax paid
-        this.results.totaalBelastingBetaald = totaalBelastingBetaald;
         
         return this.data;
     }
@@ -243,6 +282,9 @@ class ROICalculator {
         const finalROIReeel = ((finalVermogenReeel - startKapitaal) / startKapitaal) * 100;
         const koopkrachtVerlies = finalVermogen - finalVermogenReeel;
         
+        // Calculate total tax paid
+        const totaleTax = this.data.yearlyTax.reduce((sum, tax) => sum + tax, 0);
+        
         this.results = {
             finalVermogen,
             finalROI,
@@ -251,7 +293,8 @@ class ROICalculator {
             koopkrachtVerlies,
             finalVermogenReeel,
             finalROIReeel,
-            finalCashReserveReeel: finalCashReserve / inflatieFactor
+            finalCashReserveReeel: finalCashReserve / inflatieFactor,
+            totaleTax
         };
         
         return this.results;
@@ -270,7 +313,8 @@ class ROICalculator {
             cashReserveReeel: [],
             totaalVermogenReeel: [],
             roiReeel: [],
-            monthlyData: []
+            monthlyData: [],
+            yearlyTax: []
         };
     }
     
@@ -310,23 +354,29 @@ class ROICalculator {
                 acc.rente += month.rente;
                 acc.aflossing += month.aflossing;
                 acc.kosten += month.kosten;
-                acc.belasting += month.belasting || 0;
+                acc.belasting += month.belasting;
                 return acc;
             }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0, belasting: 0 });
             
             const finalValue = this.data.totaalVermogen[this.data.totaalVermogen.length - 1];
             
+            const waterfallData = [
+                { label: 'Start Kapitaal', value: this.inputs.startKapitaal, type: 'start' },
+                { label: 'Lening', value: this.inputs.lening, type: 'positive' },
+                { label: 'Rendement', value: totals.opbrengst, type: 'positive' },
+                { label: 'Rente Kosten', value: -totals.rente, type: 'negative' },
+                { label: 'Aflossingen', value: -totals.aflossing, type: 'negative' },
+                { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' }
+            ];
+            
+            if (totals.belasting > 0) {
+                waterfallData.push({ label: 'Belasting', value: -totals.belasting, type: 'negative' });
+            }
+            
+            waterfallData.push({ label: 'Eindwaarde', value: finalValue, type: 'total' });
+            
             return {
-                data: [
-                    { label: 'Start Kapitaal', value: this.inputs.startKapitaal, type: 'start' },
-                    { label: 'Lening', value: this.inputs.lening, type: 'positive' },
-                    { label: 'Rendement', value: totals.opbrengst, type: 'positive' },
-                    { label: 'Rente Kosten', value: -totals.rente, type: 'negative' },
-                    { label: 'Aflossingen', value: -totals.aflossing, type: 'negative' },
-                    { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' },
-                    { label: 'Belasting', value: -totals.belasting, type: 'negative' },
-                    { label: 'Eindwaarde', value: finalValue, type: 'total' }
-                ],
+                data: waterfallData,
                 totals
             };
         } else {
@@ -345,7 +395,7 @@ class ROICalculator {
                 acc.rente += month.rente;
                 acc.aflossing += month.aflossing;
                 acc.kosten += month.kosten;
-                acc.belasting += month.belasting || 0;
+                acc.belasting += month.belasting;
                 return acc;
             }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0, belasting: 0 });
             
@@ -355,134 +405,52 @@ class ROICalculator {
             
             const endValue = this.data.totaalVermogen[year] || startValue;
             
+            const waterfallData = [
+                { label: 'Begin Saldo', value: startValue, type: 'start' },
+                { label: 'Rendement', value: yearTotals.opbrengst, type: 'positive' },
+                { label: 'Rente Kosten', value: -yearTotals.rente, type: 'negative' },
+                { label: 'Aflossingen', value: -yearTotals.aflossing, type: 'negative' },
+                { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' }
+            ];
+            
+            if (yearTotals.belasting > 0) {
+                waterfallData.push({ label: 'Belasting', value: -yearTotals.belasting, type: 'negative' });
+            }
+            
+            waterfallData.push({ label: 'Eind Saldo', value: endValue, type: 'total' });
+            
             return {
-                data: [
-                    { label: 'Begin Saldo', value: startValue, type: 'start' },
-                    { label: 'Rendement', value: yearTotals.opbrengst, type: 'positive' },
-                    { label: 'Rente Kosten', value: -yearTotals.rente, type: 'negative' },
-                    { label: 'Aflossingen', value: -yearTotals.aflossing, type: 'negative' },
-                    { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' },
-                    { label: 'Belasting', value: -yearTotals.belasting, type: 'negative' },
-                    { label: 'Eind Saldo', value: endValue, type: 'total' }
-                ],
+                data: waterfallData,
                 totals: yearTotals
             };
         }
     }
     
-    // Calculate scenario with specific overrides
+    // Calculate scenario
     calculateScenario(overrides) {
-        // Create a temporary calculator instance to avoid affecting the main calculation
-        const tempCalc = new ROICalculator();
+        const originalInputs = { ...this.inputs };
         
-        // Get current form values
+        // Store current form values
         const currentValues = this.getInputValues();
         
-        // Apply overrides to the temporary calculator
-        tempCalc.inputs = { ...currentValues, ...overrides };
+        // Apply overrides
+        Object.assign(this.inputs, currentValues, overrides);
         
-        // Perform calculation with temporary values
-        tempCalc.resetData();
+        // Calculate with new values
+        this.calculate();
+        const roi = this.results.finalROI;
         
-        const {
-            startKapitaal,
-            lening,
-            renteLening,
-            looptijd,
-            leningLooptijd,
-            rendementType,
-            rendement,
-            aflossingsType,
-            herinvestering,
-            vasteKosten,
-            herinvesteringDrempel,
-            inflatie
-        } = tempCalc.inputs;
+        // Restore original inputs
+        this.inputs = originalInputs;
         
-        // Convert rendement to monthly if needed
-        const maandRendement = rendementType === 'jaarlijks' 
-            ? (Math.pow(1 + rendement / 100, 1/12) - 1) * 100 
-            : rendement;
-        
-        // Initialize variables
-        let portfolioWaarde = startKapitaal + lening;
-        let cashReserve = 0;
-        let leningBedrag = lening;
-        const totalMonths = looptijd * 12;
-        const loanMonths = leningLooptijd * 12;
-        const maandKosten = vasteKosten / 12;
-        
-        // Calculate monthly payment
-        let maandAflossing = 0;
-        let maandelijkseAflossing = 0;
-        
-        if (lening > 0 && loanMonths > 0) {
-            if (aflossingsType === 'annuitair') {
-                maandAflossing = Utils.calculateAnnuity(lening, renteLening, loanMonths);
-            } else if (aflossingsType === 'lineair') {
-                maandelijkseAflossing = lening / loanMonths;
-            }
-        }
-        
-        // Simulate months
-        for (let month = 1; month <= totalMonths; month++) {
-            const maandOpbrengst = portfolioWaarde * (maandRendement / 100);
-            
-            let maandRente = 0;
-            let actualPayment = 0;
-            let principalPayment = 0;
-            
-            if (month <= loanMonths && leningBedrag > 0) {
-                maandRente = leningBedrag * (renteLening / 100 / 12);
-                
-                if (aflossingsType === 'annuitair') {
-                    actualPayment = Math.min(maandAflossing, leningBedrag + maandRente);
-                    principalPayment = actualPayment - maandRente;
-                } else if (aflossingsType === 'lineair') {
-                    principalPayment = Math.min(maandelijkseAflossing, leningBedrag);
-                    actualPayment = principalPayment + maandRente;
-                } else if (aflossingsType === 'aflossingsvrij') {
-                    actualPayment = maandRente;
-                    principalPayment = 0;
-                }
-            }
-            
-            const nettoResultaat = maandOpbrengst - actualPayment - maandKosten;
-            
-            if (nettoResultaat < 0) {
-                if (cashReserve >= Math.abs(nettoResultaat)) {
-                    cashReserve += nettoResultaat;
-                } else {
-                    const tekort = Math.abs(nettoResultaat) - cashReserve;
-                    cashReserve = 0;
-                    portfolioWaarde = Math.max(0, portfolioWaarde - tekort);
-                }
-            } else {
-                const herinvesteringBedrag = nettoResultaat * (herinvestering / 100);
-                
-                if (herinvesteringBedrag >= herinvesteringDrempel) {
-                    portfolioWaarde += herinvesteringBedrag;
-                    cashReserve += nettoResultaat - herinvesteringBedrag;
-                } else {
-                    cashReserve += nettoResultaat;
-                }
-            }
-            
-            if (month <= loanMonths && leningBedrag > 0) {
-                leningBedrag = Math.max(0, leningBedrag - principalPayment);
-            }
-        }
-        
-        // Calculate final ROI
-        const finalVermogen = portfolioWaarde + cashReserve - leningBedrag;
-        const finalROI = ((finalVermogen - startKapitaal) / startKapitaal) * 100;
-        
-        return finalROI;
+        return roi;
     }
     
     // Run stress test
     runStressTest() {
-        const baseROI = this.results.finalROI;
+        // Store current calculation
+        const originalResults = { ...this.results };
+        const baseROI = originalResults.finalROI;
         
         const scenarios = [
             { name: 'Rente stijging +2%', change: { renteLening: this.inputs.renteLening + 2 } },
@@ -505,6 +473,9 @@ class ROICalculator {
             };
         });
         
+        // Restore original calculation
+        this.calculate();
+        
         return results;
     }
     
@@ -515,48 +486,46 @@ class ROICalculator {
         
         for (let i = 0; i < numSimulations; i++) {
             // Generate random variations using normal distribution
-            const rendementVariation = Utils.randomNormal() * volatility;
-            const renteVariation = Utils.randomNormal() * renteVolatility;
+            const rendementVariation = Utils.randomNormal() * volatility * 100;
+            const renteVariation = Utils.randomNormal() * renteVolatility * 100;
             const kostenVariation = Utils.randomNormal() * kostenVolatility;
             
-            // Apply variations - ensure they create realistic scenarios
-            const simulationInputs = {
-                rendement: baseInputs.rendement + rendementVariation,
-                renteLening: Math.max(0, baseInputs.renteLening + renteVariation),
-                vasteKosten: Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation))
-            };
+            const rendement = baseInputs.rendement + rendementVariation;
+            const rente = Math.max(0, baseInputs.renteLening + renteVariation);
+            const kosten = Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation));
             
-            // Calculate ROI for this simulation
-            const roi = this.calculateScenario(simulationInputs);
+            // Apply variations
+            this.inputs = { ...baseInputs };
+            this.inputs.rendement = rendement;
+            this.inputs.renteLening = rente;
+            this.inputs.vasteKosten = kosten;
             
-            // Calculate final value for VaR
-            const tempCalc = new ROICalculator();
-            tempCalc.inputs = { ...baseInputs, ...simulationInputs };
-            tempCalc.calculate();
-            const finalValue = tempCalc.results.finalVermogen || 0;
+            // Calculate
+            this.calculate();
             
             results.push({
                 simulation: i + 1,
-                roi: roi,
-                finalValue: finalValue,
-                inputs: simulationInputs
+                roi: this.results.finalROI,
+                finalValue: this.results.finalVermogen,
+                inputs: { rendement, rente, kosten }
             });
         }
+        
+        // Restore original inputs and recalculate
+        this.inputs = baseInputs;
+        this.calculate();
         
         // Sort results for statistics
         results.sort((a, b) => a.roi - b.roi);
         
         // Calculate statistics
-        const roiValues = results.map(r => r.roi);
-        const finalValues = results.map(r => r.finalValue);
-        
         const stats = {
-            mean: Utils.statistics.mean(roiValues),
-            median: Utils.statistics.median(roiValues),
-            p5: Utils.statistics.percentile(roiValues, 5),
-            p95: Utils.statistics.percentile(roiValues, 95),
-            lossProb: (roiValues.filter(r => r < 0).length / numSimulations) * 100,
-            vaR5: Utils.statistics.percentile(finalValues.map(v => v - baseInputs.startKapitaal), 5),
+            mean: Utils.statistics.mean(results.map(r => r.roi)),
+            median: Utils.statistics.median(results.map(r => r.roi)),
+            p5: Utils.statistics.percentile(results.map(r => r.roi), 5),
+            p95: Utils.statistics.percentile(results.map(r => r.roi), 95),
+            lossProb: (results.filter(r => r.roi < 0).length / numSimulations) * 100,
+            vaR5: Utils.statistics.percentile(results.map(r => r.finalValue - baseInputs.startKapitaal), 5),
             results: results
         };
         
