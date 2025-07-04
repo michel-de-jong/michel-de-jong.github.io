@@ -1,4 +1,4 @@
-// Core Calculator Logic for ROI Calculator - IMPROVED VERSION
+// Core Calculator Logic for ROI Calculator - IMPROVED VERSION WITH ADVANCED TAX CALCULATIONS
 
 class ROICalculator {
     constructor() {
@@ -36,8 +36,14 @@ class ROICalculator {
             herinvesteringDrempel: parseFloat(document.getElementById('herinvesteringDrempel').value) || 0,
             inflatie: parseFloat(document.getElementById('inflatie').value) || 0,
             showRealValues: document.getElementById('inflatieToggle').checked,
-            // NEW: Tax option
-            belastingType: document.getElementById('belastingType') ? document.getElementById('belastingType').value : 'vpb'
+            
+            // Belasting configuratie
+            belastingType: document.getElementById('belastingType').value,
+            priveSubType: document.getElementById('priveSubType') ? document.getElementById('priveSubType').value : 'box1',
+            box1Tarief: parseFloat(document.getElementById('box1Tarief')?.value) || Config.defaults.box1Tarief,
+            box3Rendement: parseFloat(document.getElementById('box3Rendement')?.value) || Config.defaults.box3Rendement,
+            box3Tarief: parseFloat(document.getElementById('box3Tarief')?.value) || Config.defaults.box3Tarief,
+            box3Vrijstelling: parseFloat(document.getElementById('box3Vrijstelling')?.value) || Config.defaults.box3Vrijstelling
         };
         
         return this.inputs;
@@ -68,11 +74,9 @@ class ROICalculator {
             vasteKosten,
             herinvesteringDrempel,
             inflatie,
-            belastingType
+            belastingType,
+            priveSubType
         } = inputsToUse;
-        
-        // Get tax rate based on type
-        const belastingTarief = this.getTaxRate(belastingType);
         
         // Convert rendement to monthly if needed
         const maandRendement = rendementType === 'jaarlijks' 
@@ -124,9 +128,22 @@ class ROICalculator {
                 }
             }
             
-            // Calculate taxable income (profit minus deductible interest)
-            const belastbareWinst = month > 0 ? Math.max(0, bruttoOpbrengst - maandRente) : 0;
-            const belasting = belastbareWinst * belastingTarief;
+            // Calculate tax based on type and month
+            let belasting = 0;
+            
+            if (month > 0) {
+                // Get current total wealth for box 3 calculations
+                const huidigVermogen = portfolioWaarde + cashReserve - leningBedrag;
+                
+                belasting = this.calculateTax(
+                    bruttoOpbrengst, 
+                    maandRente, 
+                    maandKosten, 
+                    huidigVermogen, 
+                    inputsToUse,
+                    month
+                );
+            }
             
             // Net result after tax and before other costs
             const nettoOpbrengst = month > 0 ? bruttoOpbrengst - belasting : 0;
@@ -217,18 +234,80 @@ class ROICalculator {
         return this.data;
     }
     
-    // Get tax rate based on type
-    getTaxRate(belastingType) {
-        switch(belastingType) {
-            case 'vpb':
-                return Config.tax.VPB_RATE;
-            case 'prive':
-                return Config.tax.PRIVE_RATE || 0.31; // 31% gemiddeld tarief box 1
-            case 'box3':
-                return Config.tax.BOX3_RATE || 0.31; // 31% box 3 tarief
-            default:
-                return Config.tax.VPB_RATE;
+    // Calculate tax based on regime - COMPREHENSIVE TAX CALCULATION
+    calculateTax(bruttoOpbrengst, maandRente, maandKosten, huidigVermogen, inputs, month) {
+        const { belastingType, priveSubType, herinvestering } = inputs;
+        
+        if (belastingType === 'vpb') {
+            return this.calculateVPBTax(bruttoOpbrengst, maandRente, maandKosten, herinvestering);
+        } else if (belastingType === 'prive') {
+            if (priveSubType === 'box1') {
+                return this.calculateBox1Tax(bruttoOpbrengst, maandRente, maandKosten, inputs, herinvestering);
+            } else if (priveSubType === 'box3') {
+                return this.calculateBox3Tax(huidigVermogen, inputs, month);
+            }
         }
+        
+        return 0;
+    }
+    
+    // VPB Calculation - Belasting over winst na aftrek kosten
+    calculateVPBTax(bruttoOpbrengst, maandRente, maandKosten, herinvestering) {
+        // Belastbare winst = bruto rendement - aftrekbare kosten
+        const belastbareWinst = Math.max(0, bruttoOpbrengst - maandRente - maandKosten);
+        
+        // Voor VPB: alleen belasting over uitgekeerde winst (niet herinvesteerde deel)
+        const uitgekeerdeDeel = belastbareWinst * ((100 - herinvestering) / 100);
+        
+        // 25.8% VPB tarief (zou progressief kunnen zijn voor kleinere bedragen)
+        return uitgekeerdeDeel * Config.tax.VPB_RATE;
+    }
+    
+    // Box 1 Calculation - Progressieve inkomstenbelasting
+    calculateBox1Tax(bruttoOpbrengst, maandRente, maandKosten, inputs, herinvestering) {
+        // Voor box 1: beperkte aftrekbaarheid van rente
+        // Hier nemen we aan dat alleen 'zakelijke' rente aftrekbaar is
+        const aftrekbareRente = maandRente * 0.5; // Assumptie: 50% aftrekbaar
+        
+        const belastbareWinst = Math.max(0, bruttoOpbrengst - aftrekbareRente - maandKosten);
+        
+        // Box 1 is alleen over uitgekeerde winst
+        const uitgekeerdeDeel = belastbareWinst * ((100 - herinvestering) / 100);
+        
+        // Gebruik het opgegeven tarief (kan progressief worden gemaakt)
+        const tariefDecimaal = inputs.box1Tarief / 100;
+        return uitgekeerdeDeel * tariefDecimaal;
+    }
+    
+    // Box 3 Calculation - Vermogensbelasting op fictief rendement
+    calculateBox3Tax(huidigVermogen, inputs, month) {
+        // Box 3 wordt jaarlijks berekend, niet maandelijks
+        // Alleen berekenen in december (maand 12, 24, 36, etc.)
+        if (month % 12 !== 0) {
+            return 0;
+        }
+        
+        // Vermogen boven heffingsvrije voet
+        const belastbaarVermogen = Math.max(0, huidigVermogen - inputs.box3Vrijstelling);
+        
+        if (belastbaarVermogen <= 0) {
+            return 0;
+        }
+        
+        // Fictief rendement berekenen (kan progressief zijn)
+        let fictiefRendement = 0;
+        
+        // Simpele berekening met opgegeven percentage
+        fictiefRendement = belastbaarVermogen * (inputs.box3Rendement / 100);
+        
+        // Voor realistische berekening zou je de schijven kunnen gebruiken:
+        // Config.tax.BOX3_RENDEMENT_BRACKETS
+        
+        // Belasting over fictief rendement
+        const jaarlijkseBelasting = fictiefRendement * (inputs.box3Tarief / 100);
+        
+        // Verdeel over 12 maanden
+        return jaarlijkseBelasting / 12;
     }
     
     // Calculate final results and KPIs
