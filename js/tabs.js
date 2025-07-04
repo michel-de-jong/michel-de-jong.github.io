@@ -148,10 +148,7 @@ const TabTemplates = {
             <div class="cashflow-period-selector">
                 <label for="waterfallPeriod">Selecteer Periode:</label>
                 <select id="waterfallPeriod">
-                    <option value="jaar1">Jaar 1</option>
-                    <option value="jaar5">Jaar 5</option>
-                    <option value="jaar10">Jaar 10</option>
-                    <option value="totaal">Totaal Overzicht</option>
+                    <!-- Options will be populated dynamically based on looptijd -->
                 </select>
             </div>
             
@@ -183,7 +180,7 @@ const TabTemplates = {
                     <tr>
                         <th>Component</th>
                         <th>Bedrag</th>
-                        <th>% van Totaal</th>
+                        <th>Aandeel</th>
                         <th>Cumulatief</th>
                     </tr>
                 </thead>
@@ -191,6 +188,15 @@ const TabTemplates = {
                     <!-- Dynamically populated -->
                 </tbody>
             </table>
+            
+            <div class="cashflow-explanation mt-3">
+                <small>
+                    <strong>Toelichting:</strong><br>
+                    • <strong>Aandeel kolom:</strong> Voor inkomsten: percentage van totale inkomsten. Voor uitgaven: percentage van totale uitgaven.<br>
+                    • <strong>Cumulatief:</strong> Het lopende totaal na elke stap in de waterfall.<br>
+                    • <strong>Cash Conversie:</strong> Percentage van inkomsten dat als netto cashflow overblijft.
+                </small>
+            </div>
         </section>
     `,
     
@@ -346,16 +352,30 @@ const TabStyles = `
         margin-bottom: 20px;
     }
     
+    .cashflow-period-selector label {
+        display: inline-block;
+        margin-right: 10px;
+        font-weight: 600;
+    }
+    
+    .cashflow-period-selector select {
+        min-width: 200px;
+    }
+    
     .cashflow-table {
         width: 100%;
         margin-top: 30px;
         border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 12px;
-        text-align: right;
+        padding: 15px 12px;
+        text-align: left;
         border-bottom: 1px solid #dee2e6;
     }
     
@@ -363,10 +383,41 @@ const TabStyles = `
         background: #f8f9fa;
         font-weight: 600;
         color: #495057;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .cashflow-table th:nth-child(2),
+    .cashflow-table th:nth-child(4),
+    .cashflow-table td:nth-child(2),
+    .cashflow-table td:nth-child(4) {
+        text-align: right;
+    }
+    
+    .cashflow-table th:nth-child(3),
+    .cashflow-table td:nth-child(3) {
+        text-align: center;
     }
     
     .cashflow-table tr:hover {
         background: #f8f9fa;
+    }
+    
+    .cashflow-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .cashflow-explanation {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .cashflow-explanation small {
+        line-height: 1.6;
+        color: #6c757d;
     }
     
     /* Portfolio Builder */
@@ -445,55 +496,6 @@ const TabStyles = `
         display: flex;
         gap: 10px;
     }
-    
-    /* Tab Navigation */
-    .tabs {
-        overflow-x: scroll;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .tab {
-        min-width: 100px;
-        font-size: 14px;
-    }
-    
-    /* Form adjustments */
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Chart containers */
-    .chart-container {
-        height: 300px;
-    }
-    
-    /* Export grid */
-    .export-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    /* Asset rows */
-    .asset-row {
-        grid-template-columns: 1fr;
-        gap: 5px;
-    }
-    
-    .asset-row input,
-    .asset-row button {
-        width: 100%;
-    }
-    
-    /* Saved scenarios */
-    .saved-scenario {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .scenario-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
 `;
 
 // Add styles to document
