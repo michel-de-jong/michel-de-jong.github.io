@@ -1,6 +1,6 @@
-// Configuration file for ROI Calculator - IMPROVED VERSION
+// Configuration file for ROI Calculator - IMPROVED VERSION WITH ENHANCED TAX CONFIG
 const Config = {
-    // Default Values
+    // Default Values - THESE WILL BE USED TO POPULATE INPUT FIELDS
     defaults: {
         startKapitaal: 100000,
         lening: 200000,
@@ -14,14 +14,42 @@ const Config = {
         vasteKosten: 5000,
         herinvesteringDrempel: 1000,
         inflatie: 2.5,
-        belastingType: 'vpb'
+        belastingType: 'vpb',
+        
+        // Privé Belasting Defaults
+        priveSubType: 'box1',
+        box1Tarief: 37.07,              // Gemiddeld tarief box 1 (2024)
+        box3Rendement: 6.04,            // Fictief rendement box 3 (2024)
+        box3Tarief: 31,                 // Tarief box 3 (2024)
+        box3Vrijstelling: 57000         // Heffingsvrije voet box 3 (2024, alleenstaanden)
     },
     
-    // Tax Configuration - EXPANDED
+    // Tax Configuration - COMPREHENSIVE DUTCH TAX SYSTEM
     tax: {
-        VPB_RATE: 0.258,        // 25.8% Dutch corporate tax
-        PRIVE_RATE: 0.31,       // 31% average income tax box 1
-        BOX3_RATE: 0.31         // 31% box 3 wealth tax rate
+        // VPB - Vennootschapsbelasting (Corporate Tax)
+        VPB_RATE: 0.258,               // 25.8% (2024)
+        VPB_LOW_RATE: 0.19,            // 19% tot €200.000 (2024)
+        VPB_LOW_THRESHOLD: 200000,     // Grens lage tarief
+        
+        // Box 1 - Inkomstenbelasting tarieven (2024)
+        BOX1_BRACKETS: [
+            { min: 0, max: 37149, rate: 0.3693 },
+            { min: 37149, max: 73031, rate: 0.3693 },
+            { min: 73031, max: Infinity, rate: 0.495 }
+        ],
+        
+        // Box 3 - Vermogensbelasting (2024)
+        BOX3_RENDEMENT_BRACKETS: [
+            { min: 0, max: 57000, rate: 0 },           // Heffingsvrije voet
+            { min: 57000, max: 114000, rate: 0.0604 }, // 6.04%
+            { min: 114000, max: Infinity, rate: 0.0651 } // 6.51%
+        ],
+        BOX3_BELASTING_TARIEF: 0.31,   // 31% over fictief rendement
+        
+        // Default tarieven voor snelle berekening
+        DEFAULT_BOX1_RATE: 0.3707,     // Gemiddeld tarief
+        DEFAULT_BOX3_RATE: 0.31,
+        DEFAULT_BOX3_RENDEMENT: 0.0604
     },
     
     // Chart Configuration
@@ -73,7 +101,11 @@ const Config = {
         herinvestering: { min: 0, max: 100, step: 5 },
         vasteKosten: { min: 0, max: null, step: 100 },
         herinvesteringDrempel: { min: 0, max: null, step: 100 },
-        inflatie: { min: 0, max: 10, step: 0.1 }
+        inflatie: { min: 0, max: 10, step: 0.1 },
+        box1Tarief: { min: 0, max: 60, step: 0.1 },
+        box3Rendement: { min: 0, max: 20, step: 0.1 },
+        box3Tarief: { min: 0, max: 50, step: 0.1 },
+        box3Vrijstelling: { min: 0, max: null, step: 1000 }
     },
     
     // Locale Configuration
@@ -114,7 +146,8 @@ const Config = {
         enableCloudSync: false,
         enableAdvancedCharts: true,
         enableExportOptions: true,
-        enableDarkMode: true
+        enableDarkMode: true,
+        enableAdvancedTax: true
     },
     
     // Performance Settings
@@ -123,6 +156,25 @@ const Config = {
         throttleDelay: 100,
         maxChartDataPoints: 1000,
         enableWebWorkers: false
+    },
+    
+    // Tax Information for UI
+    taxInfo: {
+        vpb: {
+            name: 'Vennootschapsbelasting',
+            description: 'Voor holdings en BV\'s - 25.8% over winst',
+            features: ['Rente aftrekbaar', 'Winst na aftrek kosten', 'Geen belasting over herinvestering']
+        },
+        box1: {
+            name: 'Box 1 - Inkomstenbelasting',
+            description: 'Voor particulieren - progressief tarief over winst',
+            features: ['Beperkt aftrekbare rente', 'Progressieve tarieven', 'Winst is direct belastbaar']
+        },
+        box3: {
+            name: 'Box 3 - Vermogensbelasting',
+            description: 'Forfaitair rendement - 31% over fictief rendement',
+            features: ['Onafhankelijk van daadwerkelijk rendement', 'Gebaseerd op vermogen 1 januari', 'Heffingsvrije voet €57.000']
+        }
     }
 };
 
@@ -139,3 +191,4 @@ Object.freeze(Config.storage);
 Object.freeze(Config.api);
 Object.freeze(Config.features);
 Object.freeze(Config.performance);
+Object.freeze(Config.taxInfo);
