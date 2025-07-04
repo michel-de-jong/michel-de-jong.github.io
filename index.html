@@ -176,6 +176,42 @@
                     </div>
                 </div>
                 
+                <!-- Belasting Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">🏛️ Belastingen</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="belastingType">Type Belasting</label>
+                            <div class="input-wrapper">
+                                <select id="belastingType" aria-describedby="belastingType-tooltip">
+                                    <option value="zakelijk">Zakelijk (VPB)</option>
+                                    <option value="prive">Privé (Box 3)</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="belastingType-tooltip">Kies tussen vennootschapsbelasting (holding) of box 3 (privé vermogen)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="vpbGroup">
+                            <label for="vpbTarief">VPB Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="vpbTarief" value="25.8" min="0" max="50" step="0.1" aria-describedby="vpbTarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="vpbTarief-tooltip">Vennootschapsbelasting over niet-herinvesteerde winst (2024: 25,8%)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3Group" style="display: none;">
+                            <label for="box3Tarief">Box 3 Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Tarief" value="36" min="0" max="50" step="0.1" aria-describedby="box3Tarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Tarief-tooltip">Box 3 belasting over fictief rendement (2024: 36% over 6,04% fictief rendement)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="inflatie-toggle">
                     <label class="toggle-switch">
                         <input type="checkbox" id="inflatieToggle" aria-label="Toon reële waardes">
