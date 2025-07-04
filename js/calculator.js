@@ -126,6 +126,7 @@ class ROICalculator {
                     rente: maandRente,
                     aflossing: principalPayment,
                     kosten: maandKosten,
+                    belasting: 0, // Will be set below if applicable
                     netto: nettoResultaat,
                     portfolio: portfolioWaarde,
                     cashReserve: cashReserve,
@@ -167,6 +168,11 @@ class ROICalculator {
                             belasting = fictievRendementBedrag * box3Rate;
                         }
                         totaalBelastingBetaald += belasting;
+                        
+                        // Update monthly data with tax
+                        if (month > 0 && this.data.monthlyData[month - 1]) {
+                            this.data.monthlyData[month - 1].belasting = belasting;
+                        }
                     }
                     
                     // Check reinvestment threshold
@@ -304,8 +310,9 @@ class ROICalculator {
                 acc.rente += month.rente;
                 acc.aflossing += month.aflossing;
                 acc.kosten += month.kosten;
+                acc.belasting += month.belasting || 0;
                 return acc;
-            }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0 });
+            }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0, belasting: 0 });
             
             const finalValue = this.data.totaalVermogen[this.data.totaalVermogen.length - 1];
             
@@ -317,6 +324,7 @@ class ROICalculator {
                     { label: 'Rente Kosten', value: -totals.rente, type: 'negative' },
                     { label: 'Aflossingen', value: -totals.aflossing, type: 'negative' },
                     { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' },
+                    { label: 'Belasting', value: -totals.belasting, type: 'negative' },
                     { label: 'Eindwaarde', value: finalValue, type: 'total' }
                 ],
                 totals
@@ -337,8 +345,9 @@ class ROICalculator {
                 acc.rente += month.rente;
                 acc.aflossing += month.aflossing;
                 acc.kosten += month.kosten;
+                acc.belasting += month.belasting || 0;
                 return acc;
-            }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0 });
+            }, { opbrengst: 0, rente: 0, aflossing: 0, kosten: 0, belasting: 0 });
             
             const startValue = year > 0 && this.data.totaalVermogen[year - 1] !== undefined
                 ? this.data.totaalVermogen[year - 1]
@@ -353,6 +362,7 @@ class ROICalculator {
                     { label: 'Rente Kosten', value: -yearTotals.rente, type: 'negative' },
                     { label: 'Aflossingen', value: -yearTotals.aflossing, type: 'negative' },
                     { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' },
+                    { label: 'Belasting', value: -yearTotals.belasting, type: 'negative' },
                     { label: 'Eind Saldo', value: endValue, type: 'total' }
                 ],
                 totals: yearTotals
