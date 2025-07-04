@@ -1,4 +1,4 @@
-// Tab Content Templates and Management
+// Tab Content Templates and Management - IMPROVED FOR MOBILE
 
 const TabTemplates = {
     scenarios: `
@@ -148,26 +148,33 @@ const TabTemplates = {
             <div class="cashflow-period-selector">
                 <label for="waterfallPeriod">Selecteer Periode:</label>
                 <select id="waterfallPeriod">
-                    <!-- Options will be populated dynamically based on looptijd -->
+                    <option value="jaar1">Jaar 1</option>
+                    <option value="jaar5">Jaar 5</option>
+                    <option value="jaar10">Jaar 10</option>
+                    <option value="totaal">Totaal Overzicht</option>
                 </select>
             </div>
             
             <div class="kpi-grid mt-3">
                 <div class="kpi-card green">
-                    <div class="kpi-label">Totale Inkomsten</div>
+                    <div class="kpi-label">Netto Inkomsten</div>
                     <div class="kpi-value" id="wfInkomsten">€ 0</div>
+                    <div class="kpi-subtitle">Na belasting</div>
                 </div>
                 <div class="kpi-card orange">
                     <div class="kpi-label">Totale Uitgaven</div>
                     <div class="kpi-value" id="wfUitgaven">€ 0</div>
+                    <div class="kpi-subtitle">Rente + Aflossing + Kosten</div>
                 </div>
                 <div class="kpi-card blue">
                     <div class="kpi-label">Netto Cashflow</div>
                     <div class="kpi-value" id="wfNetto">€ 0</div>
+                    <div class="kpi-subtitle">Eindresultaat</div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-label">Cash Conversie</div>
                     <div class="kpi-value" id="wfConversie">0%</div>
+                    <div class="kpi-subtitle">% van bruto inkomsten</div>
                 </div>
             </div>
             
@@ -175,27 +182,24 @@ const TabTemplates = {
                 <canvas id="waterfallChart"></canvas>
             </div>
             
-            <table class="cashflow-table mt-4">
-                <thead>
-                    <tr>
-                        <th>Component</th>
-                        <th>Bedrag</th>
-                        <th>Aandeel</th>
-                        <th>Cumulatief</th>
-                    </tr>
-                </thead>
-                <tbody id="waterfallTableBody">
-                    <!-- Dynamically populated -->
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table class="cashflow-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Bedrag</th>
+                            <th>% van Eindresultaat</th>
+                            <th>Cumulatief</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waterfallTableBody">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
             
-            <div class="cashflow-explanation mt-3">
-                <small>
-                    <strong>Toelichting:</strong><br>
-                    • <strong>Aandeel kolom:</strong> Voor inkomsten: percentage van totale inkomsten. Voor uitgaven: percentage van totale uitgaven.<br>
-                    • <strong>Cumulatief:</strong> Het lopende totaal na elke stap in de waterfall.<br>
-                    • <strong>Cash Conversie:</strong> Percentage van inkomsten dat als netto cashflow overblijft.
-                </small>
+            <div class="mobile-table-hint mt-2" style="font-size: 12px; color: #6c757d;">
+                💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
             </div>
         </section>
     `,
@@ -215,8 +219,10 @@ const TabTemplates = {
                 </div>
             </div>
             
-            <button class="btn btn-primary" id="addAssetBtn">+ Asset Toevoegen</button>
-            <button class="btn btn-success" id="calculatePortfolioBtn">Portfolio Berekenen</button>
+            <div class="portfolio-controls mt-3">
+                <button class="btn btn-primary" id="addAssetBtn">+ Asset Toevoegen</button>
+                <button class="btn btn-success" id="calculatePortfolioBtn">Portfolio Berekenen</button>
+            </div>
             
             <div class="kpi-grid mt-4">
                 <div class="kpi-card">
@@ -244,10 +250,20 @@ const TabTemplates = {
             <h2>Opgeslagen Scenario's</h2>
             <p>Beheer en vergelijk uw opgeslagen scenario's</p>
             
-            <button class="btn btn-primary" id="saveScenarioBtn">Huidig Scenario Opslaan</button>
+            <button class="btn btn-primary" id="saveScenarioBtn">📋 Huidig Scenario Opslaan</button>
             
             <div id="savedScenariosList" class="mt-4">
                 <!-- Saved scenarios will be listed here -->
+            </div>
+            
+            <div class="saved-scenarios-help mt-4" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px;">
+                <h4 style="margin-bottom: 10px;">💡 Tips voor Scenario Beheer:</h4>
+                <ul style="margin-left: 20px; line-height: 1.6;">
+                    <li>Sla interessante combinaties van parameters op voor later vergelijken</li>
+                    <li>Gebruik verschillende scenario's voor presentaties aan stakeholders</li>
+                    <li>Maximum van 50 scenario's worden bewaard</li>
+                    <li>Data wordt lokaal in uw browser opgeslagen</li>
+                </ul>
             </div>
         </section>
     `,
@@ -261,29 +277,62 @@ const TabTemplates = {
                 <div class="export-card">
                     <div class="export-icon">📊</div>
                     <h3>Excel Export</h3>
-                    <p>Download complete analyse als Excel bestand</p>
-                    <button class="btn btn-success" id="exportExcelBtn">Excel Downloaden</button>
+                    <p>Download complete analyse als Excel bestand met alle data en berekeningen</p>
+                    <button class="btn btn-success" id="exportExcelBtn">📥 Excel Downloaden</button>
                 </div>
                 
                 <div class="export-card">
                     <div class="export-icon">📄</div>
                     <h3>PDF Rapport</h3>
-                    <p>Genereer professioneel PDF rapport</p>
-                    <button class="btn btn-danger" id="exportPDFBtn">PDF Genereren</button>
+                    <p>Genereer professioneel PDF rapport met samenvatting en grafieken</p>
+                    <button class="btn btn-danger" id="exportPDFBtn">📄 PDF Genereren</button>
                 </div>
                 
                 <div class="export-card">
                     <div class="export-icon">🖼️</div>
                     <h3>Grafiek Export</h3>
-                    <p>Download grafieken als PNG afbeeldingen</p>
-                    <button class="btn btn-primary" id="exportChartsBtn">Grafieken Downloaden</button>
+                    <p>Download alle grafieken als PNG afbeeldingen voor presentaties</p>
+                    <button class="btn btn-primary" id="exportChartsBtn">🖼️ Grafieken Downloaden</button>
+                </div>
+            </div>
+            
+            <div class="export-info mt-4" style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                <h4 style="color: #1976d2; margin-bottom: 15px;">📋 Export Informatie</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 14px;">
+                    <div>
+                        <strong>Excel Bestand bevat:</strong>
+                        <ul style="margin-left: 15px; margin-top: 5px;">
+                            <li>Alle invoerparameters</li>
+                            <li>Jaarlijkse vermogensontwikkeling</li>
+                            <li>Maandelijkse cashflow data</li>
+                            <li>Scenario vergelijkingen</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>PDF Rapport bevat:</strong>
+                        <ul style="margin-left: 15px; margin-top: 5px;">
+                            <li>Executive summary</li>
+                            <li>Key performance indicators</li>
+                            <li>Grafieken en visualisaties</li>
+                            <li>Professionele opmaak</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <strong>Afbeelding Export:</strong>
+                        <ul style="margin-left: 15px; margin-top: 5px;">
+                            <li>Hoge resolutie PNG bestanden</li>
+                            <li>Alle actieve grafieken</li>
+                            <li>Klaar voor presentaties</li>
+                            <li>Transparante achtergrond</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </section>
     `
 };
 
-// Add CSS for tab-specific styles
+// Add CSS for tab-specific styles - ENHANCED WITH MOBILE IMPROVEMENTS
 const TabStyles = `
     /* Scenario Cards */
     .scenario-grid {
@@ -333,6 +382,12 @@ const TabStyles = `
         border-radius: 10px;
         border: 1px solid #e9ecef;
         text-align: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .result-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     
     .result-card h4 {
@@ -347,154 +402,351 @@ const TabStyles = `
         color: var(--primary-color);
     }
     
-    /* Waterfall Specific */
+    /* Waterfall Specific - MOBILE OPTIMIZED */
     .cashflow-period-selector {
         margin-bottom: 20px;
     }
     
-    .cashflow-period-selector label {
-        display: inline-block;
-        margin-right: 10px;
-        font-weight: 600;
-    }
-    
-    .cashflow-period-selector select {
-        min-width: 200px;
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-top: 30px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
     }
     
     .cashflow-table {
         width: 100%;
-        margin-top: 30px;
+        min-width: 600px;
+        margin: 0;
         border-collapse: collapse;
-        background: white;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 15px 12px;
-        text-align: left;
+        padding: 12px;
+        text-align: right;
         border-bottom: 1px solid #dee2e6;
+        white-space: nowrap;
+    }
+    
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+        text-align: left;
+        position: sticky;
+        left: 0;
+        background: white;
+        min-width: 140px;
+        z-index: 1;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
     }
     
     .cashflow-table th {
         background: #f8f9fa;
         font-weight: 600;
         color: #495057;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
     }
     
-    .cashflow-table th:nth-child(2),
-    .cashflow-table th:nth-child(4),
-    .cashflow-table td:nth-child(2),
-    .cashflow-table td:nth-child(4) {
-        text-align: right;
-    }
-    
-    .cashflow-table th:nth-child(3),
-    .cashflow-table td:nth-child(3) {
-        text-align: center;
+    .cashflow-table th:first-child {
+        z-index: 3;
+        background: #f8f9fa;
     }
     
     .cashflow-table tr:hover {
         background: #f8f9fa;
     }
     
-    .cashflow-table tr:last-child td {
-        border-bottom: none;
+    .mobile-table-hint {
+        text-align: center;
+        font-style: italic;
     }
     
-    .cashflow-explanation {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    .cashflow-explanation small {
-        line-height: 1.6;
-        color: #6c757d;
-    }
-    
-    /* Portfolio Builder */
+    /* Portfolio Builder - IMPROVED */
     .asset-row {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr auto;
         gap: 10px;
         align-items: center;
         margin-bottom: 10px;
-        padding: 10px;
+        padding: 15px;
         background: #f8f9fa;
-        border-radius: 5px;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .asset-row:hover {
+        background: #e9ecef;
+        transform: translateY(-1px);
     }
     
     .asset-row input {
-        padding: 8px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+    
+    .asset-row input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
     }
     
     .btn-remove {
         background: #dc3545;
         color: white;
         border: none;
-        padding: 5px 10px;
-        border-radius: 3px;
+        padding: 8px 12px;
+        border-radius: 5px;
         cursor: pointer;
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1;
+        transition: background-color 0.2s;
+        min-width: 40px;
     }
     
     .btn-remove:hover {
         background: #c82333;
     }
     
-    /* Export Grid */
+    .portfolio-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    /* Export Grid - ENHANCED */
     .export-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
         margin-top: 30px;
     }
     
     .export-card {
-        background: #f8f9fa;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         padding: 30px;
-        border-radius: 10px;
+        border-radius: 12px;
         text-align: center;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .export-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--danger-color));
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
     
     .export-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        background: white;
+    }
+    
+    .export-card:hover::before {
+        opacity: 1;
     }
     
     .export-icon {
         font-size: 48px;
         margin-bottom: 15px;
+        display: block;
     }
     
-    /* Saved Scenarios */
-    .saved-scenario {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
+    .export-card h3 {
+        color: var(--primary-color);
         margin-bottom: 10px;
+    }
+    
+    .export-card p {
+        color: #6c757d;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    
+    .export-info {
+        border-left: 4px solid #1976d2;
+    }
+    
+    /* Saved Scenarios - IMPROVED */
+    .saved-scenario {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .saved-scenario:hover {
+        background: #e3f2fd;
+        border-color: var(--primary-color);
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .scenario-info {
         flex: 1;
     }
     
+    .scenario-info strong {
+        color: var(--primary-color);
+        font-size: 16px;
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .scenario-info span {
+        font-size: 14px;
+        color: #6c757d;
+        margin-right: 15px;
+    }
+    
     .scenario-actions {
         display: flex;
         gap: 10px;
+    }
+    
+    .saved-scenarios-help ul {
+        color: #495057;
+    }
+    
+    .saved-scenarios-help li {
+        margin-bottom: 5px;
+    }
+    
+    /* Stress Test Results */
+    .stress-test-result {
+        background: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .stress-test-result:hover {
+        background: #e9ecef;
+        transform: translateX(3px);
+    }
+    
+    .stress-test-result strong {
+        color: var(--primary-color);
+    }
+    
+    /* Loading Animation */
+    .loading {
+        text-align: center;
+        padding: 40px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    
+    .loading p {
+        margin-top: 15px;
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    /* Mobile Specific Improvements */
+    @media (max-width: 768px) {
+        .scenario-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .scenario-card {
+            padding: 15px;
+        }
+        
+        .monte-carlo-controls {
+            padding: 15px;
+        }
+        
+        .simulation-results {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .result-card {
+            padding: 15px;
+        }
+        
+        .result-value {
+            font-size: 18px;
+        }
+        
+        .export-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .export-card {
+            padding: 20px;
+        }
+        
+        .export-icon {
+            font-size: 36px;
+        }
+        
+        .asset-row {
+            grid-template-columns: 1fr;
+            gap: 8px;
+            padding: 12px;
+        }
+        
+        .portfolio-controls {
+            flex-direction: column;
+        }
+        
+        .portfolio-controls .btn {
+            width: 100%;
+        }
+        
+        .saved-scenario {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        .scenario-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .scenario-actions .btn {
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .mobile-table-hint {
+            display: block;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-table-hint {
+            display: none;
+        }
     }
 `;
 
