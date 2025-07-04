@@ -44,7 +44,7 @@
                         <div class="form-group">
                             <label for="startKapitaal">Startkapitaal (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="startKapitaal" value="10000" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
+                                <input type="number" id="startKapitaal" value="100000" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="startKapitaal-tooltip">Het eigen vermogen dat u inbrengt bij aanvang van de investering</span>
                             </div>
@@ -59,7 +59,7 @@
                         <div class="form-group">
                             <label for="lening">Lening (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="lening" value="10000" min="0" step="1000" aria-describedby="lening-tooltip">
+                                <input type="number" id="lening" value="200000" min="0" step="1000" aria-describedby="lening-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="lening-tooltip">Het geleende bedrag voor leverage. Let op: verhoogt risico maar ook potentieel rendement</span>
                             </div>
@@ -68,7 +68,7 @@
                         <div class="form-group">
                             <label for="renteLening">Rente Lening (%)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="renteLening" value="5" min="0" max="50" step="0.1" aria-describedby="renteLening-tooltip">
+                                <input type="number" id="renteLening" value="4.5" min="0" max="50" step="0.1" aria-describedby="renteLening-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="renteLening-tooltip">Jaarlijkse rente op de lening. Rentekosten zijn aftrekbaar voor VPB</span>
                             </div>
@@ -77,7 +77,7 @@
                         <div class="form-group">
                             <label for="leningLooptijd">Looptijd Lening (jaren)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="leningLooptijd" value="5" min="0" max="50" step="1" aria-describedby="leningLooptijd-tooltip">
+                                <input type="number" id="leningLooptijd" value="10" min="0" max="50" step="1" aria-describedby="leningLooptijd-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="leningLooptijd-tooltip">Aflostermijn van de lening (kan afwijken van investeringsperiode)</span>
                             </div>
@@ -126,7 +126,7 @@
                         <div class="form-group">
                             <label for="rendement">Verwacht Rendement (%)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="rendement" value="5" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
+                                <input type="number" id="rendement" value="0.8" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="rendement-tooltip">Verwacht rendement op totale investering (eigen vermogen + lening)</span>
                             </div>
@@ -135,7 +135,7 @@
                         <div class="form-group">
                             <label for="herinvestering">Herinvestering (% van winst)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="herinvestering" value="100" min="0" max="100" step="1" aria-describedby="herinvestering-tooltip">
+                                <input type="number" id="herinvestering" value="80" min="0" max="100" step="1" aria-describedby="herinvestering-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="herinvestering-tooltip">Percentage van winst dat wordt geherinvesteerd. Rest gaat naar cash reserve</span>
                             </div>
@@ -144,7 +144,7 @@
                         <div class="form-group">
                             <label for="herinvesteringDrempel">Herinvestering Drempel (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="herinvesteringDrempel" value="0" min="0" step="50" aria-describedby="herinvesteringDrempel-tooltip">
+                                <input type="number" id="herinvesteringDrempel" value="1000" min="0" step="50" aria-describedby="herinvesteringDrempel-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="herinvesteringDrempel-tooltip">Minimaal bedrag voor herinvestering. Kleinere bedragen blijven in cash</span>
                             </div>
@@ -152,61 +152,29 @@
                     </div>
                 </div>
                 
-                <!-- Belasting Sectie -->
+                <!-- Kosten & Belasting Sectie -->
                 <div class="input-section">
-                    <h3 class="section-title">💼 Belasting</h3>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="belastingType">Belasting Type</label>
-                            <div class="input-wrapper">
-                                <select id="belastingType" aria-describedby="belastingType-tooltip">
-                                    <option value="zakelijk">Zakelijk (VPB 25.8%)</option>
-                                    <option value="prive">Privé (Box 3)</option>
-                                </select>
-                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                                <span class="tooltip" id="belastingType-tooltip">Kies tussen zakelijke VPB of privé Box 3 belasting</span>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group box3-setting" style="display: none;">
-                            <label for="box3Vrijstelling">Box 3 Vrijstelling (€)</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="box3Vrijstelling" value="57000" min="0" step="1000" aria-describedby="box3Vrijstelling-tooltip">
-                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                                <span class="tooltip" id="box3Vrijstelling-tooltip">Belastingvrije voet voor Box 3 (2024: €57.000)</span>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group box3-setting" style="display: none;">
-                            <label for="box3ForfaitairRendement">Forfaitair Rendement (%)</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="box3ForfaitairRendement" value="5.53" min="0" max="10" step="0.01" aria-describedby="box3ForfaitairRendement-tooltip">
-                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                                <span class="tooltip" id="box3ForfaitairRendement-tooltip">Forfaitair rendement Box 3 (2024: 5.53%)</span>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group box3-setting" style="display: none;">
-                            <label for="box3Tarief">Box 3 Tarief (%)</label>
-                            <div class="input-wrapper">
-                                <input type="number" id="box3Tarief" value="31" min="0" max="50" step="0.1" aria-describedby="box3Tarief-tooltip">
-                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
-                                <span class="tooltip" id="box3Tarief-tooltip">Belastingtarief Box 3 (2024: 31%)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Kosten & Inflatie Sectie -->
-                <div class="input-section">
-                    <h3 class="section-title">💸 Kosten & Inflatie</h3>
+                    <h3 class="section-title">💸 Kosten & Belasting</h3>
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="vasteKosten">Vaste Kosten per Jaar (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="vasteKosten" value="0" min="0" step="100" aria-describedby="vasteKosten-tooltip">
+                                <input type="number" id="vasteKosten" value="5000" min="0" step="100" aria-describedby="vasteKosten-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="vasteKosten-tooltip">Jaarlijkse vaste kosten zoals beheer, administratie, accountant</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="belastingType">Belasting Type</label>
+                            <div class="input-wrapper">
+                                <select id="belastingType" aria-describedby="belastingType-tooltip">
+                                    <option value="vpb">Vennootschapsbelasting (25.8%)</option>
+                                    <option value="prive">Privé / Box 1 (31%)</option>
+                                    <option value="box3">Box 3 Vermogen (31%)</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="belastingType-tooltip">Kies het juiste belastingregime voor uw situatie</span>
                             </div>
                         </div>
                         
@@ -252,11 +220,6 @@
                     <div class="kpi-card yellow">
                         <div class="kpi-label">Koopkrachtverlies</div>
                         <div class="kpi-value" id="kpiKoopkracht">€ 0</div>
-                    </div>
-                    <div class="kpi-card purple" id="kpiBelasting">
-                        <div class="kpi-label">Totale Belasting</div>
-                        <div class="kpi-value" id="kpiBelastingBedrag">€ 0</div>
-                        <div class="kpi-subtitle" id="kpiBelastingType">VPB</div>
                     </div>
                 </div>
                 
