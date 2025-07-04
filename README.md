@@ -1,6 +1,6 @@
 # ROI Calculator Suite - Setup Instructions
 
-Een professionele ROI rekentool voor Nederlandse holdings met geavanceerde investeringsanalyse functies.
+Een professionele ROI rekentool met geavanceerde investeringsanalyse functies.
 
 ## Kenmerken
 
