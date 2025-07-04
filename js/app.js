@@ -16,6 +16,9 @@ class ROICalculatorApp {
             // Wait for libraries to load
             await this.waitForLibraries();
             
+            // Load default values first
+            this.loadDefaultValues();
+            
             // Load additional tabs
             this.loadAdditionalTabs();
             
@@ -43,32 +46,28 @@ class ROICalculatorApp {
         }
     }
     
+    // Load default values from config
+    loadDefaultValues() {
+        Object.entries(Config.defaults).forEach(([key, value]) => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = value;
+                } else {
+                    element.value = value;
+                }
+            }
+        });
+    }
+    
     // Wait for external libraries to load
     waitForLibraries() {
-        return new Promise((resolve, reject) => {
-            let attempts = 0;
-            const maxAttempts = 50; // 5 seconds timeout
-            
+        return new Promise((resolve) => {
             const checkLibraries = () => {
-                attempts++;
-                
-                const librariesLoaded = 
-                    typeof Chart !== 'undefined' && 
+                if (typeof Chart !== 'undefined' && 
                     typeof XLSX !== 'undefined' && 
-                    typeof window.jspdf !== 'undefined';
-                
-                if (librariesLoaded) {
-                    console.log('All libraries loaded successfully');
+                    typeof window.jspdf !== 'undefined') {
                     resolve();
-                } else if (attempts >= maxAttempts) {
-                    const missing = [];
-                    if (typeof Chart === 'undefined') missing.push('Chart.js');
-                    if (typeof XLSX === 'undefined') missing.push('XLSX');
-                    if (typeof window.jspdf === 'undefined') missing.push('jsPDF');
-                    
-                    const error = `Failed to load libraries: ${missing.join(', ')}. Please check your internet connection.`;
-                    console.error(error);
-                    reject(new Error(error));
                 } else {
                     setTimeout(checkLibraries, 100);
                 }
@@ -98,8 +97,14 @@ class ROICalculatorApp {
         // Calculator inputs
         const calculatorInputs = document.querySelectorAll('#calculator input, #calculator select');
         calculatorInputs.forEach(input => {
-            input.addEventListener('change', () => this.calculate());
-            input.addEventListener('input', Utils.debounce(() => this.calculate(), Config.performance.debounceDelay));
+            input.addEventListener('change', () => {
+                this.calculate();
+                this.updateWaterfallYearOptions(); // Update waterfall years when looptijd changes
+            });
+            input.addEventListener('input', Utils.debounce(() => {
+                this.calculate();
+                this.updateWaterfallYearOptions();
+            }, Config.performance.debounceDelay));
         });
         
         // Inflation toggle
@@ -129,37 +134,23 @@ class ROICalculatorApp {
     
     // Setup scenario specific listeners
     setupScenarioListeners() {
-        // Use a more reliable approach than setTimeout
-        const checkAndSetup = () => {
-            // Scenario inputs
-            const scenarioInputs = document.querySelectorAll('[id*="Case"]');
-            if (scenarioInputs.length > 0) {
-                scenarioInputs.forEach(input => {
-                    if (!input.hasAttribute('data-listener-added')) {
-                        input.addEventListener('change', () => this.calculateScenarios());
-                        input.addEventListener('input', Utils.debounce(() => this.calculateScenarios(), Config.performance.debounceDelay));
-                        input.setAttribute('data-listener-added', 'true');
-                    }
+        // Scenario inputs
+        const scenarioInputs = document.querySelectorAll('[id*="Case"]');
+        scenarioInputs.forEach(input => {
+            input.addEventListener('change', () => this.calculateScenarios());
+            input.addEventListener('input', Utils.debounce(() => this.calculateScenarios(), Config.performance.debounceDelay));
+        });
+        
+        // Monte Carlo inputs
+        const mcInputs = document.querySelectorAll('[id^="mc"]');
+        mcInputs.forEach(input => {
+            if (input.id !== 'mcResults' && input.id !== 'mcLoading' && 
+                input.id !== 'mcChartContainer' && input.id !== 'mcDistContainer') {
+                input.addEventListener('change', () => {
+                    input.setAttribute('data-user-modified', 'true');
                 });
             }
-            
-            // Monte Carlo inputs
-            const mcInputs = document.querySelectorAll('[id^="mc"]');
-            mcInputs.forEach(input => {
-                if (input.id !== 'mcResults' && input.id !== 'mcLoading' && 
-                    input.id !== 'mcChartContainer' && input.id !== 'mcDistContainer' &&
-                    !input.hasAttribute('data-listener-added')) {
-                    input.addEventListener('change', () => {
-                        input.setAttribute('data-user-modified', 'true');
-                    });
-                    input.setAttribute('data-listener-added', 'true');
-                }
-            });
-        };
-        
-        // Try immediately and also with a delay as fallback
-        checkAndSetup();
-        setTimeout(checkAndSetup, 200);
+        });
     }
     
     // Handle button clicks
@@ -254,6 +245,7 @@ class ROICalculatorApp {
                             waterfallPeriod.setAttribute('data-listener-added', 'true');
                         }
                     }
+                    this.updateWaterfallYearOptions();
                     this.updateWaterfall();
                     break;
                 case 'portfolio':
@@ -266,6 +258,39 @@ class ROICalculatorApp {
                     break;
             }
         }, 50);
+    }
+    
+    // Update waterfall year options based on current looptijd
+    updateWaterfallYearOptions() {
+        const waterfallPeriod = document.getElementById('waterfallPeriod');
+        if (!waterfallPeriod) return;
+        
+        const looptijd = parseInt(document.getElementById('looptijd').value) || 10;
+        const currentValue = waterfallPeriod.value;
+        
+        // Clear existing options
+        waterfallPeriod.innerHTML = '';
+        
+        // Add individual year options
+        for (let jaar = 1; jaar <= looptijd; jaar++) {
+            const option = document.createElement('option');
+            option.value = `jaar${jaar}`;
+            option.textContent = `Jaar ${jaar}`;
+            waterfallPeriod.appendChild(option);
+        }
+        
+        // Add total overview option
+        const totalOption = document.createElement('option');
+        totalOption.value = 'totaal';
+        totalOption.textContent = 'Totaal Overzicht';
+        waterfallPeriod.appendChild(totalOption);
+        
+        // Restore previous selection if still valid, otherwise default to first year
+        if (Array.from(waterfallPeriod.options).some(option => option.value === currentValue)) {
+            waterfallPeriod.value = currentValue;
+        } else {
+            waterfallPeriod.value = 'jaar1';
+        }
     }
     
     // Sync inputs from calculator to other tabs
@@ -306,26 +331,11 @@ class ROICalculatorApp {
     // Main calculation
     calculate() {
         try {
-            // Check if calculator is available
-            if (!window.calculator) {
-                console.error('Calculator not initialized');
-                return;
-            }
-            
             calculator.calculate();
             this.updateKPIs();
             this.updateCharts();
-            
-            // Save state for recovery if needed
-            if (Config.features.enableAutoSave) {
-                Utils.storage.set('lastCalculation', {
-                    inputs: calculator.inputs,
-                    timestamp: new Date().toISOString()
-                });
-            }
         } catch (error) {
             console.error('Calculation error:', error);
-            this.showError('Er is een fout opgetreden bij de berekening. Controleer uw invoer.');
         }
     }
     
@@ -334,32 +344,25 @@ class ROICalculatorApp {
         const results = calculator.results;
         const showReal = calculator.inputs.showRealValues;
         
-        // Helper function to safely update element text
-        const updateElement = (id, text) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.textContent = text;
-            } else {
-                console.warn(`Element with id '${id}' not found`);
-            }
-        };
-        
         // Update nominal values
-        updateElement('kpiTotaalVermogen', Utils.formatNumber(results.finalVermogen));
-        updateElement('kpiROI', results.finalROI.toFixed(1) + '%');
-        updateElement('kpiLeverage', results.leverageFactor.toFixed(1) + 'x');
-        updateElement('kpiCashReserve', Utils.formatNumber(results.finalCashReserve));
-        updateElement('kpiKoopkracht', Utils.formatNumber(results.koopkrachtVerlies));
+        document.getElementById('kpiTotaalVermogen').textContent = Utils.formatNumber(results.finalVermogen);
+        document.getElementById('kpiROI').textContent = results.finalROI.toFixed(1) + '%';
+        document.getElementById('kpiLeverage').textContent = results.leverageFactor.toFixed(1) + 'x';
+        document.getElementById('kpiCashReserve').textContent = Utils.formatNumber(results.finalCashReserve);
+        document.getElementById('kpiKoopkracht').textContent = Utils.formatNumber(results.koopkrachtVerlies);
         
         // Update real values (subtitles)
         if (showReal) {
-            updateElement('kpiTotaalVermogenReeel', `Reëel: ${Utils.formatNumber(results.finalVermogenReeel)}`);
-            updateElement('kpiROIReeel', `Reëel: ${results.finalROIReeel.toFixed(1)}%`);
-            updateElement('kpiCashReserveReeel', `Reëel: ${Utils.formatNumber(results.finalCashReserveReeel)}`);
+            document.getElementById('kpiTotaalVermogenReeel').textContent = 
+                `Reëel: ${Utils.formatNumber(results.finalVermogenReeel)}`;
+            document.getElementById('kpiROIReeel').textContent = 
+                `Reëel: ${results.finalROIReeel.toFixed(1)}%`;
+            document.getElementById('kpiCashReserveReeel').textContent = 
+                `Reëel: ${Utils.formatNumber(results.finalCashReserveReeel)}`;
         } else {
-            updateElement('kpiTotaalVermogenReeel', '');
-            updateElement('kpiROIReeel', '');
-            updateElement('kpiCashReserveReeel', '');
+            document.getElementById('kpiTotaalVermogenReeel').textContent = '';
+            document.getElementById('kpiROIReeel').textContent = '';
+            document.getElementById('kpiCashReserveReeel').textContent = '';
         }
     }
     
@@ -375,17 +378,8 @@ class ROICalculatorApp {
         const results = [];
         
         scenarios.forEach(scenario => {
-            const rendementElement = document.getElementById(`${scenario}CaseRendement`);
-            const kostenElement = document.getElementById(`${scenario}CaseKosten`);
-            const roiElement = document.getElementById(`${scenario}CaseROI`);
-            
-            if (!rendementElement || !kostenElement || !roiElement) {
-                console.warn(`Missing elements for ${scenario} scenario`);
-                return;
-            }
-            
-            const rendement = parseFloat(rendementElement.value) || 0;
-            const kosten = parseFloat(kostenElement.value) || 0;
+            const rendement = parseFloat(document.getElementById(`${scenario}CaseRendement`).value) || 0;
+            const kosten = parseFloat(document.getElementById(`${scenario}CaseKosten`).value) || 0;
             
             const roi = calculator.calculateScenario({
                 rendement: rendement,
@@ -393,11 +387,11 @@ class ROICalculatorApp {
             });
             
             results.push(roi);
-            roiElement.textContent = `ROI: ${roi.toFixed(1)}%`;
+            document.getElementById(`${scenario}CaseROI`).textContent = `ROI: ${roi.toFixed(1)}%`;
         });
         
-        // Update scenario chart only if we have valid results
-        if (chartManager.charts.scenario && results.length === 3) {
+        // Update scenario chart
+        if (chartManager.charts.scenario) {
             chartManager.charts.scenario.data.datasets[0].data = results;
             chartManager.charts.scenario.update();
         }
@@ -480,13 +474,25 @@ class ROICalculatorApp {
         this.updateWaterfallTable(waterfallData);
     }
     
-    // Update waterfall table
+    // Update waterfall table with improved percentage calculation
     updateWaterfallTable(waterfallData) {
         const tbody = document.getElementById('waterfallTableBody');
         if (!tbody) return;
         
         let html = '';
         let cumulative = 0;
+        
+        // Calculate total inkomsten and uitgaven for percentage calculation
+        const totalInkomsten = waterfallData.data
+            .filter(item => item.type === 'positive' || item.type === 'start')
+            .reduce((sum, item) => sum + Math.abs(item.value), 0);
+        
+        const totalUitgaven = waterfallData.data
+            .filter(item => item.type === 'negative')
+            .reduce((sum, item) => sum + Math.abs(item.value), 0);
+        
+        // Get final value for percentage calculation
+        const finalValue = waterfallData.data.find(item => item.type === 'total')?.value || 0;
         
         waterfallData.data.forEach((item, index) => {
             if (item.type === 'start') {
@@ -495,14 +501,22 @@ class ROICalculatorApp {
                 cumulative += item.value;
             }
             
-            const percentage = Math.abs(item.value / waterfallData.data[0].value * 100);
+            // Improved percentage calculation
+            let percentage = '';
+            if (item.type === 'positive' && totalInkomsten > 0) {
+                percentage = (Math.abs(item.value) / totalInkomsten * 100).toFixed(1) + '% van inkomsten';
+            } else if (item.type === 'negative' && totalUitgaven > 0) {
+                percentage = (Math.abs(item.value) / totalUitgaven * 100).toFixed(1) + '% van uitgaven';
+            } else if (item.type === 'start' || item.type === 'total') {
+                percentage = '-';
+            }
             
             html += `
                 <tr>
-                    <td>${item.label}</td>
-                    <td class="${item.value < 0 ? 'negative' : ''}">${Utils.formatNumber(item.value)}</td>
-                    <td>${item.type !== 'start' && item.type !== 'total' ? percentage.toFixed(1) + '%' : '-'}</td>
-                    <td>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</td>
+                    <td><strong>${item.label}</strong></td>
+                    <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">${Utils.formatNumber(item.value)}</td>
+                    <td>${percentage}</td>
+                    <td><strong>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</strong></td>
                 </tr>
             `;
         });
@@ -801,48 +815,8 @@ class ROICalculatorApp {
     
     // Show error message
     showError(message) {
-        // Create error notification if it doesn't exist
-        let errorDiv = document.getElementById('error-notification');
-        if (!errorDiv) {
-            errorDiv = document.createElement('div');
-            errorDiv.id = 'error-notification';
-            errorDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #dc3545;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-                z-index: 9999;
-                max-width: 350px;
-                display: none;
-                animation: slideIn 0.3s ease;
-            `;
-            document.body.appendChild(errorDiv);
-            
-            // Add animation keyframes
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            errorDiv.style.display = 'none';
-        }, 5000);
-        
-        // Also log to console for debugging
-        console.error('Error:', message);
+        // Simple alert for now, can be replaced with better UI
+        alert(message);
     }
 }
 
