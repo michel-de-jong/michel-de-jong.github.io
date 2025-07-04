@@ -148,6 +148,9 @@ const TabTemplates = {
             <div class="cashflow-period-selector">
                 <label for="waterfallPeriod">Selecteer Periode:</label>
                 <select id="waterfallPeriod">
+                    <option value="jaar1">Jaar 1</option>
+                    <option value="jaar5">Jaar 5</option>
+                    <option value="jaar10">Jaar 10</option>
                     <option value="totaal">Totaal Overzicht</option>
                 </select>
             </div>
@@ -443,13 +446,54 @@ const TabStyles = `
         gap: 10px;
     }
     
-    /* Stress test results */
-    .stress-test-result {
-        background: #f8f9fa;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
+    /* Tab Navigation */
+    .tabs {
+        overflow-x: scroll;
+        -webkit-overflow-scrolling: touch;
     }
+    
+    .tab {
+        min-width: 100px;
+        font-size: 14px;
+    }
+    
+    /* Form adjustments */
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Chart containers */
+    .chart-container {
+        height: 300px;
+    }
+    
+    /* Export grid */
+    .export-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Asset rows */
+    .asset-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    
+    .asset-row input,
+    .asset-row button {
+        width: 100%;
+    }
+    
+    /* Saved scenarios */
+    .saved-scenario {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .scenario-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
 `;
 
 // Add styles to document
