@@ -28,6 +28,9 @@ class ROICalculatorApp {
             // Set up event listeners
             this.setupEventListeners();
             
+            // Setup tax toggle
+            this.setupTaxToggle();
+            
             // Load saved settings
             this.loadSettings();
             
@@ -58,6 +61,22 @@ class ROICalculatorApp {
                 }
             }
         });
+    }
+    
+    // Setup tax type toggle
+    setupTaxToggle() {
+        const belastingType = document.getElementById('belastingType');
+        const box3Settings = document.querySelectorAll('.box3-setting');
+        
+        if (belastingType) {
+            belastingType.addEventListener('change', () => {
+                const isBox3 = belastingType.value === 'prive';
+                box3Settings.forEach(setting => {
+                    setting.style.display = isBox3 ? 'block' : 'none';
+                });
+                this.calculate();
+            });
+        }
     }
     
     // Wait for external libraries to load
@@ -351,6 +370,12 @@ class ROICalculatorApp {
         document.getElementById('kpiCashReserve').textContent = Utils.formatNumber(results.finalCashReserve);
         document.getElementById('kpiKoopkracht').textContent = Utils.formatNumber(results.koopkrachtVerlies);
         
+        // Update tax KPI
+        const belastingType = calculator.inputs.belastingType || 'zakelijk';
+        const belastingBedrag = results.totaleTax || 0;
+        document.getElementById('kpiBelastingBedrag').textContent = Utils.formatNumber(belastingBedrag);
+        document.getElementById('kpiBelastingType').textContent = belastingType === 'zakelijk' ? 'VPB' : 'Box 3';
+        
         // Update real values (subtitles)
         if (showReal) {
             document.getElementById('kpiTotaalVermogenReeel').textContent = 
@@ -460,7 +485,7 @@ class ROICalculatorApp {
         if (waterfallData.totals) {
             const totals = waterfallData.totals;
             const inkomsten = totals.opbrengst || 0;
-            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0) + (totals.belasting || 0);
             const netto = inkomsten - uitgaven;
             const conversie = inkomsten > 0 ? (netto / inkomsten) * 100 : 0;
             
@@ -662,6 +687,9 @@ class ROICalculatorApp {
             }
         });
         
+        // Trigger tax toggle if needed
+        this.setupTaxToggle();
+        
         // Switch to calculator tab and recalculate
         this.switchTab('calculator');
         this.calculate();
@@ -691,11 +719,13 @@ class ROICalculatorApp {
             ['Rente', calculator.inputs.renteLening + '%'],
             ['Looptijd', calculator.inputs.looptijd + ' jaar'],
             ['Rendement', calculator.inputs.rendement + '%'],
+            ['Belasting Type', calculator.inputs.belastingType],
             [],
             ['Resultaten'],
             ['Totaal Vermogen', calculator.results.finalVermogen],
             ['ROI', calculator.results.finalROI + '%'],
-            ['Cash Reserve', calculator.results.finalCashReserve]
+            ['Cash Reserve', calculator.results.finalCashReserve],
+            ['Totale Belasting', calculator.results.totaleTax || 0]
         ];
         
         const ws1 = XLSX.utils.aoa_to_sheet(mainData);
@@ -748,7 +778,8 @@ class ROICalculatorApp {
             `Lening: ${Utils.formatNumber(calculator.inputs.lening)}`,
             `Rente: ${calculator.inputs.renteLening}%`,
             `Looptijd: ${calculator.inputs.looptijd} jaar`,
-            `Rendement: ${calculator.inputs.rendement}%`
+            `Rendement: ${calculator.inputs.rendement}%`,
+            `Belasting: ${calculator.inputs.belastingType}`
         ];
         
         inputs.forEach(input => {
@@ -766,7 +797,8 @@ class ROICalculatorApp {
             `Totaal Vermogen: ${Utils.formatNumber(calculator.results.finalVermogen)}`,
             `ROI: ${calculator.results.finalROI.toFixed(1)}%`,
             `Leverage Factor: ${calculator.results.leverageFactor.toFixed(1)}x`,
-            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`
+            `Cash Reserve: ${Utils.formatNumber(calculator.results.finalCashReserve)}`,
+            `Totale Belasting: ${Utils.formatNumber(calculator.results.totaleTax || 0)}`
         ];
         
         results.forEach(result => {
