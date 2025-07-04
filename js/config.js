@@ -166,3 +166,6 @@ Object.freeze(Config.api);
 Object.freeze(Config.features);
 Object.freeze(Config.performance);
 Object.freeze(Config.taxSettings);
+
+// Make Config globally available
+window.Config = Config;
