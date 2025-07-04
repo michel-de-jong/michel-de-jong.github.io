@@ -128,7 +128,7 @@ class ROICalculatorApp {
                     const isValid = this.validateInput(inputId, e.target.value);
                     if (!isValid) {
                         e.target.classList.add('invalid');
-                        // Optionally show error message
+                        // Show clear error message
                         const wrapper = e.target.closest('.input-wrapper');
                         if (wrapper) {
                             let error = wrapper.querySelector('.error-message');
@@ -137,7 +137,20 @@ class ROICalculatorApp {
                                 error.className = 'error-message';
                                 wrapper.appendChild(error);
                             }
-                            error.textContent = `Waarde moet tussen ${rules.min || 'N/A'} en ${rules.max || 'N/A'} zijn`;
+                            // Create clear error message
+                            let errorMsg = 'Waarde moet ';
+                            if (rules.min !== null && rules.max !== null) {
+                                errorMsg += `tussen ${rules.min} en ${rules.max} zijn`;
+                            } else if (rules.min !== null) {
+                                errorMsg += `minimaal ${rules.min} zijn`;
+                            } else if (rules.max !== null) {
+                                errorMsg += `maximaal ${rules.max} zijn`;
+                            }
+                            if (rules.step && rules.step !== 1) {
+                                errorMsg += ` (stappen van ${rules.step})`;
+                            }
+                            error.textContent = errorMsg;
+                        }
                         }
                     } else {
                         e.target.classList.remove('invalid');
@@ -326,6 +339,8 @@ class ROICalculatorApp {
                             waterfallPeriod.setAttribute('data-listener-added', 'true');
                         }
                     }
+                    // Populate year options based on looptijd
+                    this.populateWaterfallYears();
                     this.updateWaterfall();
                     break;
                 case 'portfolio':
@@ -400,6 +415,12 @@ class ROICalculatorApp {
             calculator.calculate();
             this.updateKPIs();
             this.updateCharts();
+            
+            // Update waterfall years if on waterfall tab
+            if (this.currentTab === 'waterfall') {
+                this.populateWaterfallYears();
+                this.updateWaterfall();
+            }
         } catch (error) {
             console.error('Calculation error:', error);
         }
@@ -518,6 +539,25 @@ class ROICalculatorApp {
         distContainer.style.display = 'block';
     }
     
+    // Populate waterfall year options
+    populateWaterfallYears() {
+        const select = document.getElementById('waterfallPeriod');
+        if (!select) return;
+        
+        const looptijd = parseInt(document.getElementById('looptijd').value) || 10;
+        
+        // Clear existing options except 'totaal'
+        select.innerHTML = '<option value="totaal">Totaal Overzicht</option>';
+        
+        // Add year options
+        for (let i = 1; i <= looptijd; i++) {
+            const option = document.createElement('option');
+            option.value = `jaar${i}`;
+            option.textContent = `Jaar ${i}`;
+            select.appendChild(option);
+        }
+    }
+    
     // Update waterfall chart
     updateWaterfall() {
         const period = document.getElementById('waterfallPeriod').value;
@@ -526,7 +566,7 @@ class ROICalculatorApp {
         if (waterfallData.totals) {
             const totals = waterfallData.totals;
             const inkomsten = totals.opbrengst || 0;
-            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+            const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0) + (totals.belasting || 0);
             const netto = inkomsten - uitgaven;
             const conversie = inkomsten > 0 ? (netto / inkomsten) * 100 : 0;
             
