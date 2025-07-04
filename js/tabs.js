@@ -1,511 +1,507 @@
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+// Tab Content Templates and Management
 
-:root {
-    /* Color Variables */
-    --primary-color: #1e3c72;
-    --primary-dark: #2a5298;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-color: #f8f9fa;
-    --dark-color: #333;
-    --gray-color: #6c757d;
-    --white-color: #ffffff;
+const TabTemplates = {
+    scenarios: `
+        <section id="scenarios" class="tab-pane" role="tabpanel">
+            <h2>Scenario Analyse</h2>
+            <p>Vergelijk verschillende scenario's en voer stress tests uit</p>
+            
+            <div class="scenario-grid">
+                <div class="scenario-card">
+                    <h3>Best Case</h3>
+                    <div class="form-group">
+                        <label for="bestCaseRendement">Rendement (%)</label>
+                        <input type="number" id="bestCaseRendement" value="1.2" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="bestCaseKosten">Vaste Kosten (€)</label>
+                        <input type="number" id="bestCaseKosten" value="4000" step="100">
+                    </div>
+                    <div class="kpi-value" id="bestCaseROI">ROI: 0%</div>
+                </div>
+                
+                <div class="scenario-card">
+                    <h3>Base Case</h3>
+                    <div class="form-group">
+                        <label for="baseCaseRendement">Rendement (%)</label>
+                        <input type="number" id="baseCaseRendement" value="0.8" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="baseCaseKosten">Vaste Kosten (€)</label>
+                        <input type="number" id="baseCaseKosten" value="5000" step="100">
+                    </div>
+                    <div class="kpi-value" id="baseCaseROI">ROI: 0%</div>
+                </div>
+                
+                <div class="scenario-card">
+                    <h3>Worst Case</h3>
+                    <div class="form-group">
+                        <label for="worstCaseRendement">Rendement (%)</label>
+                        <input type="number" id="worstCaseRendement" value="0.3" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="worstCaseKosten">Vaste Kosten (€)</label>
+                        <input type="number" id="worstCaseKosten" value="6000" step="100">
+                    </div>
+                    <div class="kpi-value" id="worstCaseROI">ROI: 0%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container mt-4">
+                <canvas id="scenarioChart"></canvas>
+            </div>
+            
+            <h3 class="mt-4">Stress Test</h3>
+            <button class="btn btn-primary" id="runStressTestBtn">Run Stress Test</button>
+            <div id="stressTestResults" class="mt-3"></div>
+        </section>
+    `,
     
-    /* Spacing Variables */
-    --spacing-xs: 5px;
-    --spacing-sm: 10px;
-    --spacing-md: 20px;
-    --spacing-lg: 30px;
-    --spacing-xl: 40px;
+    montecarlo: `
+        <section id="montecarlo" class="tab-pane" role="tabpanel">
+            <h2>Monte Carlo Simulatie</h2>
+            <p>Probabilistische analyse met duizenden scenario's voor risico-inzicht</p>
+            
+            <div class="monte-carlo-controls">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="mcSimulations">Aantal Simulaties</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="mcSimulations" value="10000" min="1000" max="100000" step="1000">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip">Meer simulaties = nauwkeuriger resultaat maar langere rekentijd</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mcVolatility">Rendement Volatiliteit (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="mcVolatility" value="3" min="0" max="20" step="0.5">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip">Standaarddeviatie van het rendement (hoger = meer risico)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mcRenteVolatility">Rente Volatiliteit (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="mcRenteVolatility" value="1" min="0" max="5" step="0.1">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip">Variatie in rentetarieven over tijd</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mcKostenVolatility">Kosten Volatiliteit (%)</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="mcKostenVolatility" value="10" min="0" max="50" step="5">
+                            <span class="tooltip-icon">?</span>
+                            <span class="tooltip">Variatie in vaste kosten (percentage van basis)</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary" id="runMonteCarloBtn">
+                    <span>🎲</span> Start Monte Carlo Simulatie
+                </button>
+            </div>
+            
+            <div class="loading" id="mcLoading">
+                <div class="spinner"></div>
+                <p>Simulatie wordt uitgevoerd...</p>
+            </div>
+            
+            <div class="simulation-results" id="mcResults" style="display: none;">
+                <div class="result-card">
+                    <h4>Mediaan ROI (P50)</h4>
+                    <div class="result-value" id="mcMedianROI">0%</div>
+                </div>
+                <div class="result-card">
+                    <h4>95% Confidence (P5-P95)</h4>
+                    <div class="result-value" id="mcConfidence">0% - 0%</div>
+                </div>
+                <div class="result-card">
+                    <h4>Kans op Verlies</h4>
+                    <div class="result-value" id="mcLossProb">0%</div>
+                </div>
+                <div class="result-card">
+                    <h4>Value at Risk (5%)</h4>
+                    <div class="result-value" id="mcVaR">€ 0</div>
+                </div>
+            </div>
+            
+            <div class="chart-container mt-4" style="display: none;" id="mcChartContainer">
+                <canvas id="monteCarloChart"></canvas>
+            </div>
+            
+            <div class="chart-container mt-4" style="display: none;" id="mcDistContainer">
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </section>
+    `,
     
-    /* Border Radius */
-    --radius-sm: 3px;
-    --radius-md: 5px;
-    --radius-lg: 10px;
+    waterfall: `
+        <section id="waterfall" class="tab-pane" role="tabpanel">
+            <h2>Cashflow Waterfall Analyse</h2>
+            <p>Gedetailleerd overzicht van alle geldstromen per periode</p>
+            
+            <div class="cashflow-period-selector">
+                <label for="waterfallPeriod">Selecteer Periode:</label>
+                <select id="waterfallPeriod">
+                    <!-- Options will be populated dynamically based on looptijd -->
+                </select>
+            </div>
+            
+            <div class="kpi-grid mt-3">
+                <div class="kpi-card green">
+                    <div class="kpi-label">Totale Inkomsten</div>
+                    <div class="kpi-value" id="wfInkomsten">€ 0</div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label">Totale Uitgaven</div>
+                    <div class="kpi-value" id="wfUitgaven">€ 0</div>
+                </div>
+                <div class="kpi-card blue">
+                    <div class="kpi-label">Netto Cashflow</div>
+                    <div class="kpi-value" id="wfNetto">€ 0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Cash Conversie</div>
+                    <div class="kpi-value" id="wfConversie">0%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container tall mt-4">
+                <canvas id="waterfallChart"></canvas>
+            </div>
+            
+            <table class="cashflow-table mt-4">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Bedrag</th>
+                        <th>Aandeel</th>
+                        <th>Cumulatief</th>
+                    </tr>
+                </thead>
+                <tbody id="waterfallTableBody">
+                    <!-- Dynamically populated -->
+                </tbody>
+            </table>
+            
+            <div class="cashflow-explanation mt-3">
+                <small>
+                    <strong>Toelichting:</strong><br>
+                    • <strong>Aandeel kolom:</strong> Voor inkomsten: percentage van totale inkomsten. Voor uitgaven: percentage van totale uitgaven.<br>
+                    • <strong>Cumulatief:</strong> Het lopende totaal na elke stap in de waterfall.<br>
+                    • <strong>Cash Conversie:</strong> Percentage van inkomsten dat als netto cashflow overblijft.
+                </small>
+            </div>
+        </section>
+    `,
     
-    /* Shadows */
-    --shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
-    --shadow-md: 0 2px 10px rgba(0,0,0,0.1);
-    --shadow-lg: 0 4px 15px rgba(0,0,0,0.1);
+    portfolio: `
+        <section id="portfolio" class="tab-pane" role="tabpanel">
+            <h2>Multi-Asset Portfolio Builder</h2>
+            <p>Bouw een gediversifieerde portfolio met verschillende assets</p>
+            
+            <div id="assetList">
+                <div class="asset-row">
+                    <input type="text" placeholder="Asset naam" class="asset-name">
+                    <input type="number" placeholder="Bedrag (€)" class="asset-amount" min="0" step="1000">
+                    <input type="number" placeholder="Rendement %" class="asset-return" step="0.1">
+                    <input type="number" placeholder="Risico %" class="asset-risk" min="0" max="100" step="1">
+                    <button class="btn-remove" data-action="remove">×</button>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" id="addAssetBtn">+ Asset Toevoegen</button>
+            <button class="btn btn-success" id="calculatePortfolioBtn">Portfolio Berekenen</button>
+            
+            <div class="kpi-grid mt-4">
+                <div class="kpi-card">
+                    <div class="kpi-label">Portfolio Waarde</div>
+                    <div class="kpi-value" id="portfolioWaarde">€ 0</div>
+                </div>
+                <div class="kpi-card green">
+                    <div class="kpi-label">Gewogen Rendement</div>
+                    <div class="kpi-value" id="portfolioRendement">0%</div>
+                </div>
+                <div class="kpi-card orange">
+                    <div class="kpi-label">Portfolio Risico</div>
+                    <div class="kpi-value" id="portfolioRisico">0%</div>
+                </div>
+            </div>
+            
+            <div class="chart-container mt-4">
+                <canvas id="portfolioChart"></canvas>
+            </div>
+        </section>
+    `,
     
-    /* Transitions */
-    --transition-fast: 0.2s ease;
-    --transition-normal: 0.3s ease;
-    --transition-slow: 0.4s ease;
-}
+    saved: `
+        <section id="saved" class="tab-pane" role="tabpanel">
+            <h2>Opgeslagen Scenario's</h2>
+            <p>Beheer en vergelijk uw opgeslagen scenario's</p>
+            
+            <button class="btn btn-primary" id="saveScenarioBtn">Huidig Scenario Opslaan</button>
+            
+            <div id="savedScenariosList" class="mt-4">
+                <!-- Saved scenarios will be listed here -->
+            </div>
+        </section>
+    `,
+    
+    export: `
+        <section id="export" class="tab-pane" role="tabpanel">
+            <h2>Export Functies</h2>
+            <p>Exporteer uw analyses naar verschillende formaten</p>
+            
+            <div class="export-grid">
+                <div class="export-card">
+                    <div class="export-icon">📊</div>
+                    <h3>Excel Export</h3>
+                    <p>Download complete analyse als Excel bestand</p>
+                    <button class="btn btn-success" id="exportExcelBtn">Excel Downloaden</button>
+                </div>
+                
+                <div class="export-card">
+                    <div class="export-icon">📄</div>
+                    <h3>PDF Rapport</h3>
+                    <p>Genereer professioneel PDF rapport</p>
+                    <button class="btn btn-danger" id="exportPDFBtn">PDF Genereren</button>
+                </div>
+                
+                <div class="export-card">
+                    <div class="export-icon">🖼️</div>
+                    <h3>Grafiek Export</h3>
+                    <p>Download grafieken als PNG afbeeldingen</p>
+                    <button class="btn btn-primary" id="exportChartsBtn">Grafieken Downloaden</button>
+                </div>
+            </div>
+        </section>
+    `
+};
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f5f7fa;
-    color: var(--dark-color);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-/* Container */
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: var(--spacing-md);
-}
-
-/* Header */
-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: var(--white-color);
-    padding: var(--spacing-lg) 0;
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-}
-
-h1 {
-    text-align: center;
-    font-size: 2.5em;
-    font-weight: 300;
-    margin-bottom: var(--spacing-sm);
-}
-
-.subtitle {
-    text-align: center;
-    opacity: 0.9;
-    margin-top: var(--spacing-sm);
-}
-
-/* Tabs */
-.tabs {
-    display: flex;
-    background: var(--white-color);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    overflow-x: auto;
-    box-shadow: var(--shadow-sm);
-    scrollbar-width: thin;
-    scrollbar-color: var(--gray-color) var(--light-color);
-}
-
-.tabs::-webkit-scrollbar {
-    height: 6px;
-}
-
-.tabs::-webkit-scrollbar-track {
-    background: var(--light-color);
-}
-
-.tabs::-webkit-scrollbar-thumb {
-    background: var(--gray-color);
-    border-radius: var(--radius-sm);
-}
-
-.tab {
-    flex: 0 0 auto;
-    min-width: 120px;
-    padding: 15px var(--spacing-md);
-    background: var(--light-color);
-    border: none;
-    cursor: pointer;
-    font-size: 15px;
-    transition: all var(--transition-normal);
-    position: relative;
-    white-space: nowrap;
-    font-family: inherit;
-}
-
-.tab:hover {
-    background: #e9ecef;
-}
-
-.tab.active {
-    background: var(--white-color);
-    color: var(--primary-color);
-    font-weight: 600;
-}
-
-.tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary-color);
-}
-
-/* Tab Content */
-.tab-content {
-    background: var(--white-color);
-    padding: var(--spacing-lg);
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    min-height: 600px;
-}
-
-.tab-pane {
-    display: none;
-    animation: fadeIn var(--transition-normal);
-}
-
-.tab-pane.active {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
+// Add CSS for tab-specific styles
+const TabStyles = `
+    /* Scenario Cards */
+    .scenario-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    
+    .scenario-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        transition: all 0.3s;
     }
+    
+    .scenario-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .scenario-card h3 {
+        margin-bottom: 15px;
+        color: var(--primary-color);
+    }
+    
+    /* Monte Carlo Specific */
+    .monte-carlo-controls {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .simulation-results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .result-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .result-card h4 {
+        color: #495057;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+    
+    .result-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    /* Waterfall Specific */
+    .cashflow-period-selector {
+        margin-bottom: 20px;
+    }
+    
+    .cashflow-period-selector label {
+        display: inline-block;
+        margin-right: 10px;
+        font-weight: 600;
+    }
+    
+    .cashflow-period-selector select {
+        min-width: 200px;
+    }
+    
+    .cashflow-table {
+        width: 100%;
+        margin-top: 30px;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 15px 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .cashflow-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .cashflow-table th:nth-child(2),
+    .cashflow-table th:nth-child(4),
+    .cashflow-table td:nth-child(2),
+    .cashflow-table td:nth-child(4) {
+        text-align: right;
+    }
+    
+    .cashflow-table th:nth-child(3),
+    .cashflow-table td:nth-child(3) {
+        text-align: center;
+    }
+    
+    .cashflow-table tr:hover {
+        background: #f8f9fa;
+    }
+    
+    .cashflow-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .cashflow-explanation {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .cashflow-explanation small {
+        line-height: 1.6;
+        color: #6c757d;
+    }
+    
+    /* Portfolio Builder */
+    .asset-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .asset-row input {
+        padding: 8px;
+    }
+    
+    .btn-remove {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+    }
+    
+    .btn-remove:hover {
+        background: #c82333;
+    }
+    
+    /* Export Grid */
+    .export-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .export-card {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+    
+    .export-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .export-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+    
+    /* Saved Scenarios */
+    .saved-scenario {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .scenario-info {
+        flex: 1;
+    }
+    
+    .scenario-actions {
+        display: flex;
+        gap: 10px;
+    }
+`;
+
+// Add styles to document
+if (!document.getElementById('tab-styles')) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'tab-styles';
+    styleSheet.textContent = TabStyles;
+    document.head.appendChild(styleSheet);
 }
-
-/* Input Sections */
-.input-section {
-    background: var(--light-color);
-    border-radius: var(--radius-lg);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
-    border: 1px solid #e0e0e0;
-}
-
-.section-title {
-    font-size: 1.2em;
-    color: var(--primary-color);
-    margin-bottom: var(--spacing-md);
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-/* Form Styling */
-.form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-md);
-}
-
-.form-group {
-    margin-bottom: 0;
-}
-
-label {
-    display: block;
-    margin-bottom: var(--spacing-xs);
-    font-weight: 500;
-    color: #495057;
-}
-
-.input-wrapper {
-    position: relative;
-}
-
-input[type="number"],
-input[type="text"],
-select {
-    width: 100%;
-    padding: var(--spacing-sm) 40px var(--spacing-sm) 15px;
-    border: 1px solid #ced4da;
-    border-radius: var(--radius-md);
-    font-size: 16px;
-    transition: border-color var(--transition-normal);
-    font-family: inherit;
-    background-color: var(--white-color);
-}
-
-input[type="number"]:focus,
-input[type="text"]:focus,
-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
-}
-
-/* Tooltip */
-.tooltip-icon {
-    position: absolute;
-    right: var(--spacing-sm);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    background: var(--gray-color);
-    color: var(--white-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    cursor: help;
-    transition: background-color var(--transition-fast);
-}
-
-.tooltip-icon:hover {
-    background: var(--primary-color);
-}
-
-.tooltip {
-    position: absolute;
-    bottom: 100%;
-    right: 0;
-    background: var(--dark-color);
-    color: var(--white-color);
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--transition-normal);
-    z-index: 1000;
-    max-width: 250px;
-    white-space: normal;
-    margin-bottom: var(--spacing-xs);
-}
-
-.tooltip-icon:hover + .tooltip {
-    opacity: 1;
-}
-
-/* KPI Cards */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.kpi-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: var(--white-color);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    transition: transform var(--transition-normal);
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-.kpi-card.green {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-}
-
-.kpi-card.blue {
-    background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
-}
-
-.kpi-card.orange {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.kpi-card.yellow {
-    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
-}
-
-.kpi-label {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-bottom: var(--spacing-xs);
-}
-
-.kpi-value {
-    font-size: 28px;
-    font-weight: 700;
-}
-
-.kpi-subtitle {
-    font-size: 12px;
-    opacity: 0.8;
-    margin-top: var(--spacing-xs);
-}
-
-/* Chart Container */
-.chart-container {
-    background: var(--white-color);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    margin-top: var(--spacing-lg);
-    height: 400px;
-    position: relative;
-}
-
-.chart-container.tall {
-    height: 500px;
-}
-
-/* Buttons */
-.btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: 16px;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: inherit;
-    font-weight: 500;
-}
-
-.btn:active {
-    transform: scale(0.98);
-}
-
-.btn-primary {
-    background: var(--primary-color);
-    color: var(--white-color);
-}
-
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
-
-.btn-secondary {
-    background: var(--gray-color);
-    color: var(--white-color);
-}
-
-.btn-secondary:hover {
-    background: #5a6268;
-}
-
-.btn-success {
-    background: var(--success-color);
-    color: var(--white-color);
-}
-
-.btn-success:hover {
-    background: #218838;
-}
-
-.btn-danger {
-    background: var(--danger-color);
-    color: var(--white-color);
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.btn-sm {
-    padding: 5px 10px;
-    font-size: 14px;
-}
-
-/* Toggle Switch */
-.inflatie-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
-}
-
-.toggle-switch {
-    position: relative;
-    width: 50px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: var(--transition-fast);
-    border-radius: 24px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 4px;
-    bottom: 4px;
-    background-color: var(--white-color);
-    transition: var(--transition-fast);
-    border-radius: 50%;
-}
-
-input:checked + .toggle-slider {
-    background-color: var(--primary-color);
-}
-
-input:checked + .toggle-slider:before {
-    transform: translateX(26px);
-}
-
-/* Loading Spinner */
-.loading {
-    display: none;
-    text-align: center;
-    padding: var(--spacing-xl);
-}
-
-.loading.active {
-    display: block;
-}
-
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--primary-color);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto var(--spacing-md);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Utility Classes */
-.positive {
-    color: var(--success-color);
-    font-weight: 600;
-}
-
-.negative {
-    color: var(--danger-color);
-    font-weight: 600;
-}
-
-.text-center {
-    text-align: center;
-}
-
-.mt-1 { margin-top: var(--spacing-xs); }
-.mt-2 { margin-top: var(--spacing-sm); }
-.mt-3 { margin-top: var(--spacing-md); }
-.mt-4 { margin-top: var(--spacing-lg); }
-.mt-5 { margin-top: var(--spacing-xl); }
-
-.mb-1 { margin-bottom: var(--spacing-xs); }
-.mb-2 { margin-bottom: var(--spacing-sm); }
-.mb-3 { margin-bottom: var(--spacing-md); }
-.mb-4 { margin-bottom: var(--spacing-lg); }
-.mb-5 { margin-bottom: var(--spacing-xl); }
