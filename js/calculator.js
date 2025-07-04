@@ -35,7 +35,10 @@ class ROICalculator {
             vasteKosten: parseFloat(document.getElementById('vasteKosten').value) || 0,
             herinvesteringDrempel: parseFloat(document.getElementById('herinvesteringDrempel').value) || 0,
             inflatie: parseFloat(document.getElementById('inflatie').value) || 0,
-            showRealValues: document.getElementById('inflatieToggle').checked
+            showRealValues: document.getElementById('inflatieToggle').checked,
+            belastingType: document.getElementById('belastingType').value || 'zakelijk',
+            vpbTarief: parseFloat(document.getElementById('vpbTarief').value) || 25.8,
+            box3Tarief: parseFloat(document.getElementById('box3Tarief').value) || 36
         };
         
         return this.inputs;
@@ -70,6 +73,7 @@ class ROICalculator {
         let portfolioWaarde = startKapitaal + lening;
         let cashReserve = 0;
         let leningBedrag = lening;
+        let totaalBelastingBetaald = 0;
         const totalMonths = looptijd * 12;
         const loanMonths = leningLooptijd * 12;
         const maandKosten = vasteKosten / 12;
@@ -144,13 +148,29 @@ class ROICalculator {
                 } else {
                     // Positive return: split between reinvestment and cash
                     const herinvesteringBedrag = nettoResultaat * (herinvestering / 100);
+                    const cashFlowBedrag = nettoResultaat - herinvesteringBedrag;
+                    
+                    // Calculate tax on cash flow (not reinvested amount)
+                    let belasting = 0;
+                    if (cashFlowBedrag > 0) {
+                        if (this.inputs.belastingType === 'zakelijk') {
+                            // VPB over winst (na aftrek van rente)
+                            belasting = cashFlowBedrag * (this.inputs.vpbTarief / 100);
+                        } else {
+                            // Box 3 - forfaitair rendement (gemiddeld 6% van vermogen)
+                            // Belasting over fictief rendement, niet over werkelijke winst
+                            const fictievRendement = (portfolioWaarde + cashReserve) * 0.06 / 12;
+                            belasting = fictievRendement * (this.inputs.box3Tarief / 100);
+                        }
+                        totaalBelastingBetaald += belasting;
+                    }
                     
                     // Check reinvestment threshold
                     if (herinvesteringBedrag >= herinvesteringDrempel) {
                         portfolioWaarde += herinvesteringBedrag;
-                        cashReserve += nettoResultaat - herinvesteringBedrag;
+                        cashReserve += cashFlowBedrag - belasting;
                     } else {
-                        cashReserve += nettoResultaat;
+                        cashReserve += nettoResultaat - belasting;
                     }
                 }
                 
@@ -188,6 +208,9 @@ class ROICalculator {
         
         // Calculate final results
         this.calculateFinalResults();
+        
+        // Store total tax paid
+        this.results.totaalBelastingBetaald = totaalBelastingBetaald;
         
         return this.data;
     }
@@ -482,7 +505,7 @@ class ROICalculator {
             const renteVariation = Utils.randomNormal() * renteVolatility;
             const kostenVariation = Utils.randomNormal() * kostenVolatility;
             
-            // Apply variations
+            // Apply variations - ensure they create realistic scenarios
             const simulationInputs = {
                 rendement: baseInputs.rendement + rendementVariation,
                 renteLening: Math.max(0, baseInputs.renteLening + renteVariation),
@@ -496,7 +519,7 @@ class ROICalculator {
             const tempCalc = new ROICalculator();
             tempCalc.inputs = { ...baseInputs, ...simulationInputs };
             tempCalc.calculate();
-            const finalValue = tempCalc.results.finalVermogen;
+            const finalValue = tempCalc.results.finalVermogen || 0;
             
             results.push({
                 simulation: i + 1,
@@ -510,13 +533,16 @@ class ROICalculator {
         results.sort((a, b) => a.roi - b.roi);
         
         // Calculate statistics
+        const roiValues = results.map(r => r.roi);
+        const finalValues = results.map(r => r.finalValue);
+        
         const stats = {
-            mean: Utils.statistics.mean(results.map(r => r.roi)),
-            median: Utils.statistics.median(results.map(r => r.roi)),
-            p5: Utils.statistics.percentile(results.map(r => r.roi), 5),
-            p95: Utils.statistics.percentile(results.map(r => r.roi), 95),
-            lossProb: (results.filter(r => r.roi < 0).length / numSimulations) * 100,
-            vaR5: Utils.statistics.percentile(results.map(r => r.finalValue - baseInputs.startKapitaal), 5),
+            mean: Utils.statistics.mean(roiValues),
+            median: Utils.statistics.median(roiValues),
+            p5: Utils.statistics.percentile(roiValues, 5),
+            p95: Utils.statistics.percentile(roiValues, 95),
+            lossProb: (roiValues.filter(r => r < 0).length / numSimulations) * 100,
+            vaR5: Utils.statistics.percentile(finalValues.map(v => v - baseInputs.startKapitaal), 5),
             results: results
         };
         
