@@ -142,39 +142,62 @@ const TabTemplates = {
     
     waterfall: `
         <section id="waterfall" class="tab-pane" role="tabpanel">
-            <h2>Cashflow Waterfall Analyse</h2>
+            <h2>💧 Cashflow Waterfall Analyse</h2>
             <p>Gedetailleerd overzicht van alle geldstromen per periode</p>
             
-            <div class="cashflow-period-selector">
-                <label for="waterfallPeriod">Selecteer Periode:</label>
-                <select id="waterfallPeriod">
-                    <option value="jaar1">Jaar 1</option>
-                    <option value="jaar5">Jaar 5</option>
-                    <option value="jaar10">Jaar 10</option>
-                    <option value="totaal">Totaal Overzicht</option>
-                </select>
+            <div class="waterfall-controls">
+                <div class="period-selector-group">
+                    <label for="waterfallPeriod">📅 Selecteer Periode:</label>
+                    <select id="waterfallPeriod" class="period-select">
+                        <!-- Dynamically populated -->
+                    </select>
+                    <button class="btn btn-sm btn-secondary" id="comparePeriodsBtn">📊 Vergelijk Periodes</button>
+                </div>
+                
+                <div class="view-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="waterfallViewToggle" aria-label="Toon percentages">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>Toon als percentages</span>
+                </div>
             </div>
             
-            <div class="kpi-grid mt-3">
-                <div class="kpi-card green">
-                    <div class="kpi-label">Netto Inkomsten</div>
-                    <div class="kpi-value" id="wfInkomsten">€ 0</div>
-                    <div class="kpi-subtitle">Na belasting</div>
+            <div class="waterfall-summary">
+                <div class="summary-card positive">
+                    <div class="summary-icon">📈</div>
+                    <div class="summary-content">
+                        <div class="summary-label">Totale Inkomsten</div>
+                        <div class="summary-value" id="wfTotaleInkomsten">€ 0</div>
+                        <div class="summary-detail" id="wfInkomstenDetail">Bruto: € 0 | Belasting: € 0</div>
+                    </div>
                 </div>
-                <div class="kpi-card orange">
-                    <div class="kpi-label">Totale Uitgaven</div>
-                    <div class="kpi-value" id="wfUitgaven">€ 0</div>
-                    <div class="kpi-subtitle">Rente + Aflossing + Kosten</div>
+                
+                <div class="summary-card negative">
+                    <div class="summary-icon">📉</div>
+                    <div class="summary-content">
+                        <div class="summary-label">Totale Uitgaven</div>
+                        <div class="summary-value" id="wfTotaleUitgaven">€ 0</div>
+                        <div class="summary-detail" id="wfUitgavenDetail">Rente: € 0 | Aflossing: € 0 | Kosten: € 0</div>
+                    </div>
                 </div>
-                <div class="kpi-card blue">
-                    <div class="kpi-label">Netto Cashflow</div>
-                    <div class="kpi-value" id="wfNetto">€ 0</div>
-                    <div class="kpi-subtitle">Eindresultaat</div>
+                
+                <div class="summary-card primary">
+                    <div class="summary-icon">💰</div>
+                    <div class="summary-content">
+                        <div class="summary-label">Netto Cashflow</div>
+                        <div class="summary-value" id="wfNettoCashflow">€ 0</div>
+                        <div class="summary-detail" id="wfCashflowDetail">0% van bruto inkomsten</div>
+                    </div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Cash Conversie</div>
-                    <div class="kpi-value" id="wfConversie">0%</div>
-                    <div class="kpi-subtitle">% van bruto inkomsten</div>
+                
+                <div class="summary-card info">
+                    <div class="summary-icon">📊</div>
+                    <div class="summary-content">
+                        <div class="summary-label">Effectief Belastingtarief</div>
+                        <div class="summary-value" id="wfBelastingTarief">0%</div>
+                        <div class="summary-detail" id="wfBelastingDetail">Op bruto rendement</div>
+                    </div>
                 </div>
             </div>
             
@@ -182,20 +205,39 @@ const TabTemplates = {
                 <canvas id="waterfallChart"></canvas>
             </div>
             
-            <div class="table-wrapper">
-                <table class="cashflow-table">
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Bedrag</th>
-                            <th>% van Eindresultaat</th>
-                            <th>Cumulatief</th>
-                        </tr>
-                    </thead>
-                    <tbody id="waterfallTableBody">
-                        <!-- Dynamically populated -->
-                    </tbody>
-                </table>
+            <div class="waterfall-analysis mt-4">
+                <h3>📊 Cashflow Breakdown</h3>
+                <div class="analysis-tabs">
+                    <button class="analysis-tab active" data-analysis="components">Componenten</button>
+                    <button class="analysis-tab" data-analysis="trends">Trends</button>
+                    <button class="analysis-tab" data-analysis="ratios">Ratio's</button>
+                </div>
+                
+                <div class="analysis-content" id="analysisContent">
+                    <div class="table-wrapper">
+                        <table class="cashflow-table">
+                            <thead>
+                                <tr>
+                                    <th>Component</th>
+                                    <th>Bedrag</th>
+                                    <th>% van Bruto</th>
+                                    <th>% van Netto</th>
+                                    <th>Impact</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waterfallTableBody">
+                                <!-- Dynamically populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="waterfall-insights mt-4">
+                <h3>💡 Inzichten</h3>
+                <div id="waterfallInsights" class="insights-grid">
+                    <!-- Dynamically populated insights -->
+                </div>
             </div>
             
             <div class="mobile-table-hint mt-2" style="font-size: 12px; color: #6c757d;">
@@ -402,15 +444,214 @@ const TabStyles = `
         color: var(--primary-color);
     }
     
-    /* Waterfall Specific - MOBILE OPTIMIZED */
-    .cashflow-period-selector {
+    /* Waterfall Specific - ENHANCED */
+    .waterfall-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .period-selector-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .period-selector-group label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 16px;
+        margin: 0;
+    }
+    
+    .period-select {
+        padding: 10px 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 15px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 200px;
+    }
+    
+    .period-select:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .period-select:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    }
+    
+    .view-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .waterfall-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .summary-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    
+    .summary-card.positive {
+        border-left: 4px solid var(--success-color);
+    }
+    
+    .summary-card.negative {
+        border-left: 4px solid var(--danger-color);
+    }
+    
+    .summary-card.primary {
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .summary-card.info {
+        border-left: 4px solid var(--info-color);
+    }
+    
+    .summary-icon {
+        font-size: 32px;
+        line-height: 1;
+        opacity: 0.8;
+    }
+    
+    .summary-content {
+        flex: 1;
+    }
+    
+    .summary-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    
+    .summary-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 5px;
+    }
+    
+    .summary-detail {
+        font-size: 12px;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    
+    .waterfall-analysis {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .analysis-tabs {
+        display: flex;
+        gap: 10px;
         margin-bottom: 20px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .analysis-tab {
+        padding: 10px 20px;
+        background: none;
+        border: none;
+        font-size: 15px;
+        color: #6c757d;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .analysis-tab:hover {
+        color: var(--primary-color);
+    }
+    
+    .analysis-tab.active {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .analysis-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary-color);
+    }
+    
+    .waterfall-insights {
+        margin-top: 30px;
+    }
+    
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .insight-card {
+        padding: 15px;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 8px;
+        border-left: 3px solid #1976d2;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+    
+    .insight-card.warning {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        border-left-color: #f57c00;
+    }
+    
+    .insight-card.success {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border-left-color: #388e3c;
+    }
+    
+    .insight-card.danger {
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        border-left-color: #d32f2f;
     }
     
     .table-wrapper {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        margin-top: 30px;
+        margin-top: 20px;
         border: 1px solid #dee2e6;
         border-radius: 8px;
         background: white;
@@ -418,14 +659,14 @@ const TabStyles = `
     
     .cashflow-table {
         width: 100%;
-        min-width: 600px;
+        min-width: 700px;
         margin: 0;
         border-collapse: collapse;
     }
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 12px;
+        padding: 12px 15px;
         text-align: right;
         border-bottom: 1px solid #dee2e6;
         white-space: nowrap;
@@ -439,7 +680,8 @@ const TabStyles = `
         background: white;
         min-width: 140px;
         z-index: 1;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        font-weight: 500;
     }
     
     .cashflow-table th {
@@ -458,6 +700,40 @@ const TabStyles = `
     
     .cashflow-table tr:hover {
         background: #f8f9fa;
+    }
+    
+    .cashflow-table .positive {
+        color: var(--success-color);
+        font-weight: 600;
+    }
+    
+    .cashflow-table .negative {
+        color: var(--danger-color);
+        font-weight: 600;
+    }
+    
+    .impact-bar {
+        display: inline-block;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        width: 100px;
+        position: relative;
+        vertical-align: middle;
+    }
+    
+    .impact-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+    
+    .impact-fill.positive {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .impact-fill.negative {
+        background: linear-gradient(90deg, #dc3545 0%, #e91e63 100%);
     }
     
     .mobile-table-hint {
@@ -740,6 +1016,53 @@ const TabStyles = `
         
         .mobile-table-hint {
             display: block;
+        }
+        
+        .waterfall-controls {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .period-selector-group {
+            width: 100%;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .period-select {
+            width: 100%;
+        }
+        
+        .waterfall-summary {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .summary-icon {
+            font-size: 24px;
+        }
+        
+        .summary-value {
+            font-size: 20px;
+        }
+        
+        .analysis-tabs {
+            flex-wrap: wrap;
+        }
+        
+        .analysis-tab {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+        
+        .cashflow-table {
+            min-width: 500px;
+        }
+        
+        .cashflow-table th,
+        .cashflow-table td {
+            padding: 10px 8px;
+            font-size: 13px;
         }
     }
     
