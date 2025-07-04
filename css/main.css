@@ -17,6 +17,7 @@
     --dark-color: #333;
     --gray-color: #6c757d;
     --white-color: #ffffff;
+    --purple-color: #6f42c1;
     
     /* Spacing Variables */
     --spacing-xs: 5px;
@@ -173,7 +174,6 @@ h1 {
     padding: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     border: 1px solid #e0e0e0;
-    overflow: hidden; /* Prevent content overflow */
 }
 
 .section-title {
@@ -195,7 +195,6 @@ h1 {
 
 .form-group {
     margin-bottom: 0;
-    min-width: 0; /* Allow shrinking */
 }
 
 label {
@@ -207,7 +206,6 @@ label {
 
 .input-wrapper {
     position: relative;
-    width: 100%;
 }
 
 input[type="number"],
@@ -221,7 +219,6 @@ select {
     transition: border-color var(--transition-normal);
     font-family: inherit;
     background-color: var(--white-color);
-    box-sizing: border-box; /* Include padding in width calculation */
 }
 
 input[type="number"]:focus,
@@ -313,6 +310,10 @@ select:focus {
 
 .kpi-card.yellow {
     background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+}
+
+.kpi-card.purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .kpi-label {
@@ -487,32 +488,25 @@ input:checked + .toggle-slider:before {
     100% { transform: rotate(360deg); }
 }
 
-/* Validation Styles */
-input.invalid {
-    border-color: var(--danger-color);
-    background-color: rgba(220, 53, 69, 0.05);
+/* Box 3 Settings Visibility */
+.box3-setting {
+    transition: all var(--transition-normal);
 }
 
-input.invalid:focus {
-    border-color: var(--danger-color);
-    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
-}
-
-.error-message {
-    display: block;
-    color: var(--danger-color);
-    font-size: 12px;
-    margin-top: 5px;
-    animation: fadeIn var(--transition-fast);
+.box3-setting[style*="display: none"] {
+    opacity: 0;
+    transform: translateY(-10px);
 }
 
 /* Utility Classes */
 .positive {
     color: var(--success-color);
+    font-weight: 600;
 }
 
 .negative {
     color: var(--danger-color);
+    font-weight: 600;
 }
 
 .text-center {
