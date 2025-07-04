@@ -44,7 +44,7 @@
                         <div class="form-group">
                             <label for="startKapitaal">Startkapitaal (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="startKapitaal" value="100000" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
+                                <input type="number" id="startKapitaal" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="startKapitaal-tooltip">Het eigen vermogen dat u inbrengt bij aanvang van de investering</span>
                             </div>
@@ -59,7 +59,7 @@
                         <div class="form-group">
                             <label for="lening">Lening (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="lening" value="200000" min="0" step="1000" aria-describedby="lening-tooltip">
+                                <input type="number" id="lening" min="0" step="1000" aria-describedby="lening-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="lening-tooltip">Het geleende bedrag voor leverage. Let op: verhoogt risico maar ook potentieel rendement</span>
                             </div>
@@ -68,7 +68,7 @@
                         <div class="form-group">
                             <label for="renteLening">Rente Lening (%)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="renteLening" value="4.5" min="0" max="50" step="0.1" aria-describedby="renteLening-tooltip">
+                                <input type="number" id="renteLening" min="0" max="50" step="0.1" aria-describedby="renteLening-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="renteLening-tooltip">Jaarlijkse rente op de lening. Rentekosten zijn aftrekbaar voor VPB</span>
                             </div>
@@ -77,7 +77,7 @@
                         <div class="form-group">
                             <label for="leningLooptijd">Looptijd Lening (jaren)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="leningLooptijd" value="10" min="0" max="50" step="1" aria-describedby="leningLooptijd-tooltip">
+                                <input type="number" id="leningLooptijd" min="0" max="50" step="1" aria-describedby="leningLooptijd-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="leningLooptijd-tooltip">Aflostermijn van de lening (kan afwijken van investeringsperiode)</span>
                             </div>
@@ -105,7 +105,7 @@
                         <div class="form-group">
                             <label for="looptijd">Looptijd Investering (jaren)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="looptijd" value="10" min="0" max="50" step="1" aria-describedby="looptijd-tooltip">
+                                <input type="number" id="looptijd" min="0" max="50" step="1" aria-describedby="looptijd-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="looptijd-tooltip">Totale periode waarover de investering wordt doorgerekend</span>
                             </div>
@@ -126,7 +126,7 @@
                         <div class="form-group">
                             <label for="rendement">Verwacht Rendement (%)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="rendement" value="0.8" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
+                                <input type="number" id="rendement" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="rendement-tooltip">Verwacht rendement op totale investering (eigen vermogen + lening)</span>
                             </div>
@@ -135,7 +135,7 @@
                         <div class="form-group">
                             <label for="herinvestering">Herinvestering (% van winst)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="herinvestering" value="80" min="0" max="100" step="1" aria-describedby="herinvestering-tooltip">
+                                <input type="number" id="herinvestering" min="0" max="100" step="1" aria-describedby="herinvestering-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="herinvestering-tooltip">Percentage van winst dat wordt geherinvesteerd. Rest gaat naar cash reserve</span>
                             </div>
@@ -144,7 +144,7 @@
                         <div class="form-group">
                             <label for="herinvesteringDrempel">Herinvestering Drempel (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="herinvesteringDrempel" value="1000" min="0" step="50" aria-describedby="herinvesteringDrempel-tooltip">
+                                <input type="number" id="herinvesteringDrempel" min="0" step="50" aria-describedby="herinvesteringDrempel-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="herinvesteringDrempel-tooltip">Minimaal bedrag voor herinvestering. Kleinere bedragen blijven in cash</span>
                             </div>
@@ -159,7 +159,7 @@
                         <div class="form-group">
                             <label for="vasteKosten">Vaste Kosten per Jaar (€)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="vasteKosten" value="5000" min="0" step="100" aria-describedby="vasteKosten-tooltip">
+                                <input type="number" id="vasteKosten" min="0" step="100" aria-describedby="vasteKosten-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="vasteKosten-tooltip">Jaarlijkse vaste kosten zoals beheer, administratie, accountant</span>
                             </div>
@@ -169,9 +169,8 @@
                             <label for="belastingType">Belasting Type</label>
                             <div class="input-wrapper">
                                 <select id="belastingType" aria-describedby="belastingType-tooltip">
-                                    <option value="vpb">Vennootschapsbelasting (25.8%)</option>
-                                    <option value="prive">Privé / Box 1 (31%)</option>
-                                    <option value="box3">Box 3 Vermogen (31%)</option>
+                                    <option value="vpb">Zakelijk (VPB)</option>
+                                    <option value="prive">Privé</option>
                                 </select>
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="belastingType-tooltip">Kies het juiste belastingregime voor uw situatie</span>
@@ -181,9 +180,60 @@
                         <div class="form-group">
                             <label for="inflatie">Inflatie (% per jaar)</label>
                             <div class="input-wrapper">
-                                <input type="number" id="inflatie" value="2.5" min="0" max="20" step="0.1" aria-describedby="inflatie-tooltip">
+                                <input type="number" id="inflatie" min="0" max="20" step="0.1" aria-describedby="inflatie-tooltip">
                                 <span class="tooltip-icon" aria-label="Meer informatie">?</span>
                                 <span class="tooltip" id="inflatie-tooltip">Jaarlijkse inflatie voor reële waarde berekeningen</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Privé Belasting Opties - Verborgen by default -->
+                    <div id="priveOptions" class="form-grid" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                        <div class="form-group">
+                            <label for="priveSubType">Privé Belasting Methode</label>
+                            <div class="input-wrapper">
+                                <select id="priveSubType" aria-describedby="priveSubType-tooltip">
+                                    <option value="box1">Box 1 - Inkomstenbelasting op winst</option>
+                                    <option value="box3">Box 3 - Vermogensbelasting</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="priveSubType-tooltip">Box 1: belasting over daadwerkelijke winst. Box 3: belasting over fictief rendement op vermogen</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box1Options">
+                            <label for="box1Tarief">Box 1 Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box1Tarief" min="0" max="60" step="0.1" aria-describedby="box1Tarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box1Tarief-tooltip">Uw marginale tarief box 1 (afhankelijk van totaal inkomen)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3Options" style="display: none;">
+                            <label for="box3Rendement">Box 3 Fictief Rendement (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Rendement" min="0" max="20" step="0.1" aria-describedby="box3Rendement-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Rendement-tooltip">Fictief rendement percentage voor box 3 (2024: 6.04% tot €57.000, daarna hoger)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3TariefGroup" style="display: none;">
+                            <label for="box3Tarief">Box 3 Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Tarief" min="0" max="50" step="0.1" aria-describedby="box3Tarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Tarief-tooltip">Belastingtarief over fictief rendement box 3 (2024: 31%)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3VrijstellingGroup" style="display: none;">
+                            <label for="box3Vrijstelling">Box 3 Heffingsvrije Voet (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Vrijstelling" min="0" step="1000" aria-describedby="box3Vrijstelling-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Vrijstelling-tooltip">Heffingsvrije voet box 3 (2024: €57.000 voor alleenstaanden)</span>
                             </div>
                         </div>
                     </div>
