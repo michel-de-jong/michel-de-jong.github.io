@@ -1,6 +1,6 @@
 // Configuration file for ROI Calculator
 const Config = {
-    // Default Values - matching index.html
+    // Default Values
     defaults: {
         startKapitaal: 10000,
         lening: 10000,
@@ -14,16 +14,12 @@ const Config = {
         vasteKosten: 0,
         herinvesteringDrempel: 0,
         inflatie: 2.5,
-        belastingType: 'zakelijk',
-        vpbTarief: 25.8,
-        box3Tarief: 36
+        inflatieToggle: false
     },
     
     // Tax Configuration
     tax: {
-        VPB_RATE: 0.258,        // 25.8% Dutch corporate tax rate (2024)
-        BOX3_RATE: 0.36,        // 36% Box 3 wealth tax rate (2024)
-        BOX3_FICTIEF: 0.0604    // 6.04% fictitious return for Box 3 (2024)
+        VPB_RATE: 0.258 // 25.8% Dutch corporate tax
     },
     
     // Chart Configuration
@@ -53,10 +49,7 @@ const Config = {
         defaultSimulations: 10000,
         minSimulations: 1000,
         maxSimulations: 100000,
-        histogramBins: 50,
-        defaultVolatility: 3,       // Default 3% volatility
-        defaultRenteVolatility: 1,  // Default 1% interest rate volatility
-        defaultKostenVolatility: 10 // Default 10% cost volatility
+        histogramBins: 50
     },
     
     // Export Configuration
@@ -67,20 +60,18 @@ const Config = {
         dateFormat: 'nl-NL'
     },
     
-    // Validation Rules - updated to match actual input constraints
+    // Validation Rules
     validation: {
         startKapitaal: { min: 0, max: null, step: 1000 },
         lening: { min: 0, max: null, step: 1000 },
-        renteLening: { min: 0, max: 50, step: 0.1 },
-        looptijd: { min: 0, max: 50, step: 1 },
-        leningLooptijd: { min: 0, max: 50, step: 1 },
+        renteLening: { min: 0, max: 20, step: 0.1 },
+        looptijd: { min: 1, max: 50, step: 1 },
+        leningLooptijd: { min: 1, max: 50, step: 1 },
         rendement: { min: -10, max: 50, step: 0.1 },
-        herinvestering: { min: 0, max: 100, step: 1 },
+        herinvestering: { min: 0, max: 100, step: 5 },
         vasteKosten: { min: 0, max: null, step: 100 },
-        herinvesteringDrempel: { min: 0, max: null, step: 50 },
-        inflatie: { min: 0, max: 20, step: 0.1 },
-        vpbTarief: { min: 0, max: 50, step: 0.1 },
-        box3Tarief: { min: 0, max: 50, step: 0.1 }
+        herinvesteringDrempel: { min: 0, max: null, step: 100 },
+        inflatie: { min: 0, max: 10, step: 0.1 }
     },
     
     // Locale Configuration
@@ -121,8 +112,7 @@ const Config = {
         enableCloudSync: false,
         enableAdvancedCharts: true,
         enableExportOptions: true,
-        enableDarkMode: true,
-        enableTaxCalculations: true
+        enableDarkMode: true
     },
     
     // Performance Settings
@@ -131,24 +121,6 @@ const Config = {
         throttleDelay: 100,
         maxChartDataPoints: 1000,
         enableWebWorkers: false
-    },
-    
-    // Tax specific settings
-    taxSettings: {
-        // VPB settings
-        vpb: {
-            defaultRate: 25.8,
-            smallBusinessRate: 19,     // First €395,000
-            smallBusinessThreshold: 395000,
-            deductibleItems: ['interest', 'costs', 'depreciation']
-        },
-        // Box 3 settings
-        box3: {
-            defaultRate: 36,
-            fictitiousReturn: 6.04,    // 2024 rate
-            taxFreeAllowance: 57000,   // 2024 heffingsvrij vermogen
-            partnerAllowance: 114000   // With fiscal partner
-        }
     }
 };
 
@@ -165,7 +137,3 @@ Object.freeze(Config.storage);
 Object.freeze(Config.api);
 Object.freeze(Config.features);
 Object.freeze(Config.performance);
-Object.freeze(Config.taxSettings);
-
-// Make Config globally available
-window.Config = Config;
