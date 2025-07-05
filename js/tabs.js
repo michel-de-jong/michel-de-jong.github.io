@@ -1,141 +1,273 @@
-// Tab Content Templates and Management - IMPROVED FOR MOBILE
+// Tab Content Templates and Management - ENHANCED VISUAL DESIGN
 
 const TabTemplates = {
     scenarios: `
         <section id="scenarios" class="tab-pane" role="tabpanel">
-            <h2>Scenario Analyse</h2>
-            <p>Vergelijk verschillende scenario's en voer stress tests uit</p>
+            <h2>📊 Scenario Analyse</h2>
+            <p class="tab-description">Vergelijk verschillende scenario's en analyseer de impact van veranderingen in uw parameters</p>
             
-            <div class="scenario-grid">
-                <div class="scenario-card">
-                    <h3>Best Case</h3>
-                    <div class="form-group">
-                        <label for="bestCaseRendement">Rendement (%)</label>
-                        <input type="number" id="bestCaseRendement" value="1.2" step="0.1">
+            <div class="scenario-comparison">
+                <div class="scenario-grid">
+                    <div class="scenario-card best-case">
+                        <div class="scenario-header">
+                            <span class="scenario-icon">🌟</span>
+                            <h3>Best Case</h3>
+                        </div>
+                        <div class="scenario-body">
+                            <div class="form-group">
+                                <label for="bestCaseRendement">
+                                    <span class="label-icon">📈</span>
+                                    Rendement (%)
+                                </label>
+                                <input type="number" id="bestCaseRendement" value="1.2" step="0.1" class="scenario-input">
+                                <div class="input-help">Optimistisch scenario</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="bestCaseKosten">
+                                    <span class="label-icon">💰</span>
+                                    Vaste Kosten (€)
+                                </label>
+                                <input type="number" id="bestCaseKosten" value="4000" step="100" class="scenario-input">
+                                <div class="input-help">Lagere kosten verwacht</div>
+                            </div>
+                            <div class="scenario-result">
+                                <div class="result-label">Verwachte ROI</div>
+                                <div class="kpi-value scenario-roi" id="bestCaseROI">ROI: 0%</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="bestCaseKosten">Vaste Kosten (€)</label>
-                        <input type="number" id="bestCaseKosten" value="4000" step="100">
+                    
+                    <div class="scenario-card base-case">
+                        <div class="scenario-header">
+                            <span class="scenario-icon">📊</span>
+                            <h3>Base Case</h3>
+                        </div>
+                        <div class="scenario-body">
+                            <div class="form-group">
+                                <label for="baseCaseRendement">
+                                    <span class="label-icon">📈</span>
+                                    Rendement (%)
+                                </label>
+                                <input type="number" id="baseCaseRendement" value="0.8" step="0.1" class="scenario-input">
+                                <div class="input-help">Realistisch scenario</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="baseCaseKosten">
+                                    <span class="label-icon">💰</span>
+                                    Vaste Kosten (€)
+                                </label>
+                                <input type="number" id="baseCaseKosten" value="5000" step="100" class="scenario-input">
+                                <div class="input-help">Verwachte kosten</div>
+                            </div>
+                            <div class="scenario-result">
+                                <div class="result-label">Verwachte ROI</div>
+                                <div class="kpi-value scenario-roi" id="baseCaseROI">ROI: 0%</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-value" id="bestCaseROI">ROI: 0%</div>
-                </div>
-                
-                <div class="scenario-card">
-                    <h3>Base Case</h3>
-                    <div class="form-group">
-                        <label for="baseCaseRendement">Rendement (%)</label>
-                        <input type="number" id="baseCaseRendement" value="0.8" step="0.1">
+                    
+                    <div class="scenario-card worst-case">
+                        <div class="scenario-header">
+                            <span class="scenario-icon">⚠️</span>
+                            <h3>Worst Case</h3>
+                        </div>
+                        <div class="scenario-body">
+                            <div class="form-group">
+                                <label for="worstCaseRendement">
+                                    <span class="label-icon">📈</span>
+                                    Rendement (%)
+                                </label>
+                                <input type="number" id="worstCaseRendement" value="0.3" step="0.1" class="scenario-input">
+                                <div class="input-help">Pessimistisch scenario</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="worstCaseKosten">
+                                    <span class="label-icon">💰</span>
+                                    Vaste Kosten (€)
+                                </label>
+                                <input type="number" id="worstCaseKosten" value="6000" step="100" class="scenario-input">
+                                <div class="input-help">Hogere kosten risico</div>
+                            </div>
+                            <div class="scenario-result">
+                                <div class="result-label">Verwachte ROI</div>
+                                <div class="kpi-value scenario-roi" id="worstCaseROI">ROI: 0%</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="baseCaseKosten">Vaste Kosten (€)</label>
-                        <input type="number" id="baseCaseKosten" value="5000" step="100">
-                    </div>
-                    <div class="kpi-value" id="baseCaseROI">ROI: 0%</div>
-                </div>
-                
-                <div class="scenario-card">
-                    <h3>Worst Case</h3>
-                    <div class="form-group">
-                        <label for="worstCaseRendement">Rendement (%)</label>
-                        <input type="number" id="worstCaseRendement" value="0.3" step="0.1">
-                    </div>
-                    <div class="form-group">
-                        <label for="worstCaseKosten">Vaste Kosten (€)</label>
-                        <input type="number" id="worstCaseKosten" value="6000" step="100">
-                    </div>
-                    <div class="kpi-value" id="worstCaseROI">ROI: 0%</div>
                 </div>
             </div>
             
-            <div class="chart-container mt-4">
-                <canvas id="scenarioChart"></canvas>
+            <div class="scenario-visualization">
+                <div class="chart-container mt-4">
+                    <canvas id="scenarioChart"></canvas>
+                </div>
             </div>
             
-            <h3 class="mt-4">Stress Test</h3>
-            <button class="btn btn-primary" id="runStressTestBtn">Run Stress Test</button>
-            <div id="stressTestResults" class="mt-3"></div>
+            <div class="stress-test-section">
+                <h3 class="section-header">
+                    <span class="header-icon">🔬</span>
+                    Stress Test Analyse
+                </h3>
+                <p class="section-description">Test de robuustheid van uw investering onder verschillende negatieve scenario's</p>
+                
+                <button class="btn btn-primary btn-lg" id="runStressTestBtn">
+                    <span class="btn-icon">▶️</span>
+                    Start Stress Test
+                </button>
+                
+                <div id="stressTestResults" class="stress-test-results"></div>
+            </div>
         </section>
     `,
     
     montecarlo: `
         <section id="montecarlo" class="tab-pane" role="tabpanel">
-            <h2>Monte Carlo Simulatie</h2>
-            <p>Probabilistische analyse met duizenden scenario's voor risico-inzicht</p>
+            <h2>🎲 Monte Carlo Simulatie</h2>
+            <p class="tab-description">Geavanceerde probabilistische analyse met duizenden scenario's voor diepgaand risico-inzicht</p>
             
             <div class="monte-carlo-controls">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="mcSimulations">Aantal Simulaties</label>
-                        <div class="input-wrapper">
+                <h3 class="control-header">
+                    <span class="header-icon">⚙️</span>
+                    Simulatie Parameters
+                </h3>
+                
+                <div class="parameter-grid">
+                    <div class="parameter-card">
+                        <div class="parameter-header">
+                            <span class="param-icon">🔢</span>
+                            <label for="mcSimulations">Aantal Simulaties</label>
+                        </div>
+                        <div class="parameter-body">
                             <input type="number" id="mcSimulations" value="10000" min="1000" max="100000" step="1000">
-                            <span class="tooltip-icon">?</span>
-                            <span class="tooltip">Meer simulaties = nauwkeuriger resultaat maar langere rekentijd</span>
+                            <div class="parameter-scale">
+                                <span>1K</span>
+                                <div class="scale-bar">
+                                    <div class="scale-fill" style="width: 10%"></div>
+                                </div>
+                                <span>100K</span>
+                            </div>
+                            <div class="parameter-help">Meer simulaties = nauwkeuriger resultaat</div>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="mcVolatility">Rendement Volatiliteit (%)</label>
-                        <div class="input-wrapper">
+                    <div class="parameter-card">
+                        <div class="parameter-header">
+                            <span class="param-icon">📊</span>
+                            <label for="mcVolatility">Rendement Volatiliteit (%)</label>
+                        </div>
+                        <div class="parameter-body">
                             <input type="number" id="mcVolatility" value="3" min="0" max="20" step="0.5">
-                            <span class="tooltip-icon">?</span>
-                            <span class="tooltip">Standaarddeviatie van het rendement (hoger = meer risico)</span>
+                            <div class="volatility-indicator">
+                                <div class="volatility-bar low"></div>
+                                <div class="volatility-bar medium active"></div>
+                                <div class="volatility-bar high"></div>
+                            </div>
+                            <div class="parameter-help">Standaarddeviatie van het rendement</div>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="mcRenteVolatility">Rente Volatiliteit (%)</label>
-                        <div class="input-wrapper">
+                    <div class="parameter-card">
+                        <div class="parameter-header">
+                            <span class="param-icon">💸</span>
+                            <label for="mcRenteVolatility">Rente Volatiliteit (%)</label>
+                        </div>
+                        <div class="parameter-body">
                             <input type="number" id="mcRenteVolatility" value="1" min="0" max="5" step="0.1">
-                            <span class="tooltip-icon">?</span>
-                            <span class="tooltip">Variatie in rentetarieven over tijd</span>
+                            <div class="volatility-indicator">
+                                <div class="volatility-bar low active"></div>
+                                <div class="volatility-bar medium"></div>
+                                <div class="volatility-bar high"></div>
+                            </div>
+                            <div class="parameter-help">Variatie in rentetarieven</div>
                         </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="mcKostenVolatility">Kosten Volatiliteit (%)</label>
-                        <div class="input-wrapper">
+                    <div class="parameter-card">
+                        <div class="parameter-header">
+                            <span class="param-icon">📉</span>
+                            <label for="mcKostenVolatility">Kosten Volatiliteit (%)</label>
+                        </div>
+                        <div class="parameter-body">
                             <input type="number" id="mcKostenVolatility" value="10" min="0" max="50" step="5">
-                            <span class="tooltip-icon">?</span>
-                            <span class="tooltip">Variatie in vaste kosten (percentage van basis)</span>
+                            <div class="volatility-indicator">
+                                <div class="volatility-bar low"></div>
+                                <div class="volatility-bar medium active"></div>
+                                <div class="volatility-bar high"></div>
+                            </div>
+                            <div class="parameter-help">Variatie in vaste kosten</div>
                         </div>
                     </div>
                 </div>
                 
-                <button class="btn btn-primary" id="runMonteCarloBtn">
-                    <span>🎲</span> Start Monte Carlo Simulatie
-                </button>
+                <div class="simulation-action">
+                    <button class="btn btn-primary btn-xl" id="runMonteCarloBtn">
+                        <span class="btn-icon">🎲</span>
+                        Start Monte Carlo Simulatie
+                    </button>
+                </div>
             </div>
             
             <div class="loading" id="mcLoading">
-                <div class="spinner"></div>
-                <p>Simulatie wordt uitgevoerd...</p>
+                <div class="loading-animation">
+                    <div class="dice-animation">
+                        <span class="dice">🎲</span>
+                        <span class="dice">🎲</span>
+                        <span class="dice">🎲</span>
+                    </div>
+                </div>
+                <p>Simulatie wordt uitgevoerd... <span class="progress">0%</span></p>
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
             </div>
             
             <div class="simulation-results" id="mcResults" style="display: none;">
-                <div class="result-card">
-                    <h4>Mediaan ROI (P50)</h4>
-                    <div class="result-value" id="mcMedianROI">0%</div>
-                </div>
-                <div class="result-card">
-                    <h4>95% Confidence (P5-P95)</h4>
-                    <div class="result-value" id="mcConfidence">0% - 0%</div>
-                </div>
-                <div class="result-card">
-                    <h4>Kans op Verlies</h4>
-                    <div class="result-value" id="mcLossProb">0%</div>
-                </div>
-                <div class="result-card">
-                    <h4>Value at Risk (5%)</h4>
-                    <div class="result-value" id="mcVaR">€ 0</div>
+                <h3 class="results-header">
+                    <span class="header-icon">📊</span>
+                    Simulatie Resultaten
+                </h3>
+                
+                <div class="results-grid">
+                    <div class="result-card primary">
+                        <div class="result-icon">📊</div>
+                        <h4>Mediaan ROI (P50)</h4>
+                        <div class="result-value" id="mcMedianROI">0%</div>
+                        <div class="result-description">Meest waarschijnlijke uitkomst</div>
+                    </div>
+                    
+                    <div class="result-card info">
+                        <div class="result-icon">🎯</div>
+                        <h4>95% Confidence Interval</h4>
+                        <div class="result-value" id="mcConfidence">0% - 0%</div>
+                        <div class="result-description">Waarschijnlijke range (P5-P95)</div>
+                    </div>
+                    
+                    <div class="result-card warning">
+                        <div class="result-icon">⚠️</div>
+                        <h4>Kans op Verlies</h4>
+                        <div class="result-value" id="mcLossProb">0%</div>
+                        <div class="result-description">Percentage negatieve uitkomsten</div>
+                    </div>
+                    
+                    <div class="result-card danger">
+                        <div class="result-icon">📉</div>
+                        <h4>Value at Risk (5%)</h4>
+                        <div class="result-value" id="mcVaR">€ 0</div>
+                        <div class="result-description">Maximum verlies in 95% gevallen</div>
+                    </div>
                 </div>
             </div>
             
-            <div class="chart-container mt-4" style="display: none;" id="mcChartContainer">
-                <canvas id="monteCarloChart"></canvas>
-            </div>
-            
-            <div class="chart-container mt-4" style="display: none;" id="mcDistContainer">
-                <canvas id="distributionChart"></canvas>
+            <div class="monte-carlo-charts">
+                <div class="chart-container mt-4" style="display: none;" id="mcChartContainer">
+                    <h4 class="chart-title">ROI Distributie over Simulaties</h4>
+                    <canvas id="monteCarloChart"></canvas>
+                </div>
+                
+                <div class="chart-container mt-4" style="display: none;" id="mcDistContainer">
+                    <h4 class="chart-title">Waarschijnlijkheidsverdeling</h4>
+                    <canvas id="distributionChart"></canvas>
+                </div>
             </div>
         </section>
     `,
@@ -143,15 +275,21 @@ const TabTemplates = {
     waterfall: `
         <section id="waterfall" class="tab-pane" role="tabpanel">
             <h2>💧 Cashflow Waterfall Analyse</h2>
-            <p>Gedetailleerd overzicht van alle geldstromen per periode</p>
+            <p class="tab-description">Gedetailleerd overzicht van alle geldstromen per periode met visuele breakdown</p>
             
             <div class="waterfall-controls">
                 <div class="period-selector-group">
-                    <label for="waterfallPeriod">📅 Selecteer Periode:</label>
+                    <label for="waterfallPeriod">
+                        <span class="label-icon">📅</span>
+                        Selecteer Periode:
+                    </label>
                     <select id="waterfallPeriod" class="period-select">
                         <!-- Dynamically populated -->
                     </select>
-                    <button class="btn btn-sm btn-secondary" id="comparePeriodsBtn">📊 Vergelijk Periodes</button>
+                    <button class="btn btn-sm btn-secondary" id="comparePeriodsBtn">
+                        <span class="btn-icon">📊</span>
+                        Vergelijk Periodes
+                    </button>
                 </div>
                 
                 <div class="view-toggle">
@@ -221,7 +359,7 @@ const TabTemplates = {
                                     <th>Component</th>
                                     <th>Bedrag</th>
                                     <th>% van Bruto</th>
-                                    <th>% van Netto</th>
+                                    <th>% van Totaal</th>
                                     <th>Impact</th>
                                 </tr>
                             </thead>
@@ -234,13 +372,13 @@ const TabTemplates = {
             </div>
             
             <div class="waterfall-insights mt-4">
-                <h3>💡 Inzichten</h3>
+                <h3>💡 Inzichten & Aanbevelingen</h3>
                 <div id="waterfallInsights" class="insights-grid">
                     <!-- Dynamically populated insights -->
                 </div>
             </div>
             
-            <div class="mobile-table-hint mt-2" style="font-size: 12px; color: #6c757d;">
+            <div class="mobile-table-hint mt-2">
                 💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
             </div>
         </section>
@@ -248,124 +386,216 @@ const TabTemplates = {
     
     portfolio: `
         <section id="portfolio" class="tab-pane" role="tabpanel">
-            <h2>Multi-Asset Portfolio Builder</h2>
-            <p>Bouw een gediversifieerde portfolio met verschillende assets</p>
+            <h2>🏦 Multi-Asset Portfolio Builder</h2>
+            <p class="tab-description">Bouw een gediversifieerde portfolio met verschillende assets en analyseer risico/rendement verhoudingen</p>
             
-            <div id="assetList">
-                <div class="asset-row">
-                    <input type="text" placeholder="Asset naam" class="asset-name">
-                    <input type="number" placeholder="Bedrag (€)" class="asset-amount" min="0" step="1000">
-                    <input type="number" placeholder="Rendement %" class="asset-return" step="0.1">
-                    <input type="number" placeholder="Risico %" class="asset-risk" min="0" max="100" step="1">
-                    <button class="btn-remove" data-action="remove">×</button>
+            <div class="portfolio-builder">
+                <h3 class="section-header">
+                    <span class="header-icon">📊</span>
+                    Portfolio Samenstelling
+                </h3>
+                
+                <div id="assetList" class="asset-list">
+                    <div class="asset-row">
+                        <div class="asset-field">
+                            <label>Asset Naam</label>
+                            <input type="text" placeholder="Bijv. Aandelen" class="asset-name">
+                        </div>
+                        <div class="asset-field">
+                            <label>Bedrag (€)</label>
+                            <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
+                        </div>
+                        <div class="asset-field">
+                            <label>Rendement %</label>
+                            <input type="number" placeholder="7.5" class="asset-return" step="0.1">
+                        </div>
+                        <div class="asset-field">
+                            <label>Risico %</label>
+                            <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
+                        </div>
+                        <button class="btn-remove" data-action="remove">×</button>
+                    </div>
+                </div>
+                
+                <div class="portfolio-controls mt-3">
+                    <button class="btn btn-secondary" id="addAssetBtn">
+                        <span class="btn-icon">➕</span>
+                        Asset Toevoegen
+                    </button>
+                    <button class="btn btn-success" id="calculatePortfolioBtn">
+                        <span class="btn-icon">📊</span>
+                        Portfolio Berekenen
+                    </button>
                 </div>
             </div>
             
-            <div class="portfolio-controls mt-3">
-                <button class="btn btn-primary" id="addAssetBtn">+ Asset Toevoegen</button>
-                <button class="btn btn-success" id="calculatePortfolioBtn">Portfolio Berekenen</button>
+            <div class="portfolio-metrics">
+                <h3 class="section-header">
+                    <span class="header-icon">📈</span>
+                    Portfolio Prestaties
+                </h3>
+                
+                <div class="kpi-grid mt-4">
+                    <div class="kpi-card">
+                        <div class="kpi-icon">💰</div>
+                        <div class="kpi-label">Portfolio Waarde</div>
+                        <div class="kpi-value" id="portfolioWaarde">€ 0</div>
+                    </div>
+                    <div class="kpi-card green">
+                        <div class="kpi-icon">📈</div>
+                        <div class="kpi-label">Gewogen Rendement</div>
+                        <div class="kpi-value" id="portfolioRendement">0%</div>
+                    </div>
+                    <div class="kpi-card orange">
+                        <div class="kpi-icon">⚠️</div>
+                        <div class="kpi-label">Portfolio Risico</div>
+                        <div class="kpi-value" id="portfolioRisico">0%</div>
+                    </div>
+                </div>
             </div>
             
-            <div class="kpi-grid mt-4">
-                <div class="kpi-card">
-                    <div class="kpi-label">Portfolio Waarde</div>
-                    <div class="kpi-value" id="portfolioWaarde">€ 0</div>
+            <div class="portfolio-visualization">
+                <h3 class="section-header">
+                    <span class="header-icon">🎯</span>
+                    Asset Verdeling
+                </h3>
+                
+                <div class="chart-container mt-4">
+                    <canvas id="portfolioChart"></canvas>
                 </div>
-                <div class="kpi-card green">
-                    <div class="kpi-label">Gewogen Rendement</div>
-                    <div class="kpi-value" id="portfolioRendement">0%</div>
-                </div>
-                <div class="kpi-card orange">
-                    <div class="kpi-label">Portfolio Risico</div>
-                    <div class="kpi-value" id="portfolioRisico">0%</div>
-                </div>
-            </div>
-            
-            <div class="chart-container mt-4">
-                <canvas id="portfolioChart"></canvas>
             </div>
         </section>
     `,
     
     saved: `
         <section id="saved" class="tab-pane" role="tabpanel">
-            <h2>Opgeslagen Scenario's</h2>
-            <p>Beheer en vergelijk uw opgeslagen scenario's</p>
+            <h2>💾 Opgeslagen Scenario's</h2>
+            <p class="tab-description">Beheer en vergelijk uw opgeslagen investeringsscenario's</p>
             
-            <button class="btn btn-primary" id="saveScenarioBtn">📋 Huidig Scenario Opslaan</button>
-            
-            <div id="savedScenariosList" class="mt-4">
-                <!-- Saved scenarios will be listed here -->
+            <div class="saved-controls">
+                <button class="btn btn-primary btn-lg" id="saveScenarioBtn">
+                    <span class="btn-icon">💾</span>
+                    Huidig Scenario Opslaan
+                </button>
             </div>
             
-            <div class="saved-scenarios-help mt-4" style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px;">
-                <h4 style="margin-bottom: 10px;">💡 Tips voor Scenario Beheer:</h4>
-                <ul style="margin-left: 20px; line-height: 1.6;">
-                    <li>Sla interessante combinaties van parameters op voor later vergelijken</li>
-                    <li>Gebruik verschillende scenario's voor presentaties aan stakeholders</li>
-                    <li>Maximum van 50 scenario's worden bewaard</li>
-                    <li>Data wordt lokaal in uw browser opgeslagen</li>
-                </ul>
+            <div class="saved-scenarios-container">
+                <h3 class="section-header">
+                    <span class="header-icon">📋</span>
+                    Scenario Overzicht
+                </h3>
+                
+                <div id="savedScenariosList" class="saved-scenarios-list">
+                    <!-- Saved scenarios will be listed here -->
+                </div>
+            </div>
+            
+            <div class="saved-scenarios-help">
+                <div class="help-card">
+                    <h4>💡 Tips voor Scenario Beheer</h4>
+                    <ul>
+                        <li>Sla interessante combinaties van parameters op voor later vergelijken</li>
+                        <li>Gebruik verschillende scenario's voor presentaties aan stakeholders</li>
+                        <li>Maximum van 50 scenario's worden bewaard</li>
+                        <li>Data wordt lokaal in uw browser opgeslagen</li>
+                    </ul>
+                </div>
             </div>
         </section>
     `,
     
     export: `
         <section id="export" class="tab-pane" role="tabpanel">
-            <h2>Export Functies</h2>
-            <p>Exporteer uw analyses naar verschillende formaten</p>
+            <h2>📤 Export Functies</h2>
+            <p class="tab-description">Exporteer uw analyses naar verschillende formaten voor rapportage en presentaties</p>
             
             <div class="export-grid">
-                <div class="export-card">
+                <div class="export-card excel">
                     <div class="export-icon">📊</div>
                     <h3>Excel Export</h3>
-                    <p>Download complete analyse als Excel bestand met alle data en berekeningen</p>
-                    <button class="btn btn-success" id="exportExcelBtn">📥 Excel Downloaden</button>
+                    <p>Download complete analyse als Excel bestand met alle data, berekeningen en grafieken</p>
+                    <div class="export-features">
+                        <span class="feature">✓ Alle berekeningen</span>
+                        <span class="feature">✓ Jaarlijkse data</span>
+                        <span class="feature">✓ Scenario's</span>
+                    </div>
+                    <button class="btn btn-success btn-lg" id="exportExcelBtn">
+                        <span class="btn-icon">📥</span>
+                        Excel Downloaden
+                    </button>
                 </div>
                 
-                <div class="export-card">
+                <div class="export-card pdf">
                     <div class="export-icon">📄</div>
                     <h3>PDF Rapport</h3>
-                    <p>Genereer professioneel PDF rapport met samenvatting en grafieken</p>
-                    <button class="btn btn-danger" id="exportPDFBtn">📄 PDF Genereren</button>
+                    <p>Genereer professioneel PDF rapport met executive summary en belangrijkste inzichten</p>
+                    <div class="export-features">
+                        <span class="feature">✓ Executive summary</span>
+                        <span class="feature">✓ Grafieken</span>
+                        <span class="feature">✓ Professionele opmaak</span>
+                    </div>
+                    <button class="btn btn-danger btn-lg" id="exportPDFBtn">
+                        <span class="btn-icon">📄</span>
+                        PDF Genereren
+                    </button>
                 </div>
                 
-                <div class="export-card">
+                <div class="export-card images">
                     <div class="export-icon">🖼️</div>
                     <h3>Grafiek Export</h3>
-                    <p>Download alle grafieken als PNG afbeeldingen voor presentaties</p>
-                    <button class="btn btn-primary" id="exportChartsBtn">🖼️ Grafieken Downloaden</button>
+                    <p>Download alle grafieken als hoge resolutie PNG afbeeldingen voor presentaties</p>
+                    <div class="export-features">
+                        <span class="feature">✓ Hoge resolutie</span>
+                        <span class="feature">✓ Transparante achtergrond</span>
+                        <span class="feature">✓ Presentatie-klaar</span>
+                    </div>
+                    <button class="btn btn-primary btn-lg" id="exportChartsBtn">
+                        <span class="btn-icon">🖼️</span>
+                        Grafieken Downloaden
+                    </button>
                 </div>
             </div>
             
-            <div class="export-info mt-4" style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
-                <h4 style="color: #1976d2; margin-bottom: 15px;">📋 Export Informatie</h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; font-size: 14px;">
-                    <div>
-                        <strong>Excel Bestand bevat:</strong>
-                        <ul style="margin-left: 15px; margin-top: 5px;">
-                            <li>Alle invoerparameters</li>
+            <div class="export-info">
+                <h3 class="info-header">
+                    <span class="header-icon">ℹ️</span>
+                    Export Informatie
+                </h3>
+                
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h4>📊 Excel Bestand</h4>
+                        <p>Het Excel bestand bevat:</p>
+                        <ul>
+                            <li>Alle invoerparameters en instellingen</li>
                             <li>Jaarlijkse vermogensontwikkeling</li>
                             <li>Maandelijkse cashflow data</li>
                             <li>Scenario vergelijkingen</li>
+                            <li>Monte Carlo resultaten</li>
                         </ul>
                     </div>
-                    <div>
-                        <strong>PDF Rapport bevat:</strong>
-                        <ul style="margin-left: 15px; margin-top: 5px;">
-                            <li>Executive summary</li>
-                            <li>Key performance indicators</li>
-                            <li>Grafieken en visualisaties</li>
-                            <li>Professionele opmaak</li>
+                    
+                    <div class="info-card">
+                        <h4>📄 PDF Rapport</h4>
+                        <p>Het PDF rapport bevat:</p>
+                        <ul>
+                            <li>Executive summary met key metrics</li>
+                            <li>Grafische weergave van resultaten</li>
+                            <li>Risico analyse overzicht</li>
+                            <li>Professionele rapportage layout</li>
+                            <li>Print-vriendelijk formaat</li>
                         </ul>
                     </div>
-                    <div>
-                        <strong>Afbeelding Export:</strong>
-                        <ul style="margin-left: 15px; margin-top: 5px;">
-                            <li>Hoge resolutie PNG bestanden</li>
-                            <li>Alle actieve grafieken</li>
-                            <li>Klaar voor presentaties</li>
-                            <li>Transparante achtergrond</li>
+                    
+                    <div class="info-card">
+                        <h4>🖼️ Afbeeldingen</h4>
+                        <p>De grafiek export bevat:</p>
+                        <ul>
+                            <li>PNG bestanden in hoge resolutie</li>
+                            <li>Alle actieve grafieken en charts</li>
+                            <li>Transparante achtergrond optie</li>
+                            <li>Direct bruikbaar in presentaties</li>
+                            <li>Optimaal voor PowerPoint/Keynote</li>
                         </ul>
                     </div>
                 </div>
@@ -374,77 +604,534 @@ const TabTemplates = {
     `
 };
 
-// Add CSS for tab-specific styles - ENHANCED WITH MOBILE IMPROVEMENTS
+// Add CSS for tab-specific styles - ENHANCED VISUAL DESIGN
 const TabStyles = `
-    /* Scenario Cards */
+    /* General Tab Enhancements */
+    .tab-description {
+        color: #6c757d;
+        font-size: 16px;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        font-size: 1.3em;
+    }
+    
+    .header-icon {
+        font-size: 1.2em;
+    }
+    
+    .section-description {
+        color: #6c757d;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+    
+    /* Enhanced Scenario Cards */
+    .scenario-comparison {
+        margin-bottom: 40px;
+    }
+    
     .scenario-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
         margin-top: 20px;
     }
     
     .scenario-card {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         border: 2px solid transparent;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
+        overflow: hidden;
     }
     
     .scenario-card:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
     
-    .scenario-card h3 {
+    .scenario-card.best-case {
+        border-color: #28a745;
+    }
+    
+    .scenario-card.base-case {
+        border-color: #ffc107;
+    }
+    
+    .scenario-card.worst-case {
+        border-color: #dc3545;
+    }
+    
+    .scenario-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .scenario-icon {
+        font-size: 32px;
+    }
+    
+    .scenario-header h3 {
+        margin: 0;
+        color: var(--primary-color);
+        font-size: 1.2em;
+    }
+    
+    .scenario-body {
+        padding: 25px;
+    }
+    
+    .scenario-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .scenario-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    }
+    
+    .input-help {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .label-icon {
+        margin-right: 5px;
+    }
+    
+    .scenario-result {
+        margin-top: 25px;
+        padding: 20px;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .result-label {
+        font-size: 14px;
+        color: #495057;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .scenario-roi {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .scenario-roi.excellent {
+        color: #00c851;
+    }
+    
+    .scenario-roi.good {
+        color: #28a745;
+    }
+    
+    .scenario-roi.moderate {
+        color: #ffc107;
+    }
+    
+    .scenario-roi.poor {
+        color: #dc3545;
+    }
+    
+    /* Enhanced Stress Test Section */
+    .stress-test-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 40px;
+    }
+    
+    .btn-lg {
+        padding: 14px 28px;
+        font-size: 16px;
+    }
+    
+    .btn-xl {
+        padding: 18px 36px;
+        font-size: 18px;
+    }
+    
+    .btn-icon {
+        margin-right: 8px;
+        font-size: 1.1em;
+    }
+    
+    .stress-test-results {
+        margin-top: 30px;
+    }
+    
+    .stress-test-summary {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .stress-test-result {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
         margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border-left: 4px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .stress-test-result.severe {
+        border-left-color: #dc3545;
+    }
+    
+    .stress-test-result.moderate {
+        border-left-color: #ffc107;
+    }
+    
+    .stress-test-result.mild {
+        border-left-color: #fd7e14;
+    }
+    
+    .stress-test-result.positive {
+        border-left-color: #28a745;
+    }
+    
+    .stress-test-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .stress-test-icon {
+        font-size: 24px;
+    }
+    
+    .stress-test-metrics {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 15px;
+    }
+    
+    .metric {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .metric .label {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    .metric .value {
+        font-weight: 600;
+        font-size: 16px;
+    }
+    
+    /* Enhanced Monte Carlo Design */
+    .monte-carlo-controls {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .control-header {
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         color: var(--primary-color);
     }
     
-    /* Monte Carlo Specific */
-    .monte-carlo-controls {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
+    .parameter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
         margin-bottom: 30px;
     }
     
+    .parameter-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .parameter-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transform: translateY(-2px);
+    }
+    
+    .parameter-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .param-icon {
+        font-size: 24px;
+    }
+    
+    .parameter-body input {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    .parameter-scale {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .scale-bar {
+        flex: 1;
+        height: 4px;
+        background: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .scale-fill {
+        height: 100%;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+    
+    .volatility-indicator {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .volatility-bar {
+        flex: 1;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .volatility-bar.active {
+        background: var(--primary-color);
+    }
+    
+    .volatility-bar.low.active {
+        background: #28a745;
+    }
+    
+    .volatility-bar.medium.active {
+        background: #ffc107;
+    }
+    
+    .volatility-bar.high.active {
+        background: #dc3545;
+    }
+    
+    .parameter-help {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .simulation-action {
+        text-align: center;
+    }
+    
+    /* Enhanced Loading Animation */
+    .loading {
+        text-align: center;
+        padding: 60px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        margin: 20px 0;
+    }
+    
+    .loading-animation {
+        margin-bottom: 20px;
+    }
+    
+    .dice-animation {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .dice {
+        font-size: 48px;
+        animation: rollDice 1s ease-in-out infinite;
+    }
+    
+    .dice:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .dice:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes rollDice {
+        0%, 100% {
+            transform: rotateZ(0deg);
+        }
+        50% {
+            transform: rotateZ(360deg);
+        }
+    }
+    
+    .progress {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    .progress-bar {
+        width: 100%;
+        max-width: 400px;
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        margin: 15px auto 0;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    
+    /* Enhanced Results Display */
     .simulation-results {
+        margin-top: 40px;
+    }
+    
+    .results-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        color: var(--primary-color);
+    }
+    
+    .results-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 20px;
-        margin-top: 30px;
     }
     
     .result-card {
         background: white;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #e9ecef;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         text-align: center;
-        transition: transform 0.2s ease;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
     }
     
     .result-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .result-card.primary {
+        border-color: var(--primary-color);
+    }
+    
+    .result-card.info {
+        border-color: var(--info-color);
+    }
+    
+    .result-card.warning {
+        border-color: var(--warning-color);
+    }
+    
+    .result-card.danger {
+        border-color: var(--danger-color);
+    }
+    
+    .result-icon {
+        font-size: 36px;
+        margin-bottom: 15px;
     }
     
     .result-card h4 {
         color: #495057;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         font-size: 16px;
     }
     
     .result-value {
-        font-size: 24px;
-        font-weight: bold;
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 10px;
         color: var(--primary-color);
     }
     
-    /* Waterfall Specific - ENHANCED */
+    .result-value.excellent {
+        color: #00c851;
+    }
+    
+    .result-value.good {
+        color: #28a745;
+    }
+    
+    .result-value.moderate {
+        color: #ffc107;
+    }
+    
+    .result-value.poor {
+        color: #dc3545;
+    }
+    
+    .result-description {
+        font-size: 13px;
+        color: #6c757d;
+    }
+    
+    .monte-carlo-charts {
+        margin-top: 40px;
+    }
+    
+    .chart-title {
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 16px;
+        text-align: center;
+    }
+    
+    /* Enhanced Waterfall Styles */
     .waterfall-controls {
         display: flex;
         justify-content: space-between;
@@ -452,8 +1139,8 @@ const TabStyles = `
         flex-wrap: wrap;
         gap: 20px;
         margin-bottom: 30px;
-        padding: 20px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 25px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -470,6 +1157,9 @@ const TabStyles = `
         color: #495057;
         font-size: 16px;
         margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     
     .period-select {
@@ -619,16 +1309,16 @@ const TabStyles = `
     
     .insights-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 15px;
         margin-top: 15px;
     }
     
     .insight-card {
-        padding: 15px;
+        padding: 20px;
         background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 8px;
-        border-left: 3px solid #1976d2;
+        border-radius: 10px;
+        border-left: 4px solid #1976d2;
         font-size: 14px;
         line-height: 1.6;
     }
@@ -739,31 +1429,56 @@ const TabStyles = `
     .mobile-table-hint {
         text-align: center;
         font-style: italic;
+        font-size: 13px;
+        color: #6c757d;
     }
     
-    /* Portfolio Builder - IMPROVED */
+    /* Enhanced Portfolio Builder */
+    .portfolio-builder {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 30px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+    }
+    
+    .asset-list {
+        margin-top: 20px;
+    }
+    
     .asset-row {
         display: grid;
-        grid-template-columns: 2fr 1fr 1fr 1fr auto;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 10px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: end;
+        margin-bottom: 15px;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
         transition: all 0.3s ease;
     }
     
     .asset-row:hover {
-        background: #e9ecef;
-        transform: translateY(-1px);
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .asset-field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .asset-field label {
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 500;
     }
     
     .asset-row input {
         padding: 10px;
         border: 1px solid #ced4da;
-        border-radius: 5px;
+        border-radius: 6px;
         font-size: 14px;
     }
     
@@ -778,104 +1493,79 @@ const TabStyles = `
         color: white;
         border: none;
         padding: 8px 12px;
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 16px;
         line-height: 1;
-        transition: background-color 0.2s;
+        transition: all 0.2s;
         min-width: 40px;
+        align-self: center;
     }
     
     .btn-remove:hover {
         background: #c82333;
+        transform: scale(1.1);
     }
     
     .portfolio-controls {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         flex-wrap: wrap;
+        margin-top: 20px;
     }
     
-    /* Export Grid - ENHANCED */
-    .export-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 30px;
+    .portfolio-metrics {
+        margin-top: 40px;
     }
     
-    .export-card {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 30px;
-        border-radius: 12px;
+    .portfolio-metrics .kpi-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         text-align: center;
-        transition: all 0.3s ease;
-        border: 1px solid #dee2e6;
-        position: relative;
-        overflow: hidden;
+        padding: 25px;
     }
     
-    .export-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--danger-color));
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .export-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        background: white;
-    }
-    
-    .export-card:hover::before {
-        opacity: 1;
-    }
-    
-    .export-icon {
-        font-size: 48px;
-        margin-bottom: 15px;
-        display: block;
-    }
-    
-    .export-card h3 {
-        color: var(--primary-color);
+    .kpi-icon {
+        font-size: 36px;
         margin-bottom: 10px;
     }
     
-    .export-card p {
-        color: #6c757d;
-        margin-bottom: 20px;
-        line-height: 1.5;
+    .portfolio-visualization {
+        margin-top: 40px;
     }
     
-    .export-info {
-        border-left: 4px solid #1976d2;
+    /* Enhanced Saved Scenarios */
+    .saved-controls {
+        text-align: center;
+        margin-bottom: 40px;
     }
     
-    /* Saved Scenarios - IMPROVED */
+    .saved-scenarios-container {
+        margin-top: 40px;
+    }
+    
+    .saved-scenarios-list {
+        margin-top: 20px;
+    }
+    
     .saved-scenario {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        background: white;
         padding: 20px;
-        border-radius: 8px;
+        border-radius: 10px;
         margin-bottom: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid #e9ecef;
+        border: 2px solid #e9ecef;
         transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
     .saved-scenario:hover {
-        background: #e3f2fd;
         border-color: var(--primary-color);
         transform: translateX(5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
     }
     
     .scenario-info {
@@ -900,93 +1590,287 @@ const TabStyles = `
         gap: 10px;
     }
     
-    .saved-scenarios-help ul {
+    .saved-scenarios-help {
+        margin-top: 40px;
+    }
+    
+    .help-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 25px;
+        border-radius: 12px;
+        border-left: 4px solid #1976d2;
+    }
+    
+    .help-card h4 {
+        color: #1976d2;
+        margin-bottom: 15px;
+    }
+    
+    .help-card ul {
+        margin-left: 20px;
         color: #495057;
     }
     
-    .saved-scenarios-help li {
-        margin-bottom: 5px;
+    .help-card li {
+        margin-bottom: 8px;
+        line-height: 1.6;
     }
     
-    /* Stress Test Results */
-    .stress-test-result {
-        background: #f8f9fa;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        border-left: 4px solid var(--primary-color);
-        transition: all 0.3s ease;
+    /* Enhanced Export Cards */
+    .export-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 30px;
     }
     
-    .stress-test-result:hover {
-        background: #e9ecef;
-        transform: translateX(3px);
-    }
-    
-    .stress-test-result strong {
-        color: var(--primary-color);
-    }
-    
-    /* Loading Animation */
-    .loading {
+    .export-card {
+        background: white;
+        padding: 35px;
+        border-radius: 12px;
         text-align: center;
-        padding: 40px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        margin: 20px 0;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     
-    .loading p {
-        margin-top: 15px;
+    .export-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .export-card.excel::before {
+        background: linear-gradient(90deg, #28a745, #20c997);
+    }
+    
+    .export-card.pdf::before {
+        background: linear-gradient(90deg, #dc3545, #e91e63);
+    }
+    
+    .export-card.images::before {
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+    }
+    
+    .export-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .export-card:hover::before {
+        opacity: 1;
+    }
+    
+    .export-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        display: block;
+    }
+    
+    .export-card h3 {
+        color: var(--primary-color);
+        margin-bottom: 15px;
+        font-size: 1.4em;
+    }
+    
+    .export-card p {
         color: #6c757d;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .export-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 25px;
+    }
+    
+    .feature {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+    }
+    
+    .export-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 30px;
+        border-radius: 12px;
+        margin-top: 40px;
+        border-left: 4px solid #1976d2;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #1976d2;
+        margin-bottom: 25px;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+    }
+    
+    .info-card {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .info-card h4 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+    
+    .info-card p {
+        color: #6c757d;
+        margin-bottom: 15px;
         font-size: 14px;
     }
     
-    /* Mobile Specific Improvements */
+    .info-card ul {
+        margin-left: 20px;
+        color: #495057;
+        font-size: 14px;
+    }
+    
+    .info-card li {
+        margin-bottom: 8px;
+        line-height: 1.5;
+    }
+    
+    /* Trends and Ratios Styling */
+    .trends-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .trend-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .trend-card h4 {
+        color: var(--primary-color);
+        margin-bottom: 15px;
+    }
+    
+    .trend-stats {
+        margin-top: 15px;
+    }
+    
+    .trend-stats div {
+        padding: 8px 0;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 14px;
+        color: #495057;
+    }
+    
+    .trend-stats div:last-child {
+        border-bottom: none;
+    }
+    
+    .ratios-analysis {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+    }
+    
+    .ratios-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .ratio-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    
+    .ratio-label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .ratio-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 8px;
+    }
+    
+    .ratio-description {
+        font-size: 11px;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    
+    /* Mobile Responsive Improvements */
     @media (max-width: 768px) {
         .scenario-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .scenario-card {
+            margin-bottom: 0;
+        }
+        
+        .parameter-grid {
             grid-template-columns: 1fr;
             gap: 15px;
         }
         
-        .scenario-card {
-            padding: 15px;
-        }
-        
-        .monte-carlo-controls {
-            padding: 15px;
-        }
-        
-        .simulation-results {
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-        }
-        
-        .result-card {
-            padding: 15px;
+        .results-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
         }
         
         .result-value {
-            font-size: 18px;
+            font-size: 24px;
         }
         
         .export-grid {
             grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        
-        .export-card {
-            padding: 20px;
+            gap: 20px;
         }
         
         .export-icon {
-            font-size: 36px;
+            font-size: 48px;
         }
         
         .asset-row {
             grid-template-columns: 1fr;
-            gap: 8px;
-            padding: 12px;
+            gap: 10px;
+        }
+        
+        .asset-field {
+            width: 100%;
         }
         
         .portfolio-controls {
@@ -1001,7 +1885,6 @@ const TabStyles = `
             flex-direction: column;
             align-items: flex-start;
             gap: 15px;
-            padding: 15px;
         }
         
         .scenario-actions {
@@ -1014,13 +1897,10 @@ const TabStyles = `
             margin: 0 5px;
         }
         
-        .mobile-table-hint {
-            display: block;
-        }
-        
         .waterfall-controls {
             flex-direction: column;
             gap: 15px;
+            padding: 20px;
         }
         
         .period-selector-group {
@@ -1038,12 +1918,23 @@ const TabStyles = `
             gap: 15px;
         }
         
-        .summary-icon {
-            font-size: 24px;
+        .info-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
         
-        .summary-value {
-            font-size: 20px;
+        .btn-lg {
+            padding: 12px 20px;
+            font-size: 15px;
+        }
+        
+        .btn-xl {
+            padding: 14px 24px;
+            font-size: 16px;
+        }
+        
+        .dice {
+            font-size: 36px;
         }
         
         .analysis-tabs {
@@ -1054,21 +1945,35 @@ const TabStyles = `
             padding: 8px 15px;
             font-size: 14px;
         }
-        
-        .cashflow-table {
-            min-width: 500px;
-        }
-        
-        .cashflow-table th,
-        .cashflow-table td {
-            padding: 10px 8px;
-            font-size: 13px;
-        }
     }
     
-    @media (min-width: 769px) {
-        .mobile-table-hint {
-            display: none;
+    @media (max-width: 480px) {
+        .tab-description {
+            font-size: 14px;
+        }
+        
+        .section-header {
+            font-size: 1.1em;
+        }
+        
+        .result-card h4 {
+            font-size: 14px;
+        }
+        
+        .result-value {
+            font-size: 20px;
+        }
+        
+        .export-card {
+            padding: 25px;
+        }
+        
+        .export-card h3 {
+            font-size: 1.2em;
+        }
+        
+        .ratios-grid {
+            grid-template-columns: 1fr;
         }
     }
 `;
