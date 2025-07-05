@@ -2,16 +2,16 @@
 const Config = {
     // Default Values - THESE WILL BE USED TO POPULATE INPUT FIELDS
     defaults: {
-        startKapitaal: 100000,
-        lening: 200000,
-        renteLening: 4.5,
+        startKapitaal: 50000,
+        lening: 100000,
+        renteLening: 8,
         looptijd: 10,
         leningLooptijd: 10,
         rendementType: 'maandelijks',
-        rendement: 0.8,
+        rendement: 3,
         aflossingsType: 'annuitair',
         herinvestering: 80,
-        vasteKosten: 5000,
+        vasteKosten: 2500,
         herinvesteringDrempel: 1000,
         inflatie: 2.5,
         belastingType: 'vpb',
