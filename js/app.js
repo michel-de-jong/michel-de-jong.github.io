@@ -168,6 +168,7 @@ class ROICalculatorApp {
         // Scenario inputs - wait for DOM to be ready
         setTimeout(() => {
             this.setupScenarioListeners();
+            this.setupWaterfallListeners();
         }, 100);
         
         // Window resize handler for charts
@@ -196,6 +197,30 @@ class ROICalculatorApp {
                     input.setAttribute('data-user-modified', 'true');
                 });
             }
+        });
+    }
+    
+    // Setup waterfall specific listeners
+    setupWaterfallListeners() {
+        // Waterfall view toggle
+        const waterfallToggle = document.getElementById('waterfallViewToggle');
+        if (waterfallToggle) {
+            waterfallToggle.addEventListener('change', () => this.updateWaterfall());
+        }
+        
+        // Compare periods button
+        const compareBtn = document.getElementById('comparePeriodsBtn');
+        if (compareBtn) {
+            compareBtn.addEventListener('click', () => this.comparePeriods());
+        }
+        
+        // Analysis tabs
+        document.querySelectorAll('.analysis-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                document.querySelectorAll('.analysis-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                this.updateWaterfallAnalysis(e.target.dataset.analysis);
+            });
         });
     }
     
@@ -237,6 +262,9 @@ class ROICalculatorApp {
                 break;
             case 'exportChartsBtn':
                 this.exportCharts();
+                break;
+            case 'comparePeriodsBtn':
+                this.comparePeriods();
                 break;
         }
         
@@ -290,7 +318,11 @@ class ROICalculatorApp {
                             waterfallPeriod.addEventListener('change', () => this.updateWaterfall());
                             waterfallPeriod.setAttribute('data-listener-added', 'true');
                         }
+                        // Setup waterfall listeners
+                        this.setupWaterfallListeners();
                     }
+                    // Populate period selector
+                    this.populateWaterfallPeriods();
                     this.updateWaterfall();
                     break;
                 case 'portfolio':
@@ -408,6 +440,9 @@ class ROICalculatorApp {
             const roiElement = document.getElementById(`${scenario}CaseROI`);
             if (roiElement) {
                 roiElement.textContent = `ROI: ${roi.toFixed(1)}%`;
+                // Add color based on ROI
+                roiElement.className = 'kpi-value scenario-roi ' + 
+                    (roi > 20 ? 'excellent' : roi > 10 ? 'good' : roi > 0 ? 'moderate' : 'poor');
             }
         });
         
@@ -422,17 +457,42 @@ class ROICalculatorApp {
     runStressTest() {
         const results = calculator.runStressTest();
         
-        const resultsHTML = results.map(r => `
-            <div class="stress-test-result">
-                <strong>${r.name}:</strong> 
-                ROI: ${r.roi.toFixed(1)}% 
-                (Impact: <span class="${r.impact < 0 ? 'negative' : 'positive'}">${r.impact > 0 ? '+' : ''}${r.impact.toFixed(1)}%</span>)
-            </div>
-        `).join('');
+        const resultsHTML = results.map(r => {
+            const impactClass = r.impact < -10 ? 'severe' : r.impact < -5 ? 'moderate' : r.impact < 0 ? 'mild' : 'positive';
+            const icon = r.impact < -10 ? '⚠️' : r.impact < 0 ? '📉' : '📈';
+            
+            return `
+                <div class="stress-test-result ${impactClass}">
+                    <div class="stress-test-header">
+                        <span class="stress-test-icon">${icon}</span>
+                        <strong>${r.name}</strong>
+                    </div>
+                    <div class="stress-test-metrics">
+                        <div class="metric">
+                            <span class="label">ROI:</span>
+                            <span class="value">${r.roi.toFixed(1)}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Impact:</span>
+                            <span class="value ${r.impact < 0 ? 'negative' : 'positive'}">${r.impact > 0 ? '+' : ''}${r.impact.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                    <div class="impact-bar">
+                        <div class="impact-fill ${r.impact < 0 ? 'negative' : 'positive'}" 
+                             style="width: ${Math.min(Math.abs(r.impact) * 2, 100)}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('');
         
         const resultsContainer = document.getElementById('stressTestResults');
         if (resultsContainer) {
-            resultsContainer.innerHTML = resultsHTML;
+            resultsContainer.innerHTML = `
+                <div class="stress-test-summary">
+                    <p>Impact analyse van negatieve scenario's op uw ROI:</p>
+                </div>
+                ${resultsHTML}
+            `;
         }
     }
     
@@ -450,6 +510,12 @@ class ROICalculatorApp {
         if (chartContainer) chartContainer.style.display = 'none';
         if (distContainer) distContainer.style.display = 'none';
         
+        // Update loading text with progress
+        const loadingText = loading.querySelector('p');
+        if (loadingText) {
+            loadingText.innerHTML = 'Simulatie wordt uitgevoerd... <span class="progress">0%</span>';
+        }
+        
         // Get parameters
         const numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 10000;
         const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
@@ -461,16 +527,24 @@ class ROICalculatorApp {
         
         const stats = calculator.runMonteCarlo(numSimulations, volatility, renteVolatility, kostenVolatility);
         
-        // Update results
+        // Update results with enhanced display
         const medianElement = document.getElementById('mcMedianROI');
         const confidenceElement = document.getElementById('mcConfidence');
         const lossProbElement = document.getElementById('mcLossProb');
         const varElement = document.getElementById('mcVaR');
         
-        if (medianElement) medianElement.textContent = stats.median.toFixed(1) + '%';
+        if (medianElement) {
+            medianElement.textContent = stats.median.toFixed(1) + '%';
+            medianElement.className = 'result-value ' + 
+                (stats.median > 20 ? 'excellent' : stats.median > 10 ? 'good' : stats.median > 0 ? 'moderate' : 'poor');
+        }
         if (confidenceElement) confidenceElement.textContent = 
             `${stats.p5.toFixed(1)}% - ${stats.p95.toFixed(1)}%`;
-        if (lossProbElement) lossProbElement.textContent = stats.lossProb.toFixed(1) + '%';
+        if (lossProbElement) {
+            lossProbElement.textContent = stats.lossProb.toFixed(1) + '%';
+            lossProbElement.className = 'result-value ' + 
+                (stats.lossProb < 5 ? 'excellent' : stats.lossProb < 10 ? 'good' : stats.lossProb < 20 ? 'moderate' : 'poor');
+        }
         if (varElement) varElement.textContent = Utils.formatNumber(stats.vaR5);
         
         // Update charts
@@ -483,12 +557,28 @@ class ROICalculatorApp {
         if (distContainer) distContainer.style.display = 'block';
     }
     
-    // Update waterfall chart
+    // Populate waterfall periods
+    populateWaterfallPeriods() {
+        const periodSelect = document.getElementById('waterfallPeriod');
+        if (!periodSelect || periodSelect.options.length > 0) return;
+        
+        const looptijd = calculator.inputs.looptijd || 10;
+        let html = '<option value="totaal">Totale Periode</option>';
+        
+        for (let i = 1; i <= looptijd; i++) {
+            html += `<option value="jaar${i}">Jaar ${i}</option>`;
+        }
+        
+        periodSelect.innerHTML = html;
+    }
+    
+    // Update waterfall chart - FIXED
     updateWaterfall() {
         const periodElement = document.getElementById('waterfallPeriod');
         if (!periodElement) return;
         
-        const period = periodElement.value;
+        const period = periodElement.value || 'totaal';
+        const showPercentages = document.getElementById('waterfallViewToggle')?.checked || false;
         const waterfallData = calculator.getWaterfallData(period);
         
         if (waterfallData.totals) {
@@ -498,53 +588,277 @@ class ROICalculatorApp {
             const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
             const nettoInkomsten = bruttoInkomsten - belasting;
             const netto = nettoInkomsten - uitgaven;
-            const conversie = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
+            const cashflowRatio = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
+            const belastingTarief = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
             
-            const wfInkomstenElement = document.getElementById('wfInkomsten');
-            const wfUitgavenElement = document.getElementById('wfUitgaven');
-            const wfNettoElement = document.getElementById('wfNetto');
-            const wfConversieElement = document.getElementById('wfConversie');
+            // Update summary cards
+            const elements = {
+                wfTotaleInkomsten: Utils.formatNumber(bruttoInkomsten),
+                wfInkomstenDetail: `Bruto: ${Utils.formatNumber(bruttoInkomsten)} | Belasting: ${Utils.formatNumber(belasting)}`,
+                wfTotaleUitgaven: Utils.formatNumber(uitgaven),
+                wfUitgavenDetail: `Rente: ${Utils.formatNumber(totals.rente || 0)} | Aflossing: ${Utils.formatNumber(totals.aflossing || 0)} | Kosten: ${Utils.formatNumber(totals.kosten || 0)}`,
+                wfNettoCashflow: Utils.formatNumber(netto),
+                wfCashflowDetail: `${cashflowRatio.toFixed(1)}% van bruto inkomsten`,
+                wfBelastingTarief: `${belastingTarief.toFixed(1)}%`,
+                wfBelastingDetail: 'Op bruto rendement'
+            };
             
-            if (wfInkomstenElement) wfInkomstenElement.textContent = Utils.formatNumber(nettoInkomsten);
-            if (wfUitgavenElement) wfUitgavenElement.textContent = Utils.formatNumber(uitgaven);
-            if (wfNettoElement) wfNettoElement.textContent = Utils.formatNumber(netto);
-            if (wfConversieElement) wfConversieElement.textContent = conversie.toFixed(1) + '%';
+            Object.entries(elements).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            });
+            
+            // Generate insights
+            this.generateWaterfallInsights(waterfallData, period);
         }
         
         chartManager.updateWaterfallChart(waterfallData);
-        this.updateWaterfallTable(waterfallData);
+        this.updateWaterfallTable(waterfallData, showPercentages);
     }
     
-    // Update waterfall table - IMPROVED PERCENTAGE CALCULATION
-    updateWaterfallTable(waterfallData) {
+    // Update waterfall table - IMPROVED
+    updateWaterfallTable(waterfallData, showPercentages = false) {
         const tbody = document.getElementById('waterfallTableBody');
         if (!tbody || !waterfallData.data.length) return;
         
         let html = '';
         let cumulative = 0;
+        const totalBruto = waterfallData.totals?.bruttoOpbrengst || 0;
         const finalValue = waterfallData.finalValue || waterfallData.data[waterfallData.data.length - 1].value;
         
-        waterfallData.data.forEach((item, index) => {
+        waterfallData.data.forEach((item) => {
             if (item.type === 'start') {
                 cumulative = item.value;
             } else if (item.type !== 'total') {
                 cumulative += item.value;
             }
             
-            // Calculate percentage of final result instead of first item
-            const percentage = finalValue !== 0 ? Math.abs(item.value / finalValue * 100) : 0;
+            // Calculate percentages
+            const percentageOfBruto = totalBruto !== 0 ? Math.abs(item.value / totalBruto * 100) : 0;
+            const percentageOfFinal = finalValue !== 0 ? Math.abs(item.value / finalValue * 100) : 0;
+            
+            // Create impact bar
+            const impactBar = item.type !== 'start' && item.type !== 'total' ? 
+                `<div class="impact-bar">
+                    <div class="impact-fill ${item.value < 0 ? 'negative' : 'positive'}" 
+                         style="width: ${Math.min(percentageOfBruto, 100)}%"></div>
+                </div>` : '-';
             
             html += `
                 <tr>
                     <td>${item.label}</td>
                     <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">${Utils.formatNumber(item.value)}</td>
-                    <td>${item.type !== 'start' && item.type !== 'total' ? percentage.toFixed(1) + '%' : '-'}</td>
-                    <td>${Utils.formatNumber(item.type === 'total' ? item.value : cumulative)}</td>
+                    <td>${item.type !== 'start' && item.type !== 'total' ? percentageOfBruto.toFixed(1) + '%' : '-'}</td>
+                    <td>${item.type !== 'start' && item.type !== 'total' ? percentageOfFinal.toFixed(1) + '%' : '-'}</td>
+                    <td>${impactBar}</td>
                 </tr>
             `;
         });
         
         tbody.innerHTML = html;
+    }
+    
+    // Generate waterfall insights
+    generateWaterfallInsights(waterfallData, period) {
+        const insights = [];
+        const totals = waterfallData.totals;
+        
+        if (!totals) return;
+        
+        const bruttoInkomsten = totals.bruttoOpbrengst || 0;
+        const belasting = totals.belasting || 0;
+        const rente = totals.rente || 0;
+        const aflossing = totals.aflossing || 0;
+        const kosten = totals.kosten || 0;
+        const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
+        
+        // Cashflow efficiency
+        const efficiency = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
+        if (efficiency > 50) {
+            insights.push({
+                type: 'success',
+                text: `Uitstekende cashflow efficiëntie: ${efficiency.toFixed(1)}% van bruto rendement blijft over als netto cashflow.`
+            });
+        } else if (efficiency < 20) {
+            insights.push({
+                type: 'warning',
+                text: `Lage cashflow efficiëntie: slechts ${efficiency.toFixed(1)}% van bruto rendement blijft over. Overweeg kostenoptimalisatie.`
+            });
+        }
+        
+        // Tax burden
+        const taxRate = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
+        if (taxRate > 30) {
+            insights.push({
+                type: 'warning',
+                text: `Hoge belastingdruk: ${taxRate.toFixed(1)}% van bruto rendement. Onderzoek mogelijke fiscale optimalisatie.`
+            });
+        }
+        
+        // Interest vs returns
+        if (rente > 0 && bruttoInkomsten > 0) {
+            const interestRatio = (rente / bruttoInkomsten) * 100;
+            if (interestRatio > 40) {
+                insights.push({
+                    type: 'danger',
+                    text: `Rentekosten zijn ${interestRatio.toFixed(1)}% van bruto rendement. Leverage werkt mogelijk tegen u.`
+                });
+            }
+        }
+        
+        // Display insights
+        const container = document.getElementById('waterfallInsights');
+        if (container) {
+            container.innerHTML = insights.map(insight => `
+                <div class="insight-card ${insight.type}">
+                    ${insight.text}
+                </div>
+            `).join('');
+        }
+    }
+    
+    // Update waterfall analysis based on selected tab
+    updateWaterfallAnalysis(analysisType) {
+        const container = document.getElementById('analysisContent');
+        if (!container) return;
+        
+        switch(analysisType) {
+            case 'trends':
+                this.showWaterfallTrends(container);
+                break;
+            case 'ratios':
+                this.showWaterfallRatios(container);
+                break;
+            default:
+                // Components view is already shown by default
+                break;
+        }
+    }
+    
+    // Show waterfall trends analysis
+    showWaterfallTrends(container) {
+        const monthlyData = calculator.data.monthlyData;
+        if (!monthlyData || monthlyData.length === 0) {
+            container.innerHTML = '<p>Geen trend data beschikbaar.</p>';
+            return;
+        }
+        
+        // Calculate trends
+        const quarters = [];
+        for (let i = 0; i < monthlyData.length; i += 3) {
+            const quarterData = monthlyData.slice(i, Math.min(i + 3, monthlyData.length));
+            const avgBruto = quarterData.reduce((sum, m) => sum + m.bruttoOpbrengst, 0) / quarterData.length;
+            const avgNetto = quarterData.reduce((sum, m) => sum + m.netto, 0) / quarterData.length;
+            quarters.push({
+                quarter: Math.floor(i / 3) + 1,
+                bruto: avgBruto,
+                netto: avgNetto
+            });
+        }
+        
+        container.innerHTML = `
+            <div class="trends-grid">
+                <div class="trend-card">
+                    <h4>📈 Rendement Trend</h4>
+                    <p>Kwartaal gemiddelden van bruto rendement</p>
+                    <canvas id="trendChart" height="200"></canvas>
+                </div>
+                <div class="trend-card">
+                    <h4>📊 Cashflow Ontwikkeling</h4>
+                    <div class="trend-stats">
+                        ${quarters.map(q => `
+                            <div>Q${q.quarter}: ${Utils.formatNumber(q.netto)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Create trend chart
+        const ctx = document.getElementById('trendChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: quarters.map(q => `Q${q.quarter}`),
+                    datasets: [{
+                        label: 'Bruto Rendement',
+                        data: quarters.map(q => q.bruto),
+                        borderColor: Config.charts.colors.primary,
+                        tension: 0.4
+                    }, {
+                        label: 'Netto Cashflow',
+                        data: quarters.map(q => q.netto),
+                        borderColor: Config.charts.colors.secondary,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    }
+    
+    // Show waterfall ratios analysis
+    showWaterfallRatios(container) {
+        const waterfallData = calculator.getWaterfallData('totaal');
+        const totals = waterfallData.totals;
+        
+        if (!totals) {
+            container.innerHTML = '<p>Geen ratio data beschikbaar.</p>';
+            return;
+        }
+        
+        const bruttoInkomsten = totals.bruttoOpbrengst || 1; // Prevent division by zero
+        const nettoInkomsten = bruttoInkomsten - (totals.belasting || 0);
+        const totaleKosten = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+        
+        const ratios = {
+            cashflowRatio: ((nettoInkomsten - totaleKosten) / bruttoInkomsten * 100).toFixed(1),
+            belastingRatio: ((totals.belasting || 0) / bruttoInkomsten * 100).toFixed(1),
+            renteRatio: ((totals.rente || 0) / bruttoInkomsten * 100).toFixed(1),
+            kostenRatio: ((totals.kosten || 0) / bruttoInkomsten * 100).toFixed(1),
+            operationalEfficiency: (nettoInkomsten / bruttoInkomsten * 100).toFixed(1)
+        };
+        
+        container.innerHTML = `
+            <div class="ratios-analysis">
+                <h4>Financiële Ratio's</h4>
+                <div class="ratios-grid">
+                    <div class="ratio-card">
+                        <div class="ratio-label">Cashflow Conversie</div>
+                        <div class="ratio-value">${ratios.cashflowRatio}%</div>
+                        <div class="ratio-description">Netto cashflow als % van bruto</div>
+                    </div>
+                    <div class="ratio-card">
+                        <div class="ratio-label">Belastingdruk</div>
+                        <div class="ratio-value">${ratios.belastingRatio}%</div>
+                        <div class="ratio-description">Belasting als % van bruto</div>
+                    </div>
+                    <div class="ratio-card">
+                        <div class="ratio-label">Rentelast</div>
+                        <div class="ratio-value">${ratios.renteRatio}%</div>
+                        <div class="ratio-description">Rente als % van bruto</div>
+                    </div>
+                    <div class="ratio-card">
+                        <div class="ratio-label">Kostenratio</div>
+                        <div class="ratio-value">${ratios.kostenRatio}%</div>
+                        <div class="ratio-description">Vaste kosten als % van bruto</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Compare periods
+    comparePeriods() {
+        const periods = ['jaar1', 'jaar2', 'jaar3'];
+        const data = periods.map(period => calculator.getWaterfallData(period));
+        
+        // Create comparison view
+        alert('Periode vergelijking komt binnenkort beschikbaar!');
     }
     
     // Add asset to portfolio
