@@ -7,13 +7,13 @@
     <meta name="keywords" content="ROI calculator, investeringsanalyse, holding, Nederland, Monte Carlo, portfolio">
     <title>ROI Rekentool Suite</title>
     
-    <!-- Stylesheets -->
+    <!-- Main Stylesheet (imports all modular CSS) -->
     <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/responsive.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
     <link rel="preload" href="css/main.css" as="style">
+    <link rel="preload" href="css/base/variables.css" as="style">
 </head>
 <body>
     <header>
@@ -297,9 +297,17 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
     
-    <!-- Application Scripts -->
+    <!-- Core Application Scripts -->
     <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
+    
+    <!-- Tax Calculators -->
+    <script src="js/tax/vpb-calculator.js"></script>
+    <script src="js/tax/box1-calculator.js"></script>
+    <script src="js/tax/box3-calculator.js"></script>
+    <script src="js/tax/tax-factory.js"></script>
+    
+    <!-- Main Application Scripts -->
     <script src="js/calculator.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/tabs.js"></script>
