@@ -1,4 +1,4 @@
-// Chart Management for ROI Calculator
+// Chart Management for ROI Calculator - FIXED VERSION WITH SAFETY CHECKS
 
 class ChartManager {
     constructor() {
@@ -55,7 +55,13 @@ class ChartManager {
     
     // Initialize main chart
     initMainChart() {
-        const ctx = document.getElementById('mainChart').getContext('2d');
+        const canvas = document.getElementById('mainChart');
+        if (!canvas) {
+            console.warn('Main chart canvas not found');
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.main = new Chart(ctx, {
             type: 'line',
@@ -160,7 +166,10 @@ class ChartManager {
     
     // Update main chart
     updateMainChart(data, useRealValues = false) {
-        if (!this.charts.main) return;
+        if (!this.charts.main) {
+            console.warn('Main chart not initialized');
+            return;
+        }
         
         const chartData = calculator.getChartData(useRealValues);
         
@@ -179,9 +188,15 @@ class ChartManager {
         this.charts.main.update('none');
     }
     
-    // Initialize scenario chart
+    // Initialize scenario chart - FIXED
     initScenarioChart() {
-        const ctx = document.getElementById('scenarioChart').getContext('2d');
+        const canvas = document.getElementById('scenarioChart');
+        if (!canvas) {
+            console.warn('Scenario chart canvas not found, skipping initialization');
+            return false;
+        }
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.scenario = new Chart(ctx, {
             type: 'bar',
@@ -227,12 +242,20 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
-    // Initialize Monte Carlo charts
+    // Initialize Monte Carlo charts - FIXED
     initMonteCarloCharts() {
         // Scatter plot
-        const ctx1 = document.getElementById('monteCarloChart').getContext('2d');
+        const canvas1 = document.getElementById('monteCarloChart');
+        if (!canvas1) {
+            console.warn('Monte Carlo chart canvas not found, skipping initialization');
+            return false;
+        }
+        
+        const ctx1 = canvas1.getContext('2d');
         this.charts.monteCarlo = new Chart(ctx1, {
             type: 'scatter',
             data: {
@@ -276,7 +299,13 @@ class ChartManager {
         });
         
         // Distribution histogram
-        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        const canvas2 = document.getElementById('distributionChart');
+        if (!canvas2) {
+            console.warn('Distribution chart canvas not found, skipping initialization');
+            return false;
+        }
+        
+        const ctx2 = canvas2.getContext('2d');
         this.charts.distribution = new Chart(ctx2, {
             type: 'bar',
             data: {
@@ -314,11 +343,19 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
-    // Initialize waterfall chart
+    // Initialize waterfall chart - FIXED
     initWaterfallChart() {
-        const ctx = document.getElementById('waterfallChart').getContext('2d');
+        const canvas = document.getElementById('waterfallChart');
+        if (!canvas) {
+            console.warn('Waterfall chart canvas not found, skipping initialization');
+            return false;
+        }
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.waterfall = new Chart(ctx, {
             type: 'bar',
@@ -359,11 +396,19 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
-    // Initialize portfolio chart
+    // Initialize portfolio chart - FIXED
     initPortfolioChart() {
-        const ctx = document.getElementById('portfolioChart').getContext('2d');
+        const canvas = document.getElementById('portfolioChart');
+        if (!canvas) {
+            console.warn('Portfolio chart canvas not found, skipping initialization');
+            return false;
+        }
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.portfolio = new Chart(ctx, {
             type: 'doughnut',
@@ -397,11 +442,16 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
     // Update waterfall chart
     updateWaterfallChart(waterfallData) {
-        if (!this.charts.waterfall) return;
+        if (!this.charts.waterfall) {
+            console.warn('Waterfall chart not initialized');
+            return;
+        }
         
         const data = waterfallData.data;
         let cumulative = 0;
@@ -494,7 +544,10 @@ class ChartManager {
     // Export chart as image
     exportChart(chartName) {
         const chart = this.charts[chartName];
-        if (!chart) return;
+        if (!chart) {
+            console.warn(`Chart ${chartName} not found for export`);
+            return;
+        }
         
         const url = chart.toBase64Image();
         const link = document.createElement('a');
@@ -505,8 +558,11 @@ class ChartManager {
     
     // Destroy all charts
     destroyAll() {
-        Object.values(this.charts).forEach(chart => {
-            if (chart) chart.destroy();
+        Object.entries(this.charts).forEach(([name, chart]) => {
+            if (chart) {
+                console.log(`Destroying chart: ${name}`);
+                chart.destroy();
+            }
         });
         this.charts = {
             main: null,

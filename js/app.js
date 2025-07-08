@@ -1,4 +1,4 @@
-// Main Application Logic for ROI Calculator - IMPROVED VERSION WITH CONFIG INITIALIZATION
+// Main Application Logic for ROI Calculator - FIXED VERSION WITH TEMPLATE LOADING
 
 class ROICalculatorApp {
     constructor() {
@@ -6,6 +6,7 @@ class ROICalculatorApp {
         this.currentTab = 'calculator';
         this.sharedInputs = null;
         this.eventListeners = [];
+        this.tabsLoaded = new Set(); // Track which tabs have been loaded
     }
     
     // Initialize the application
@@ -19,8 +20,8 @@ class ROICalculatorApp {
             // Load defaults from config FIRST
             this.loadConfigDefaults();
             
-            // Load additional tabs
-            this.loadAdditionalTabs();
+            // Load all tab templates at startup
+            await this.loadAllTemplates();
             
             // Initialize charts
             chartManager.initMainChart();
@@ -43,6 +44,88 @@ class ROICalculatorApp {
         } catch (error) {
             console.error('Error initializing application:', error);
             this.showError('Er is een fout opgetreden bij het laden van de applicatie. Ververs de pagina.');
+        }
+    }
+    
+    // Load all templates at startup
+    async loadAllTemplates() {
+        const container = document.getElementById('additionalTabs');
+        if (!container) return;
+        
+        console.log('Loading all tab templates...');
+        
+        // For fallback, add inline templates if fetch fails
+        if (typeof tabManager === 'undefined' || !tabManager.loadTemplate) {
+            console.log('Using fallback template loading');
+            this.loadFallbackTemplates(container);
+            return;
+        }
+        
+        // Try to load templates via tabManager
+        const tabs = ['scenarios', 'montecarlo', 'waterfall', 'portfolio', 'saved', 'export'];
+        
+        for (const tabName of tabs) {
+            try {
+                await tabManager.initializeTab(tabName, container);
+                this.tabsLoaded.add(tabName);
+                console.log(`Loaded template: ${tabName}`);
+            } catch (error) {
+                console.error(`Failed to load template ${tabName}:`, error);
+                // Load fallback template
+                this.loadFallbackTemplate(tabName, container);
+            }
+        }
+    }
+    
+    // Fallback template loading if files not found
+    loadFallbackTemplates(container) {
+        // This ensures the app works even if template files are missing
+        const fallbackTemplates = {
+            scenarios: `<section id="scenarios" class="tab-pane" role="tabpanel">
+                <h2>📊 Scenario Analyse</h2>
+                <p>Template loading failed. Please check templates/scenarios.html</p>
+            </section>`,
+            montecarlo: `<section id="montecarlo" class="tab-pane" role="tabpanel">
+                <h2>🎲 Monte Carlo Simulatie</h2>
+                <p>Template loading failed. Please check templates/monte-carlo.html</p>
+            </section>`,
+            waterfall: `<section id="waterfall" class="tab-pane" role="tabpanel">
+                <h2>💧 Cashflow Waterfall</h2>
+                <p>Template loading failed. Please check templates/waterfall.html</p>
+            </section>`,
+            portfolio: `<section id="portfolio" class="tab-pane" role="tabpanel">
+                <h2>🏦 Portfolio Builder</h2>
+                <p>Template loading failed. Please check templates/portfolio.html</p>
+            </section>`,
+            saved: `<section id="saved" class="tab-pane" role="tabpanel">
+                <h2>💾 Opgeslagen Scenario's</h2>
+                <p>Template loading failed. Please check templates/saved.html</p>
+            </section>`,
+            export: `<section id="export" class="tab-pane" role="tabpanel">
+                <h2>📤 Export Functies</h2>
+                <p>Template loading failed. Please check templates/export.html</p>
+            </section>`
+        };
+        
+        Object.entries(fallbackTemplates).forEach(([tabName, html]) => {
+            if (!document.getElementById(tabName)) {
+                container.insertAdjacentHTML('beforeend', html);
+                this.tabsLoaded.add(tabName);
+            }
+        });
+    }
+    
+    // Load single fallback template
+    loadFallbackTemplate(tabName, container) {
+        const template = `<section id="${tabName}" class="tab-pane" role="tabpanel">
+            <h2>Error Loading Tab</h2>
+            <p>Unable to load template: templates/${tabName}.html</p>
+            <p>Please check if the file exists and is accessible.</p>
+        </section>`;
+        
+        if (!document.getElementById(tabName)) {
+            container.insertAdjacentHTML('beforeend', template);
+            this.tabsLoaded.add(tabName);
         }
     }
     
@@ -120,17 +203,6 @@ class ROICalculatorApp {
         });
     }
     
-    // Load additional tab content
-    loadAdditionalTabs() {
-        const container = document.getElementById('additionalTabs');
-        if (!container) return;
-        
-        // Add all tab templates
-        Object.keys(TabTemplates).forEach(tabName => {
-            container.insertAdjacentHTML('beforeend', TabTemplates[tabName]);
-        });
-    }
-    
     // Set up all event listeners
     setupEventListeners() {
         // Tab navigation
@@ -169,7 +241,7 @@ class ROICalculatorApp {
         setTimeout(() => {
             this.setupScenarioListeners();
             this.setupWaterfallListeners();
-        }, 100);
+        }, 500);
         
         // Window resize handler for charts
         window.addEventListener('resize', Utils.throttle(() => {
@@ -294,47 +366,82 @@ class ROICalculatorApp {
         this.currentTab = tabName;
         
         // Initialize tab-specific content
+        this.initializeTabContent(tabName);
+    }
+    
+    // Initialize tab content - FIXED VERSION
+    initializeTabContent(tabName) {
+        // Check if tab template is loaded
+        if (!this.tabsLoaded.has(tabName) && tabName !== 'calculator') {
+            console.warn(`Tab ${tabName} template not loaded yet`);
+            return;
+        }
+        
         setTimeout(() => {
             switch(tabName) {
                 case 'scenarios':
                     if (!chartManager.charts.scenario) {
-                        chartManager.initScenarioChart();
+                        const canvas = document.getElementById('scenarioChart');
+                        if (canvas) {
+                            chartManager.initScenarioChart();
+                        } else {
+                            console.warn('Scenario chart canvas not found');
+                        }
                     }
                     this.syncInputsToTab(tabName);
                     this.calculateScenarios();
                     break;
+                    
                 case 'montecarlo':
                     if (!chartManager.charts.monteCarlo) {
-                        chartManager.initMonteCarloCharts();
+                        const canvas = document.getElementById('monteCarloChart');
+                        if (canvas) {
+                            chartManager.initMonteCarloCharts();
+                        } else {
+                            console.warn('Monte Carlo chart canvas not found');
+                        }
                     }
                     this.syncInputsToTab(tabName);
                     break;
+                    
                 case 'waterfall':
                     if (!chartManager.charts.waterfall) {
-                        chartManager.initWaterfallChart();
-                        // Add waterfall period listener
-                        const waterfallPeriod = document.getElementById('waterfallPeriod');
-                        if (waterfallPeriod && !waterfallPeriod.hasAttribute('data-listener-added')) {
-                            waterfallPeriod.addEventListener('change', () => this.updateWaterfall());
-                            waterfallPeriod.setAttribute('data-listener-added', 'true');
+                        const canvas = document.getElementById('waterfallChart');
+                        if (canvas) {
+                            chartManager.initWaterfallChart();
+                            // Add waterfall period listener
+                            const waterfallPeriod = document.getElementById('waterfallPeriod');
+                            if (waterfallPeriod && !waterfallPeriod.hasAttribute('data-listener-added')) {
+                                waterfallPeriod.addEventListener('change', () => this.updateWaterfall());
+                                waterfallPeriod.setAttribute('data-listener-added', 'true');
+                            }
+                            // Setup waterfall listeners
+                            this.setupWaterfallListeners();
+                        } else {
+                            console.warn('Waterfall chart canvas not found');
                         }
-                        // Setup waterfall listeners
-                        this.setupWaterfallListeners();
                     }
                     // Populate period selector
                     this.populateWaterfallPeriods();
                     this.updateWaterfall();
                     break;
+                    
                 case 'portfolio':
                     if (!chartManager.charts.portfolio) {
-                        chartManager.initPortfolioChart();
+                        const canvas = document.getElementById('portfolioChart');
+                        if (canvas) {
+                            chartManager.initPortfolioChart();
+                        } else {
+                            console.warn('Portfolio chart canvas not found');
+                        }
                     }
                     break;
+                    
                 case 'saved':
                     this.loadSavedScenarios();
                     break;
             }
-        }, 50);
+        }, 100);
     }
     
     // Sync inputs from calculator to other tabs - IMPROVED WITH TAX SYNC
@@ -869,10 +976,22 @@ class ROICalculatorApp {
         const newAsset = document.createElement('div');
         newAsset.className = 'asset-row';
         newAsset.innerHTML = `
-            <input type="text" placeholder="Asset naam" class="asset-name">
-            <input type="number" placeholder="Bedrag (€)" class="asset-amount" min="0" step="1000">
-            <input type="number" placeholder="Rendement %" class="asset-return" step="0.1">
-            <input type="number" placeholder="Risico %" class="asset-risk" min="0" max="100" step="1">
+            <div class="asset-field">
+                <label>Asset Naam</label>
+                <input type="text" placeholder="Asset naam" class="asset-name">
+            </div>
+            <div class="asset-field">
+                <label>Bedrag (€)</label>
+                <input type="number" placeholder="Bedrag (€)" class="asset-amount" min="0" step="1000">
+            </div>
+            <div class="asset-field">
+                <label>Rendement %</label>
+                <input type="number" placeholder="Rendement %" class="asset-return" step="0.1">
+            </div>
+            <div class="asset-field">
+                <label>Risico %</label>
+                <input type="number" placeholder="Risico %" class="asset-risk" min="0" max="100" step="1">
+            </div>
             <button class="btn-remove" data-action="remove">×</button>
         `;
         assetList.appendChild(newAsset);

@@ -39,4 +39,4 @@
 @import 'utilities/print.css';
 
 /* Responsive styles - moet als laatste */
-@import '../responsive.css';
+@import url('responsive.css');
