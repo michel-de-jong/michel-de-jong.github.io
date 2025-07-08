@@ -1,0 +1,26 @@
+/* Header Styles */
+
+header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: var(--white-color);
+    padding: var(--spacing-lg) 0;
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+header h1 {
+    color: var(--white-color);
+    font-weight: 300;
+}
+
+header .subtitle {
+    color: var(--white-color);
+}
+
+/* Responsive header */
+@media (max-width: 768px) {
+    header {
+        padding: 20px 0;
+        margin-bottom: 20px;
+    }
+}

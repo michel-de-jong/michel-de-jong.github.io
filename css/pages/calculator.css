@@ -1,0 +1,111 @@
+/* Calculator Page Specific Styles */
+
+/* Tax Section */
+.tax-section {
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.tax-section.active {
+    border-color: var(--primary-color);
+    background: rgba(30, 60, 114, 0.02);
+}
+
+.tax-section h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.tax-section .form-grid {
+    margin-top: var(--spacing-md);
+}
+
+/* Conditional Display Classes */
+.show-on-vpb {
+    display: none;
+}
+
+.show-on-prive {
+    display: none;
+}
+
+.show-on-box1 {
+    display: none;
+}
+
+.show-on-box3 {
+    display: none;
+}
+
+/* Active tax type visibility */
+body[data-tax-type="vpb"] .show-on-vpb {
+    display: block;
+}
+
+body[data-tax-type="prive"] .show-on-prive {
+    display: block;
+}
+
+body[data-tax-subtype="box1"] .show-on-box1 {
+    display: block;
+}
+
+body[data-tax-subtype="box3"] .show-on-box3 {
+    display: block;
+}
+
+/* Box 3 Settings Visibility */
+.box3-setting {
+    transition: all var(--transition-normal);
+}
+
+.box3-setting[style*="display: none"] {
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+/* Tax Info Card */
+.tax-info-card h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    font-size: 16px;
+}
+
+.tax-info-card p {
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: var(--spacing-sm);
+}
+
+.tax-info-card ul {
+    margin-left: var(--spacing-md);
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.tax-info-card li {
+    margin-bottom: 3px;
+}
+
+/* Responsive calculator page */
+@media (max-width: 768px) {
+    .tax-info-card {
+        padding: var(--spacing-sm);
+        margin-top: var(--spacing-sm);
+    }
+    
+    .tax-info-card h4 {
+        font-size: 14px;
+    }
+    
+    .tax-info-card p,
+    .tax-info-card li {
+        font-size: 12px;
+    }
+}

@@ -1,0 +1,117 @@
+/* Chart Components */
+
+/* Chart Container */
+.chart-container {
+    background: var(--white-color);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-top: var(--spacing-lg);
+    height: 400px;
+    position: relative;
+}
+
+.chart-container.tall {
+    height: 500px;
+}
+
+/* Chart Title */
+.chart-title {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* Monte Carlo Charts */
+.monte-carlo-charts {
+    margin-top: 40px;
+}
+
+#mcChartContainer,
+#mcDistContainer {
+    margin-top: 20px;
+}
+
+/* Portfolio Chart */
+.portfolio-visualization {
+    margin-top: 40px;
+}
+
+/* Waterfall Specific */
+.waterfall-analysis {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Trend Chart */
+#trendChart {
+    height: 200px !important;
+}
+
+/* Scenario Chart Container */
+.scenario-visualization {
+    margin-bottom: 40px;
+}
+
+/* Chart Loading State */
+.chart-container.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-container.loading::before {
+    content: 'Loading chart...';
+    color: var(--gray-color);
+    font-size: 14px;
+}
+
+/* Responsive charts */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+        padding: 10px;
+        margin-top: 20px;
+    }
+    
+    .chart-container.tall {
+        height: 400px;
+    }
+    
+    #trendChart {
+        height: 150px !important;
+    }
+    
+    .waterfall-analysis {
+        padding: 15px;
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chart-container {
+        height: 250px;
+        padding: 8px;
+    }
+    
+    .chart-container.tall {
+        height: 350px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .chart-container.tall {
+        height: 300px;
+    }
+    
+    #trendChart {
+        height: 120px !important;
+    }
+}

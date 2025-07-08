@@ -1,0 +1,224 @@
+/* Monte Carlo Page Specific Styles */
+
+/* Monte Carlo Controls */
+.monte-carlo-controls {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.control-header {
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-color);
+}
+
+/* Parameter Header */
+.parameter-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.param-icon {
+    font-size: 24px;
+}
+
+/* Parameter Body */
+.parameter-body input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.parameter-scale {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.scale-bar {
+    flex: 1;
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.scale-fill {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+/* Volatility Indicator */
+.volatility-indicator {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.volatility-bar {
+    flex: 1;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.volatility-bar.active {
+    background: var(--primary-color);
+}
+
+.volatility-bar.low.active {
+    background: #28a745;
+}
+
+.volatility-bar.medium.active {
+    background: #ffc107;
+}
+
+.volatility-bar.high.active {
+    background: #dc3545;
+}
+
+.parameter-help {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.simulation-action {
+    text-align: center;
+}
+
+/* Loading Animation */
+.loading {
+    text-align: center;
+    padding: 60px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    margin: 20px 0;
+}
+
+.loading.active {
+    display: block;
+}
+
+.loading-animation {
+    margin-bottom: 20px;
+}
+
+.dice-animation {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.dice {
+    font-size: 48px;
+    animation: rollDice 1s ease-in-out infinite;
+}
+
+.dice:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dice:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes rollDice {
+    0%, 100% {
+        transform: rotateZ(0deg);
+    }
+    50% {
+        transform: rotateZ(360deg);
+    }
+}
+
+.progress {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.progress-bar {
+    width: 100%;
+    max-width: 400px;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 15px auto 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Simulation Results */
+.simulation-results {
+    margin-top: 40px;
+}
+
+.results-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    color: var(--primary-color);
+}
+
+.result-description {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.result-value.excellent {
+    color: #00c851;
+}
+
+.result-value.good {
+    color: #28a745;
+}
+
+.result-value.moderate {
+    color: #ffc107;
+}
+
+.result-value.poor {
+    color: #dc3545;
+}
+
+/* Responsive Monte Carlo page */
+@media (max-width: 768px) {
+    .monte-carlo-controls {
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .dice {
+        font-size: 36px;
+    }
+    
+    .result-card h4 {
+        font-size: 14px;
+    }
+    
+    .result-value {
+        font-size: 20px;
+    }
+}

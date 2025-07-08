@@ -1,0 +1,190 @@
+/* Button Components */
+
+/* Base Button */
+.btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+/* Button Variants */
+.btn-primary {
+    background: var(--primary-color);
+    color: var(--white-color);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background: var(--gray-color);
+    color: var(--white-color);
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: var(--white-color);
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: var(--white-color);
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+/* Button Sizes */
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 16px;
+}
+
+.btn-xl {
+    padding: 18px 36px;
+    font-size: 18px;
+}
+
+/* Button Icons */
+.btn-icon {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* Remove Button */
+.btn-remove {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    transition: all 0.2s;
+    min-width: 40px;
+    align-self: center;
+}
+
+.btn-remove:hover {
+    background: #c82333;
+    transform: scale(1.1);
+}
+
+/* Analysis Tabs (button-like) */
+.analysis-tab {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    font-size: 15px;
+    color: #6c757d;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.analysis-tab:hover {
+    color: var(--primary-color);
+}
+
+.analysis-tab.active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.analysis-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+/* Responsive buttons */
+@media (max-width: 768px) {
+    .btn {
+        padding: 12px 20px;
+        font-size: 16px;
+        touch-action: manipulation; /* Improves touch response */
+    }
+    
+    .btn-sm {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .btn-lg {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    .btn-xl {
+        padding: 14px 24px;
+        font-size: 16px;
+    }
+    
+    .portfolio-controls .btn {
+        width: 100%;
+    }
+    
+    .scenario-actions .btn {
+        flex: 1;
+        margin: 0 5px;
+    }
+    
+    .analysis-tab {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        padding: 10px 16px;
+        font-size: 15px;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .btn,
+    .analysis-tab {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    .analysis-tab {
+        padding: 10px 15px;
+    }
+}

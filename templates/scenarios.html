@@ -1,0 +1,116 @@
+<section id="scenarios" class="tab-pane" role="tabpanel">
+    <h2>📊 Scenario Analyse</h2>
+    <p class="tab-description">Vergelijk verschillende scenario's en analyseer de impact van veranderingen in uw parameters</p>
+    
+    <div class="scenario-comparison">
+        <div class="scenario-grid">
+            <div class="scenario-card best-case">
+                <div class="scenario-header">
+                    <span class="scenario-icon">🌟</span>
+                    <h3>Best Case</h3>
+                </div>
+                <div class="scenario-body">
+                    <div class="form-group">
+                        <label for="bestCaseRendement">
+                            <span class="label-icon">📈</span>
+                            Rendement (%)
+                        </label>
+                        <input type="number" id="bestCaseRendement" value="1.2" step="0.1" class="scenario-input">
+                        <div class="input-help">Optimistisch scenario</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bestCaseKosten">
+                            <span class="label-icon">💰</span>
+                            Vaste Kosten (€)
+                        </label>
+                        <input type="number" id="bestCaseKosten" value="4000" step="100" class="scenario-input">
+                        <div class="input-help">Lagere kosten verwacht</div>
+                    </div>
+                    <div class="scenario-result">
+                        <div class="result-label">Verwachte ROI</div>
+                        <div class="kpi-value scenario-roi" id="bestCaseROI">ROI: 0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-card base-case">
+                <div class="scenario-header">
+                    <span class="scenario-icon">📊</span>
+                    <h3>Base Case</h3>
+                </div>
+                <div class="scenario-body">
+                    <div class="form-group">
+                        <label for="baseCaseRendement">
+                            <span class="label-icon">📈</span>
+                            Rendement (%)
+                        </label>
+                        <input type="number" id="baseCaseRendement" value="0.8" step="0.1" class="scenario-input">
+                        <div class="input-help">Realistisch scenario</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="baseCaseKosten">
+                            <span class="label-icon">💰</span>
+                            Vaste Kosten (€)
+                        </label>
+                        <input type="number" id="baseCaseKosten" value="5000" step="100" class="scenario-input">
+                        <div class="input-help">Verwachte kosten</div>
+                    </div>
+                    <div class="scenario-result">
+                        <div class="result-label">Verwachte ROI</div>
+                        <div class="kpi-value scenario-roi" id="baseCaseROI">ROI: 0%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="scenario-card worst-case">
+                <div class="scenario-header">
+                    <span class="scenario-icon">⚠️</span>
+                    <h3>Worst Case</h3>
+                </div>
+                <div class="scenario-body">
+                    <div class="form-group">
+                        <label for="worstCaseRendement">
+                            <span class="label-icon">📈</span>
+                            Rendement (%)
+                        </label>
+                        <input type="number" id="worstCaseRendement" value="0.3" step="0.1" class="scenario-input">
+                        <div class="input-help">Pessimistisch scenario</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="worstCaseKosten">
+                            <span class="label-icon">💰</span>
+                            Vaste Kosten (€)
+                        </label>
+                        <input type="number" id="worstCaseKosten" value="6000" step="100" class="scenario-input">
+                        <div class="input-help">Hogere kosten risico</div>
+                    </div>
+                    <div class="scenario-result">
+                        <div class="result-label">Verwachte ROI</div>
+                        <div class="kpi-value scenario-roi" id="worstCaseROI">ROI: 0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="scenario-visualization">
+        <div class="chart-container mt-4">
+            <canvas id="scenarioChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="stress-test-section">
+        <h3 class="section-header">
+            <span class="header-icon">🔬</span>
+            Stress Test Analyse
+        </h3>
+        <p class="section-description">Test de robuustheid van uw investering onder verschillende negatieve scenario's</p>
+        
+        <button class="btn btn-primary btn-lg" id="runStressTestBtn">
+            <span class="btn-icon">▶️</span>
+            Start Stress Test
+        </button>
+        
+        <div id="stressTestResults" class="stress-test-results"></div>
+    </div>
+</section>

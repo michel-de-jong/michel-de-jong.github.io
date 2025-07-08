@@ -1,0 +1,129 @@
+/* Modal Components */
+
+/* Modal Backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: var(--z-modal);
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.modal-backdrop.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Modal Container */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--white-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: calc(var(--z-modal) + 1);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    opacity: 0;
+    transition: all var(--transition-normal);
+}
+
+.modal.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Modal Header */
+.modal-header {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--gray-color);
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: var(--light-color);
+    color: var(--dark-color);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+/* Modal Footer */
+.modal-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid #e9ecef;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+}
+
+/* Confirm Dialog */
+.confirm-dialog {
+    max-width: 400px;
+}
+
+.confirm-dialog .modal-body {
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+.confirm-dialog .confirm-icon {
+    font-size: 48px;
+    margin-bottom: var(--spacing-md);
+}
+
+.confirm-dialog.warning .confirm-icon {
+    color: var(--warning-color);
+}
+
+.confirm-dialog.danger .confirm-icon {
+    color: var(--danger-color);
+}
+
+/* Responsive modals */
+@media (max-width: 768px) {
+    .modal {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-body {
+        max-height: calc(90vh - 120px);
+    }
+}

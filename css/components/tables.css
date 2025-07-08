@@ -1,0 +1,195 @@
+/* Table Components */
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+/* Cashflow Table */
+.cashflow-table {
+    width: 100%;
+    min-width: 700px;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.cashflow-table th,
+.cashflow-table td {
+    padding: 12px 15px;
+    text-align: right;
+    border-bottom: 1px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.cashflow-table th:first-child,
+.cashflow-table td:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: white;
+    min-width: 140px;
+    z-index: 1;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+    font-weight: 500;
+}
+
+.cashflow-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.cashflow-table th:first-child {
+    z-index: 3;
+    background: #f8f9fa;
+}
+
+.cashflow-table tr:hover {
+    background: #f8f9fa;
+}
+
+.cashflow-table .positive {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.cashflow-table .negative {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+/* Impact Bar in Tables */
+.impact-bar {
+    display: inline-block;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100px;
+    position: relative;
+    vertical-align: middle;
+}
+
+.impact-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.impact-fill.positive {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+}
+
+.impact-fill.negative {
+    background: linear-gradient(90deg, #dc3545 0%, #e91e63 100%);
+}
+
+/* Stress Test Results */
+.stress-test-result {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stress-test-result.severe {
+    border-left-color: #dc3545;
+}
+
+.stress-test-result.moderate {
+    border-left-color: #ffc107;
+}
+
+.stress-test-result.mild {
+    border-left-color: #fd7e14;
+}
+
+.stress-test-result.positive {
+    border-left-color: #28a745;
+}
+
+/* Mobile Table Hint */
+.mobile-table-hint {
+    text-align: center;
+    font-style: italic;
+    font-size: 13px;
+    color: #6c757d;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    
+    .cashflow-table {
+        min-width: 600px;
+        margin-top: 0;
+        border-collapse: collapse;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 10px 8px;
+        text-align: right;
+        border-bottom: 1px solid #dee2e6;
+        white-space: nowrap;
+        font-size: 14px;
+    }
+    
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+        text-align: left;
+        min-width: 120px;
+        position: sticky;
+        left: 0;
+        background: white;
+        z-index: 1;
+    }
+    
+    .impact-bar {
+        width: 60px;
+        height: 16px;
+    }
+    
+    .stress-test-result {
+        background: #f8f9fa;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 5px;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+}
+
+@media (max-width: 480px) {
+    .cashflow-table {
+        min-width: 500px;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+    
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+        min-width: 120px;
+        font-size: 13px;
+    }
+}

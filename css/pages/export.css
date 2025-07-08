@@ -1,0 +1,104 @@
+/* Export Page Specific Styles */
+
+/* Export Features */
+.export-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.feature {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+}
+
+/* Export Info */
+.export-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 30px;
+    border-radius: 12px;
+    margin-top: 40px;
+    border-left: 4px solid #1976d2;
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1976d2;
+    margin-bottom: 25px;
+}
+
+/* Info Card */
+.info-card h4 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.info-card p {
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.info-card ul {
+    margin-left: 20px;
+    color: #495057;
+    font-size: 14px;
+}
+
+.info-card li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+/* Help Card */
+.help-card h4 {
+    color: #1976d2;
+    margin-bottom: 15px;
+}
+
+.help-card ul {
+    margin-left: 20px;
+    color: #495057;
+}
+
+.help-card li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+/* Responsive export page */
+@media (max-width: 768px) {
+    .export-features {
+        gap: 8px;
+    }
+    
+    .feature {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+    
+    .export-info {
+        padding: 20px;
+    }
+    
+    .info-card {
+        padding: 20px;
+    }
+    
+    .info-card h4 {
+        font-size: 1em;
+    }
+    
+    .info-card p,
+    .info-card li {
+        font-size: 13px;
+    }
+}

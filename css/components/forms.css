@@ -1,0 +1,205 @@
+/* Form Components */
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 0;
+    transition: all var(--transition-normal);
+}
+
+.form-group.hidden {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.form-group.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Input Wrapper */
+.input-wrapper {
+    position: relative;
+}
+
+/* Input Fields */
+input[type="number"],
+input[type="text"],
+select {
+    width: 100%;
+    padding: var(--spacing-sm) 40px var(--spacing-sm) 15px;
+    border: 1px solid #ced4da;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    transition: border-color var(--transition-normal);
+    font-family: inherit;
+    background-color: var(--white-color);
+}
+
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: var(--transition-fast);
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--white-color);
+    transition: var(--transition-fast);
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Error States */
+.form-group.error input,
+.form-group.error select {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.form-group.error label {
+    color: var(--danger-color);
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Success States */
+.form-group.success input,
+.form-group.success select {
+    border-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+}
+
+/* Private Tax Options */
+#priveOptions {
+    background: rgba(23, 162, 184, 0.05);
+    border: 1px solid rgba(23, 162, 184, 0.2);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+#priveOptions .form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+#priveOptions label {
+    color: var(--info-color);
+    font-weight: 600;
+}
+
+#priveOptions input,
+#priveOptions select {
+    border-color: rgba(23, 162, 184, 0.3);
+}
+
+#priveOptions input:focus,
+#priveOptions select:focus {
+    border-color: var(--info-color);
+    box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.1);
+}
+
+/* Box-specific styling */
+#box1Options {
+    border-left: 4px solid var(--warning-color);
+    padding-left: var(--spacing-md);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+#box3Options,
+#box3TariefGroup,
+#box3VrijstellingGroup {
+    border-left: 4px solid var(--purple-color);
+    padding-left: var(--spacing-md);
+    background: rgba(111, 66, 193, 0.05);
+    margin-top: var(--spacing-sm);
+}
+
+/* Inflation Toggle */
+.inflatie-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Responsive forms */
+@media (max-width: 768px) {
+    input[type="number"],
+    input[type="text"],
+    select {
+        padding: 12px 40px 12px 15px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    #priveOptions {
+        margin-top: var(--spacing-md);
+        padding: var(--spacing-sm);
+    }
+    
+    #priveOptions .form-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .inflatie-toggle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .inflatie-toggle span {
+        font-size: 14px;
+    }
+}

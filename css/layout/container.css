@@ -1,0 +1,58 @@
+/* Container Layout */
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-md);
+}
+
+/* Tab Content Container */
+.tab-content {
+    background: var(--white-color);
+    padding: var(--spacing-lg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    min-height: 600px;
+}
+
+.tab-pane {
+    display: none;
+    animation: fadeIn var(--transition-normal);
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Input Sections */
+.input-section {
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid #e0e0e0;
+}
+
+/* Responsive container */
+@media (max-width: 1024px) {
+    .container {
+        max-width: 100%;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .tab-content {
+        padding: 15px;
+        min-height: auto;
+    }
+    
+    .input-section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+}
