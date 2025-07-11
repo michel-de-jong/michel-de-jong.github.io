@@ -1,5 +1,6 @@
 // Monte Carlo Feature Module
 import { formatNumber, formatPercentage } from '../utils/format-utils.js';
+import { randomNormal } from '../utils/calculation-utils.js';
 
 export class MonteCarloFeature {
     constructor(calculator, chartManager) {
@@ -152,7 +153,11 @@ export class MonteCarloFeature {
                         renteVolatility,
                         kostenVolatility
                     );
-                    results.push(result);
+                    results.push({
+                        ...result,
+                        simulation: this.simulationResults ? 
+                            this.simulationResults.results.length + i + 1 : i + 1
+                    });
                 }
                 resolve(results);
             }, 0);
@@ -384,28 +389,31 @@ export class MonteCarloFeature {
 }
 
 // Add single simulation method to Calculator
-// This should be added to the Calculator class in calculator.js
-Calculator.prototype.runMonteCarloSingle = function(volatility, renteVolatility, kostenVolatility) {
-    const baseInputs = this.stateManager.getInputs();
-    const { randomNormal } = await import('../utils/calculation-utils.js');
-    
-    // Generate random variations
-    const rendementVariation = randomNormal() * volatility;
-    const renteVariation = randomNormal() * renteVolatility;
-    const kostenVariation = randomNormal() * kostenVolatility;
-    
-    const scenarioInputs = {
-        ...baseInputs,
-        rendement: baseInputs.rendement + (rendementVariation * 100),
-        renteLening: Math.max(0, baseInputs.renteLening + (renteVariation * 100)),
-        vasteKosten: Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation))
+// This extends the Calculator class to support Monte Carlo simulations
+import { Calculator } from '../core/calculator.js';
+
+if (typeof Calculator !== 'undefined') {
+    Calculator.prototype.runMonteCarloSingle = function(volatility, renteVolatility, kostenVolatility) {
+        const baseInputs = this.stateManager.getInputs();
+        
+        // Generate random variations
+        const rendementVariation = randomNormal() * volatility;
+        const renteVariation = randomNormal() * renteVolatility;
+        const kostenVariation = randomNormal() * kostenVolatility;
+        
+        const scenarioInputs = {
+            ...baseInputs,
+            rendement: baseInputs.rendement + (rendementVariation * 100),
+            renteLening: Math.max(0, baseInputs.renteLening + (renteVariation * 100)),
+            vasteKosten: Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation))
+        };
+        
+        // Quick calculation without full state update
+        const results = this.calculate(scenarioInputs);
+        
+        return {
+            roi: results.finalROI,
+            finalValue: results.finalVermogen
+        };
     };
-    
-    // Quick calculation without full state update
-    const results = this.calculate(scenarioInputs);
-    
-    return {
-        roi: results.finalROI,
-        finalValue: results.finalVermogen
-    };
-};
+}

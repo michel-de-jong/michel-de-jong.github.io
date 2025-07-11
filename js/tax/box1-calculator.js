@@ -1,6 +1,7 @@
 // Box 1 (Inkomstenbelasting) Calculator Module
+import { Config } from '../config/config.js';
 
-class Box1Calculator {
+export class Box1Calculator {
     constructor() {
         this.config = {
             brackets: Config.tax.BOX1_BRACKETS,
@@ -155,7 +156,7 @@ class Box1Calculator {
     }
 }
 
-// Export for use in main application
-window.Box1Calculator = Box1Calculator;
-
-export { Box1Calculator };
+// For backwards compatibility - will be removed in future version
+if (typeof window !== 'undefined') {
+    window.Box1Calculator = Box1Calculator;
+}

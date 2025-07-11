@@ -222,8 +222,18 @@ export class FormManager {
         };
     }
     
-    // Notify listeners
+    // Notify listeners - FIXED VERSION WITH INFLATIE TOGGLE HANDLING
     notifyListeners(changes) {
+        // Special handling for inflatieToggle
+        if ('inflatieToggle' in changes) {
+            // Update UI state for real values display
+            changes.showRealValues = changes.inflatieToggle;
+            // Update state to handle UI changes
+            if (this.stateManager) {
+                this.stateManager.update({ ui: { showRealValues: changes.inflatieToggle } });
+            }
+        }
+        
         this.listeners.forEach(listener => {
             try {
                 listener(changes);

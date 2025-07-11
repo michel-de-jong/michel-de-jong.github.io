@@ -1,6 +1,7 @@
 // Box 3 (Vermogensbelasting) Calculator Module
+import { Config } from '../config/config.js';
 
-class Box3Calculator {
+export class Box3Calculator {
     constructor() {
         this.config = {
             rendementBrackets: Config.tax.BOX3_RENDEMENT_BRACKETS,
@@ -201,7 +202,7 @@ class Box3Calculator {
     }
 }
 
-// Export for use in main application
-window.Box3Calculator = Box3Calculator;
-
-export { Box3Calculator };
+// For backwards compatibility - will be removed in future version
+if (typeof window !== 'undefined') {
+    window.Box3Calculator = Box3Calculator;
+}
