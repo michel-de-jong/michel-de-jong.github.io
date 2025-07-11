@@ -157,3 +157,5 @@ class Box1Calculator {
 
 // Export for use in main application
 window.Box1Calculator = Box1Calculator;
+
+export { Box1Calculator };

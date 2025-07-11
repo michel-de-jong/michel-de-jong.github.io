@@ -11,9 +11,14 @@
     <link rel="stylesheet" href="css/main.css">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="js/app.js" as="script">
+    <link rel="preload" href="js/main.js" as="script">
     <link rel="preload" href="css/main.css" as="style">
     <link rel="preload" href="css/base/variables.css" as="style">
+    
+    <!-- Fallback for older browsers -->
+    <script nomodule>
+        alert('Deze applicatie vereist een moderne browser met ES6 module support. Update uw browser voor de beste ervaring.');
+    </script>
 </head>
 <body>
     <header>
@@ -278,7 +283,7 @@
                 </div>
             </section>
             
-            <!-- Other tabs will be loaded here -->
+            <!-- Other tabs will be loaded here dynamically -->
             <div id="additionalTabs"></div>
         </main>
     </div>
@@ -297,20 +302,7 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
     
-    <!-- Core Application Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/utils.js"></script>
-    
-    <!-- Tax Calculators -->
-    <script src="js/tax/vpb-calculator.js"></script>
-    <script src="js/tax/box1-calculator.js"></script>
-    <script src="js/tax/box3-calculator.js"></script>
-    <script src="js/tax/tax-factory.js"></script>
-    
-    <!-- Main Application Scripts -->
-    <script src="js/calculator.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/tabs.js"></script>
-    <script src="js/app.js"></script>
+    <!-- Main Application Module - This is the only script tag needed! -->
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

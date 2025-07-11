@@ -1,6 +1,6 @@
-// Configuration file for ROI Calculator - IMPROVED VERSION WITH ENHANCED TAX CONFIG
-const Config = {
-    // Default Values - THESE WILL BE USED TO POPULATE INPUT FIELDS
+// Configuration Module - ES6 Module version
+export const Config = {
+    // Default Values
     defaults: {
         startKapitaal: 50000,
         lening: 100000,
@@ -15,39 +15,40 @@ const Config = {
         herinvesteringDrempel: 1000,
         inflatie: 2.5,
         belastingType: 'vpb',
+        showRealValues: false,
         
         // Privé Belasting Defaults
         priveSubType: 'box1',
-        box1Tarief: 37.07,              // Gemiddeld tarief box 1 (2024)
-        box3Rendement: 6.04,            // Fictief rendement box 3 (2024)
-        box3Tarief: 31,                 // Tarief box 3 (2024)
-        box3Vrijstelling: 57000         // Heffingsvrije voet box 3 (2024, alleenstaanden)
+        box1Tarief: 37.07,
+        box3Rendement: 6.04,
+        box3Tarief: 31,
+        box3Vrijstelling: 57000
     },
     
-    // Tax Configuration - COMPREHENSIVE DUTCH TAX SYSTEM
+    // Tax Configuration
     tax: {
-        // VPB - Vennootschapsbelasting (Corporate Tax)
-        VPB_RATE: 0.258,               // 25.8% (2024)
-        VPB_LOW_RATE: 0.19,            // 19% tot €200.000 (2024)
-        VPB_LOW_THRESHOLD: 200000,     // Grens lage tarief
+        // VPB - Vennootschapsbelasting
+        VPB_RATE: 0.258,
+        VPB_LOW_RATE: 0.19,
+        VPB_LOW_THRESHOLD: 200000,
         
-        // Box 1 - Inkomstenbelasting tarieven (2024)
+        // Box 1 - Inkomstenbelasting
         BOX1_BRACKETS: [
             { min: 0, max: 37149, rate: 0.3693 },
             { min: 37149, max: 73031, rate: 0.3693 },
             { min: 73031, max: Infinity, rate: 0.495 }
         ],
         
-        // Box 3 - Vermogensbelasting (2024)
+        // Box 3 - Vermogensbelasting
         BOX3_RENDEMENT_BRACKETS: [
-            { min: 0, max: 57000, rate: 0 },           // Heffingsvrije voet
-            { min: 57000, max: 114000, rate: 0.0604 }, // 6.04%
-            { min: 114000, max: Infinity, rate: 0.0651 } // 6.51%
+            { min: 0, max: 57000, rate: 0 },
+            { min: 57000, max: 114000, rate: 0.0604 },
+            { min: 114000, max: Infinity, rate: 0.0651 }
         ],
-        BOX3_BELASTING_TARIEF: 0.31,   // 31% over fictief rendement
+        BOX3_BELASTING_TARIEF: 0.31,
         
-        // Default tarieven voor snelle berekening
-        DEFAULT_BOX1_RATE: 0.3707,     // Gemiddeld tarief
+        // Default rates
+        DEFAULT_BOX1_RATE: 0.3707,
         DEFAULT_BOX3_RATE: 0.31,
         DEFAULT_BOX3_RENDEMENT: 0.0604
     },
@@ -130,26 +131,6 @@ const Config = {
         maxScenarios: 50
     },
     
-    // API Endpoints (if needed in future)
-    api: {
-        baseUrl: '',
-        endpoints: {
-            save: '/api/scenarios/save',
-            load: '/api/scenarios/load',
-            export: '/api/export'
-        }
-    },
-    
-    // Feature Flags
-    features: {
-        enableAutoSave: true,
-        enableCloudSync: false,
-        enableAdvancedCharts: true,
-        enableExportOptions: true,
-        enableDarkMode: true,
-        enableAdvancedTax: true
-    },
-    
     // Performance Settings
     performance: {
         debounceDelay: 300,
@@ -188,7 +169,5 @@ Object.freeze(Config.export);
 Object.freeze(Config.validation);
 Object.freeze(Config.locale);
 Object.freeze(Config.storage);
-Object.freeze(Config.api);
-Object.freeze(Config.features);
 Object.freeze(Config.performance);
 Object.freeze(Config.taxInfo);

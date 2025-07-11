@@ -203,3 +203,5 @@ class Box3Calculator {
 
 // Export for use in main application
 window.Box3Calculator = Box3Calculator;
+
+export { Box3Calculator };

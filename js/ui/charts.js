@@ -1,6 +1,8 @@
-// Chart Management for ROI Calculator
+// Chart Manager Module
+import { Config } from '../config/config.js';
+import { formatNumber } from '../utils/format-utils.js';
 
-class ChartManager {
+export class ChartManager {
     constructor() {
         this.charts = {
             main: null,
@@ -37,7 +39,7 @@ class ChartManager {
                                 if (context.datasetIndex === 4) { // ROI
                                     label += context.parsed.y.toFixed(1) + '%';
                                 } else {
-                                    label += Utils.formatNumber(context.parsed.y);
+                                    label += formatNumber(context.parsed.y);
                                 }
                             }
                             return label;
@@ -55,121 +57,136 @@ class ChartManager {
     
     // Initialize main chart
     initMainChart() {
-        const ctx = document.getElementById('mainChart').getContext('2d');
+        const canvas = document.getElementById('mainChart');
+        if (!canvas) {
+            console.warn('Main chart canvas not found');
+            return;
+        }
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.main = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
-                datasets: [
-                    {
-                        label: 'Portfolio Waarde',
-                        data: [],
-                        borderColor: Config.charts.colors.primary,
-                        backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.1),
-                        tension: 0.4,
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Cash Reserve',
-                        data: [],
-                        borderColor: Config.charts.colors.secondary,
-                        backgroundColor: this.createAlpha(Config.charts.colors.secondary, 0.1),
-                        tension: 0.4,
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Lening',
-                        data: [],
-                        borderColor: Config.charts.colors.danger,
-                        backgroundColor: this.createAlpha(Config.charts.colors.danger, 0.1),
-                        tension: 0.4,
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Totaal Vermogen',
-                        data: [],
-                        borderColor: Config.charts.colors.purple,
-                        backgroundColor: this.createAlpha(Config.charts.colors.purple, 0.1),
-                        tension: 0.4,
-                        borderWidth: 3
-                    },
-                    {
-                        label: 'ROI %',
-                        data: [],
-                        borderColor: Config.charts.colors.orange,
-                        backgroundColor: this.createAlpha(Config.charts.colors.orange, 0.1),
-                        tension: 0.4,
-                        borderWidth: 2,
-                        yAxisID: 'y1'
-                    }
-                ]
+                datasets: this.createMainDatasets()
             },
-            options: {
-                ...this.defaultOptions,
-                plugins: {
-                    ...this.defaultOptions.plugins,
+            options: this.createMainOptions()
+        });
+    }
+    
+    createMainDatasets() {
+        return [
+            {
+                label: 'Portfolio Waarde',
+                data: [],
+                borderColor: Config.charts.colors.primary,
+                backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.1),
+                tension: 0.4,
+                borderWidth: 2
+            },
+            {
+                label: 'Cash Reserve',
+                data: [],
+                borderColor: Config.charts.colors.secondary,
+                backgroundColor: this.createAlpha(Config.charts.colors.secondary, 0.1),
+                tension: 0.4,
+                borderWidth: 2
+            },
+            {
+                label: 'Lening',
+                data: [],
+                borderColor: Config.charts.colors.danger,
+                backgroundColor: this.createAlpha(Config.charts.colors.danger, 0.1),
+                tension: 0.4,
+                borderWidth: 2
+            },
+            {
+                label: 'Totaal Vermogen',
+                data: [],
+                borderColor: Config.charts.colors.purple,
+                backgroundColor: this.createAlpha(Config.charts.colors.purple, 0.1),
+                tension: 0.4,
+                borderWidth: 3
+            },
+            {
+                label: 'ROI %',
+                data: [],
+                borderColor: Config.charts.colors.orange,
+                backgroundColor: this.createAlpha(Config.charts.colors.orange, 0.1),
+                tension: 0.4,
+                borderWidth: 2,
+                yAxisID: 'y1'
+            }
+        ];
+    }
+    
+    createMainOptions() {
+        return {
+            ...this.defaultOptions,
+            plugins: {
+                ...this.defaultOptions.plugins,
+                title: {
+                    display: true,
+                    text: 'Vermogensontwikkeling over tijd',
+                    font: {
+                        size: 16
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
                     title: {
                         display: true,
-                        text: 'Vermogensontwikkeling over tijd',
-                        font: {
-                            size: 16
+                        text: 'Jaren'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return formatNumber(value);
                         }
                     }
                 },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'Jaren'
-                        }
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
                     },
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return Utils.formatNumber(value);
-                            }
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        grid: {
-                            drawOnChartArea: false
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
                         }
                     }
                 }
             }
-        });
+        };
     }
     
     // Update main chart
     updateMainChart(data, useRealValues = false) {
-        if (!this.charts.main) return;
+        if (!this.charts.main) {
+            console.warn('Main chart not initialized');
+            return;
+        }
         
-        const chartData = calculator.getChartData(useRealValues);
-        
-        this.charts.main.data.labels = chartData.labels;
-        this.charts.main.data.datasets[0].data = chartData.portfolio;
-        this.charts.main.data.datasets[1].data = chartData.cashReserve;
-        this.charts.main.data.datasets[2].data = chartData.lening;
-        this.charts.main.data.datasets[3].data = chartData.totaalVermogen;
-        this.charts.main.data.datasets[4].data = chartData.roi;
+        this.charts.main.data.labels = data.labels;
+        this.charts.main.data.datasets[0].data = data.portfolio;
+        this.charts.main.data.datasets[1].data = data.cashReserve;
+        this.charts.main.data.datasets[2].data = data.lening;
+        this.charts.main.data.datasets[3].data = data.totaalVermogen;
+        this.charts.main.data.datasets[4].data = data.roi;
         
         const titleText = useRealValues 
             ? 'Vermogensontwikkeling over tijd (Reële waardes)'
@@ -181,7 +198,10 @@ class ChartManager {
     
     // Initialize scenario chart
     initScenarioChart() {
-        const ctx = document.getElementById('scenarioChart').getContext('2d');
+        const canvas = document.getElementById('scenarioChart');
+        if (!canvas) return false;
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.scenario = new Chart(ctx, {
             type: 'bar',
@@ -227,12 +247,17 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
     // Initialize Monte Carlo charts
     initMonteCarloCharts() {
         // Scatter plot
-        const ctx1 = document.getElementById('monteCarloChart').getContext('2d');
+        const canvas1 = document.getElementById('monteCarloChart');
+        if (!canvas1) return false;
+        
+        const ctx1 = canvas1.getContext('2d');
         this.charts.monteCarlo = new Chart(ctx1, {
             type: 'scatter',
             data: {
@@ -244,39 +269,14 @@ class ChartManager {
                     pointHoverRadius: 4
                 }]
             },
-            options: {
-                ...this.defaultOptions,
-                plugins: {
-                    ...this.defaultOptions.plugins,
-                    title: {
-                        display: true,
-                        text: 'Monte Carlo Simulatie - ROI Spreiding'
-                    }
-                },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Simulatie #'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'ROI %'
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                }
-            }
+            options: this.createMonteCarloOptions()
         });
         
         // Distribution histogram
-        const ctx2 = document.getElementById('distributionChart').getContext('2d');
+        const canvas2 = document.getElementById('distributionChart');
+        if (!canvas2) return false;
+        
+        const ctx2 = canvas2.getContext('2d');
         this.charts.distribution = new Chart(ctx2, {
             type: 'bar',
             data: {
@@ -289,36 +289,77 @@ class ChartManager {
                     borderWidth: 1
                 }]
             },
-            options: {
-                ...this.defaultOptions,
-                plugins: {
-                    ...this.defaultOptions.plugins,
+            options: this.createDistributionOptions()
+        });
+        
+        return true;
+    }
+    
+    createMonteCarloOptions() {
+        return {
+            ...this.defaultOptions,
+            plugins: {
+                ...this.defaultOptions.plugins,
+                title: {
+                    display: true,
+                    text: 'Monte Carlo Simulatie - ROI Spreiding'
+                }
+            },
+            scales: {
+                x: {
                     title: {
                         display: true,
-                        text: 'ROI Verdeling (Histogram)'
+                        text: 'Simulatie #'
                     }
                 },
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'ROI %'
-                        }
+                y: {
+                    title: {
+                        display: true,
+                        text: 'ROI %'
                     },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Aantal Simulaties'
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
                         }
                     }
                 }
             }
-        });
+        };
+    }
+    
+    createDistributionOptions() {
+        return {
+            ...this.defaultOptions,
+            plugins: {
+                ...this.defaultOptions.plugins,
+                title: {
+                    display: true,
+                    text: 'ROI Verdeling (Histogram)'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'ROI %'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Aantal Simulaties'
+                    }
+                }
+            }
+        };
     }
     
     // Initialize waterfall chart
     initWaterfallChart() {
-        const ctx = document.getElementById('waterfallChart').getContext('2d');
+        const canvas = document.getElementById('waterfallChart');
+        if (!canvas) return false;
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.waterfall = new Chart(ctx, {
             type: 'bar',
@@ -352,18 +393,23 @@ class ChartManager {
                         stacked: true,
                         ticks: {
                             callback: function(value) {
-                                return Utils.formatNumber(value);
+                                return formatNumber(value);
                             }
                         }
                     }
                 }
             }
         });
+        
+        return true;
     }
     
     // Initialize portfolio chart
     initPortfolioChart() {
-        const ctx = document.getElementById('portfolioChart').getContext('2d');
+        const canvas = document.getElementById('portfolioChart');
+        if (!canvas) return false;
+        
+        const ctx = canvas.getContext('2d');
         
         this.charts.portfolio = new Chart(ctx, {
             type: 'doughnut',
@@ -397,11 +443,13 @@ class ChartManager {
                 }
             }
         });
+        
+        return true;
     }
     
     // Update waterfall chart
     updateWaterfallChart(waterfallData) {
-        if (!this.charts.waterfall) return;
+        if (!this.charts.waterfall || !waterfallData.data) return;
         
         const data = waterfallData.data;
         let cumulative = 0;
@@ -409,7 +457,7 @@ class ChartManager {
         const colors = [];
         const borderColors = [];
         
-        data.forEach((item, index) => {
+        data.forEach((item) => {
             if (item.type === 'start') {
                 cumulative = item.value;
                 chartData.push([0, item.value]);
@@ -453,7 +501,10 @@ class ChartManager {
         
         // Create histogram data
         if (this.charts.distribution) {
-            const histogramData = this.createHistogram(stats.results.map(r => r.roi), Config.monteCarlo.histogramBins);
+            const histogramData = this.createHistogram(
+                stats.results.map(r => r.roi), 
+                Config.monteCarlo.histogramBins
+            );
             this.charts.distribution.data.labels = histogramData.labels;
             this.charts.distribution.data.datasets[0].data = histogramData.data;
             this.charts.distribution.update('none');
@@ -484,7 +535,6 @@ class ChartManager {
     
     // Helper: Create alpha color
     createAlpha(color, alpha) {
-        // Convert hex to rgba
         const r = parseInt(color.slice(1, 3), 16);
         const g = parseInt(color.slice(3, 5), 16);
         const b = parseInt(color.slice(5, 7), 16);
@@ -494,20 +544,27 @@ class ChartManager {
     // Export chart as image
     exportChart(chartName) {
         const chart = this.charts[chartName];
-        if (!chart) return;
+        if (!chart) {
+            console.warn(`Chart ${chartName} not found for export`);
+            return;
+        }
         
         const url = chart.toBase64Image();
         const link = document.createElement('a');
-        link.download = `${chartName}_chart_${Utils.getISODateString()}.png`;
+        link.download = `${chartName}_chart_${new Date().toISOString().slice(0, 10)}.png`;
         link.href = url;
         link.click();
     }
     
     // Destroy all charts
     destroyAll() {
-        Object.values(this.charts).forEach(chart => {
-            if (chart) chart.destroy();
+        Object.entries(this.charts).forEach(([name, chart]) => {
+            if (chart) {
+                console.log(`Destroying chart: ${name}`);
+                chart.destroy();
+            }
         });
+        
         this.charts = {
             main: null,
             scenario: null,
@@ -518,6 +575,3 @@ class ChartManager {
         };
     }
 }
-
-// Create global chart manager instance
-window.chartManager = new ChartManager();

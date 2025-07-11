@@ -1,6 +1,9 @@
-// Tax Factory - Manages tax calculator instances
+// Tax Factory Module - ES6 Module version
+import { VPBCalculator } from './vpb-calculator.js';
+import { Box1Calculator } from './box1-calculator.js';
+import { Box3Calculator } from './box3-calculator.js';
 
-class TaxFactory {
+export class TaxFactory {
     constructor() {
         this.calculators = {
             vpb: new VPBCalculator(),
@@ -278,5 +281,4 @@ class TaxFactory {
     }
 }
 
-// Export for use in main application
-window.TaxFactory = TaxFactory;
+export { TaxFactory };

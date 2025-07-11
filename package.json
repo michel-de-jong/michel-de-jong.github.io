@@ -1,0 +1,27 @@
+{
+  "name": "roi-calculator",
+  "version": "2.0.0",
+  "description": "Professional ROI Calculator",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "python -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/roi-calculator.git"
+  },
+  "keywords": [
+    "roi",
+    "calculator",
+    "investment",
+    "netherlands"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
