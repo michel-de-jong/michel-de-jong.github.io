@@ -378,5 +378,3 @@ export class Box3Calculator {
         return tips;
     }
 }
-
-export { VPBCalculator };

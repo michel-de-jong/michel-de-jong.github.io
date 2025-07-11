@@ -280,5 +280,3 @@ export class TaxFactory {
         return monthlyAverage * 12;
     }
 }
-
-export { TaxFactory };
