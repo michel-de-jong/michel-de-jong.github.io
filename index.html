@@ -11,9 +11,8 @@
     <link rel="stylesheet" href="css/main.css">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="js/main.js" as="script">
+    <link rel="preload" href="js/main.js" as="script" type="module">
     <link rel="preload" href="css/main.css" as="style">
-    <link rel="preload" href="css/base/variables.css" as="style">
     
     <!-- Fallback for older browsers -->
     <script nomodule>
@@ -302,7 +301,7 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"></script>
     
-    <!-- Main Application Module - This is the only script tag needed! -->
+    <!-- Main Application Module -->
     <script type="module" src="js/main.js"></script>
 </body>
 </html>

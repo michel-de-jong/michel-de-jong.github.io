@@ -3,23 +3,11 @@
 <head>
     <meta charset="utf-8">
     <title>ROI Calculator - Pagina niet gevonden</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
         // Single Page Application 404 handling voor GitHub Pages
-        // Dit zorgt ervoor dat deep links werken
-        
-        const pathSegmentsToKeep = 1; // Voor /roi-calculator/
-        
-        const l = window.location;
-        const base = l.pathname.split('/').slice(0, pathSegmentsToKeep + 1).join('/');
-        
-        // Redirect naar index.html met de originele path als query parameter
-        l.replace(
-            l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-            base + '/?/' +
-            l.pathname.slice(base.length + 1).split('/').slice(0, -1).join('/').replace(/&/g, '~and~') +
-            (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-            l.hash
-        );
+        // Redirect to root since the app is hosted at the root domain
+        window.location.replace('/');
     </script>
 </head>
 <body>
