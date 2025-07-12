@@ -95,8 +95,3 @@ export class VPBCalculator {
         return tips;
     }
 }
-
-// For backwards compatibility - will be removed in future version
-if (typeof window !== 'undefined') {
-    window.VPBCalculator = VPBCalculator;
-}

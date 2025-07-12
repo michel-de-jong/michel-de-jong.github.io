@@ -99,9 +99,10 @@ export class StateManager {
         });
     }
     
-    // Batch update inputs
+    // Batch update inputs - FIXED VERSION
     setInputs(inputs) {
-        this.update({ inputs });
+        this.state.inputs = { ...inputs };
+        this.notifyListeners();
     }
     
     // Export current state

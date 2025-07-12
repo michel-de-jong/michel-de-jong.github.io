@@ -10,6 +10,7 @@ import { ScenariosFeature } from './features/scenarios.js';
 import { MonteCarloFeature } from './features/monte-carlo.js';
 import { WaterfallFeature } from './features/waterfall.js';
 import { PortfolioFeature } from './features/portfolio.js';
+import { SavedScenariosFeature } from './features/saved.js';
 import { ExportFeature } from './features/export.js';
 import { DataService } from './services/data-service.js';
 import { ValidationService } from './services/validation-service.js';
@@ -34,6 +35,7 @@ class ROICalculatorApp {
             monteCarlo: new MonteCarloFeature(this.calculator, this.chartManager),
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
             portfolio: new PortfolioFeature(this.chartManager),
+            saved: new SavedScenariosFeature(this.calculator, this.dataService),
             export: new ExportFeature(this.calculator, this.chartManager)
         };
         
@@ -95,7 +97,7 @@ class ROICalculatorApp {
         
         // Form change listener
         this.formManager.onChange((changes) => {
-            this.state.update(changes);
+            this.state.update({ inputs: changes });
         });
         
         // Feature event listeners
@@ -122,14 +124,15 @@ class ROICalculatorApp {
     updateUI() {
         const results = this.state.getResults();
         const inputs = this.state.getInputs();
+        const uiState = this.state.getUIState();
         
         // Update KPIs
-        this.kpiDisplay.update(results, inputs.showRealValues);
+        this.kpiDisplay.update(results, uiState.showRealValues);
         
         // Update charts
         this.chartManager.updateMainChart(
-            this.calculator.getChartData(inputs.showRealValues),
-            inputs.showRealValues
+            this.calculator.getChartData(uiState.showRealValues),
+            uiState.showRealValues
         );
     }
     
@@ -144,12 +147,14 @@ class ROICalculatorApp {
         const savedScenarios = this.dataService.loadScenarios();
         const savedSettings = this.dataService.loadSettings();
         
-        if (savedSettings) {
+        if (savedSettings && savedSettings.inputs) {
             this.state.update(savedSettings);
         }
         
         // Make scenarios available to features
-        this.features.scenarios.loadSavedScenarios(savedScenarios);
+        if (this.features.saved) {
+            this.features.saved.loadSavedScenarios(savedScenarios);
+        }
     }
     
     async waitForLibraries() {

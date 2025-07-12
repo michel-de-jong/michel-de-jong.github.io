@@ -1,0 +1,179 @@
+/* Saved Scenarios Page Specific Styles */
+
+/* Save Controls */
+.saved-controls {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+/* Saved Scenarios Container */
+.saved-scenarios-container {
+    margin-top: 40px;
+}
+
+.saved-scenarios-list {
+    margin-top: 20px;
+}
+
+/* Saved Scenario Card */
+.saved-scenario {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.saved-scenario:hover {
+    border-color: var(--primary-color);
+    transform: translateX(5px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+/* Scenario Info */
+.scenario-info {
+    flex: 1;
+}
+
+.scenario-info strong {
+    color: var(--primary-color);
+    font-size: 16px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.scenario-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.scenario-meta span {
+    font-size: 14px;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Scenario Actions */
+.scenario-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state p {
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.empty-state p:first-child {
+    font-size: 18px;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Help Section */
+.saved-scenarios-help {
+    margin-top: 40px;
+}
+
+.help-card {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    padding: 25px;
+    border-radius: 12px;
+    border-left: 4px solid #1976d2;
+}
+
+.help-card h4 {
+    color: #1976d2;
+    margin-bottom: 15px;
+}
+
+.help-card ul {
+    margin-left: 20px;
+    color: #495057;
+}
+
+.help-card li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+/* Responsive saved scenarios page */
+@media (max-width: 768px) {
+    .saved-scenario {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .scenario-meta {
+        gap: 15px;
+    }
+    
+    .scenario-meta span {
+        font-size: 13px;
+    }
+    
+    .scenario-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .scenario-actions .btn {
+        flex: 1;
+    }
+    
+    .help-card {
+        padding: 20px;
+    }
+    
+    .help-card h4 {
+        font-size: 16px;
+    }
+    
+    .help-card li {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .saved-scenario {
+        padding: 15px;
+    }
+    
+    .scenario-info strong {
+        font-size: 15px;
+    }
+    
+    .scenario-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .scenario-meta span {
+        font-size: 12px;
+    }
+    
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+    }
+}
