@@ -1,0 +1,233 @@
+<section id="historical" class="tab-pane" role="tabpanel">
+    <h2>📊 Historische Prestaties & Backtesting</h2>
+    <p class="tab-description">Vergelijk werkelijke resultaten met projecties en leer van historische investeringsbeslissingen</p>
+    
+    <!-- Data Import Section -->
+    <div class="historical-import-section">
+        <h3 class="section-header">
+            <span class="header-icon">📥</span>
+            Data Import
+        </h3>
+        
+        <div class="import-options">
+            <div class="import-card automatic">
+                <div class="import-header">
+                    <span class="import-icon">🔄</span>
+                    <h4>Automatische Import</h4>
+                </div>
+                <div class="import-body">
+                    <p>Importeer marktdata automatisch via financiële API's</p>
+                    <div class="form-group">
+                        <label for="dataSource">Data Bron</label>
+                        <select id="dataSource" class="form-control">
+                            <option value="">Selecteer data bron...</option>
+                            <option value="yahoofinance">Yahoo Finance</option>
+                            <option value="alphavantage">Alpha Vantage</option>
+                            <option value="ecb">ECB (Rente data)</option>
+                            <option value="cbs">CBS (Inflatie data)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="symbolGroup" style="display: none;">
+                        <label for="symbolInput">Symbool/Ticker</label>
+                        <input type="text" id="symbolInput" placeholder="Bijv. ASML.AS, ^AEX" class="form-control">
+                        <div class="symbol-help">Voor aandelen gebruik ticker symbool, voor indices gebruik ^SYMBOL</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="importPeriod">Periode</label>
+                        <div class="period-selector">
+                            <input type="date" id="importStartDate" class="form-control">
+                            <span>tot</span>
+                            <input type="date" id="importEndDate" class="form-control">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="fetchDataBtn" disabled>
+                        <span class="btn-icon">🔍</span>
+                        Data Ophalen
+                    </button>
+                </div>
+            </div>
+            
+            <div class="import-card manual">
+                <div class="import-header">
+                    <span class="import-icon">✏️</span>
+                    <h4>Handmatige Invoer</h4>
+                </div>
+                <div class="import-body">
+                    <p>Voer werkelijke prestaties handmatig in</p>
+                    <button class="btn btn-secondary" id="manualEntryBtn">
+                        <span class="btn-icon">➕</span>
+                        Gegevens Toevoegen
+                    </button>
+                    <button class="btn btn-secondary" id="importCSVBtn">
+                        <span class="btn-icon">📄</span>
+                        CSV Importeren
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Tracking Section -->
+    <div class="performance-tracking-section">
+        <h3 class="section-header">
+            <span class="header-icon">📈</span>
+            Prestatie Vergelijking
+        </h3>
+        
+        <div class="performance-controls">
+            <div class="view-options">
+                <label class="radio-option">
+                    <input type="radio" name="viewType" value="absolute" checked>
+                    <span>Absolute Waardes</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="viewType" value="percentage">
+                    <span>Percentage Verschil</span>
+                </label>
+                <label class="radio-option">
+                    <input type="radio" name="viewType" value="cumulative">
+                    <span>Cumulatief Rendement</span>
+                </label>
+            </div>
+            
+            <div class="time-range-selector">
+                <button class="time-btn active" data-range="1M">1M</button>
+                <button class="time-btn" data-range="3M">3M</button>
+                <button class="time-btn" data-range="6M">6M</button>
+                <button class="time-btn" data-range="1Y">1J</button>
+                <button class="time-btn" data-range="ALL">Alles</button>
+            </div>
+        </div>
+        
+        <div class="performance-metrics">
+            <div class="metric-card">
+                <div class="metric-icon">🎯</div>
+                <div class="metric-label">Tracking Error</div>
+                <div class="metric-value" id="trackingError">0.0%</div>
+                <div class="metric-detail">Standaarddeviatie van verschil</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-label">Correlatie</div>
+                <div class="metric-value" id="correlation">0.00</div>
+                <div class="metric-detail">Projectie vs werkelijk</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">🎲</div>
+                <div class="metric-label">Hit Rate</div>
+                <div class="metric-value" id="hitRate">0%</div>
+                <div class="metric-detail">Correcte richting voorspellingen</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">📉</div>
+                <div class="metric-label">Max Afwijking</div>
+                <div class="metric-value" id="maxDeviation">0%</div>
+                <div class="metric-detail">Grootste verschil ooit</div>
+            </div>
+        </div>
+        
+        <div class="chart-container tall">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Backtesting Results Section -->
+    <div class="backtesting-section">
+        <h3 class="section-header">
+            <span class="header-icon">🔬</span>
+            Backtesting Analyse
+        </h3>
+        
+        <div class="backtest-controls">
+            <button class="btn btn-primary" id="runBacktestBtn">
+                <span class="btn-icon">▶️</span>
+                Start Backtest
+            </button>
+            <button class="btn btn-secondary" id="exportBacktestBtn" disabled>
+                <span class="btn-icon">📥</span>
+                Export Resultaten
+            </button>
+        </div>
+        
+        <div id="backtestResults" class="backtest-results" style="display: none;">
+            <div class="results-summary">
+                <h4>Backtest Resultaten</h4>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">Periode:</span>
+                        <span class="value" id="btPeriod">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Aantal Observaties:</span>
+                        <span class="value" id="btObservations">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Gemiddelde Fout:</span>
+                        <span class="value" id="btAvgError">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Model Betrouwbaarheid:</span>
+                        <span class="value" id="btReliability">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="deviation-analysis">
+                <h4>Afwijkingen Analyse</h4>
+                <div class="chart-container">
+                    <canvas id="deviationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Learning Insights Section -->
+    <div class="insights-section">
+        <h3 class="section-header">
+            <span class="header-icon">💡</span>
+            Leer Inzichten
+        </h3>
+        
+        <div id="learningInsights" class="insights-container">
+            <!-- Dynamically populated insights -->
+        </div>
+    </div>
+    
+    <!-- Manual Entry Modal -->
+    <div id="manualEntryModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Werkelijke Prestaties Invoeren</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="manualEntryForm">
+                    <div class="form-group">
+                        <label for="entryDate">Datum</label>
+                        <input type="date" id="entryDate" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="actualValue">Werkelijke Portfolio Waarde (€)</label>
+                        <input type="number" id="actualValue" step="0.01" required class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="actualCashflow">Werkelijke Cashflow (€)</label>
+                        <input type="number" id="actualCashflow" step="0.01" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="actualROI">Werkelijke ROI (%)</label>
+                        <input type="number" id="actualROI" step="0.01" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notities</label>
+                        <textarea id="notes" rows="3" class="form-control" placeholder="Bijzonderheden, marktomstandigheden, etc."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelEntryBtn">Annuleren</button>
+                <button class="btn btn-primary" id="saveEntryBtn">Opslaan</button>
+            </div>
+        </div>
+    </div>
+</section>

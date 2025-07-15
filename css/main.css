@@ -31,6 +31,7 @@
 @import 'pages/portfolio.css';
 @import 'pages/saved.css';
 @import 'pages/export.css';
+@import 'pages/historical.css';
 
 /* Utilities */
 @import 'utilities/helpers.css';

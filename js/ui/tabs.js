@@ -75,6 +75,12 @@ export class TabManager {
                     <h2>📤 Export Functies</h2>
                     <p>Template could not be loaded. Please check templates/export.html</p>
                 </section>
+            `,
+            historical: `
+                <section id="historical" class="tab-pane" role="tabpanel">
+                    <h2>📊 Historische Prestaties</h2>
+                    <p>Template could not be loaded. Please check templates/historical.html</p>
+                </section>
             `
         };
         
@@ -176,7 +182,8 @@ export class TabManager {
             'waterfall',
             'portfolio',
             'saved',
-            'export'
+            'export',
+            'historical'
         ];
     }
     

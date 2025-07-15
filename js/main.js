@@ -12,8 +12,10 @@ import { WaterfallFeature } from './features/waterfall.js';
 import { PortfolioFeature } from './features/portfolio.js';
 import { SavedScenariosFeature } from './features/saved.js';
 import { ExportFeature } from './features/export.js';
+import { HistoricalFeature } from './features/historical.js';
 import { DataService } from './services/data-service.js';
 import { ValidationService } from './services/validation-service.js';
+import { HistoricalDataService } from './services/historical-data-service.js';
 
 class ROICalculatorApp {
     constructor() {
@@ -22,6 +24,7 @@ class ROICalculatorApp {
         this.calculator = new Calculator(this.state);
         this.dataService = new DataService();
         this.validationService = new ValidationService();
+        this.historicalDataService = new HistoricalDataService();
         
         // UI Managers
         this.tabManager = new TabManager();
@@ -36,7 +39,8 @@ class ROICalculatorApp {
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
             portfolio: new PortfolioFeature(this.chartManager),
             saved: new SavedScenariosFeature(this.calculator, this.dataService),
-            export: new ExportFeature(this.calculator, this.chartManager)
+            export: new ExportFeature(this.calculator, this.chartManager),
+            historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService)
         };
         
         this.initialized = false;
