@@ -320,7 +320,7 @@ export const Config = {
     
     // API keys (should be stored securely in production)
     apiKeys: {
-        alphaVantage: process.env.ALPHA_VANTAGE_KEY || 'demo',
-        exchangeRateAPI: process.env.EXCHANGE_RATE_API_KEY || null
+        alphaVantage: 'demo', // Replace with your API key or use localStorage.getItem('alphavantage_api_key')
+        exchangeRateAPI: null // Not required for free tier
     }
 };
