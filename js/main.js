@@ -1,209 +1,222 @@
-// Main entry point for ROI Calculator with Currency Support
-import { Config } from './config/config.js';
+// ROI Calculator Main Application Entry Point
+import Config from './config.js';
 import { StateManager } from './core/state-manager.js';
-import { Calculator } from './core/calculator.js';
-import { TabManager } from './ui/tabs.js';
+import { UIController } from './ui/ui-controller.js';
 import { ChartManager } from './ui/charts.js';
-import { FormManager } from './ui/forms.js';
-import { KPIDisplay } from './ui/kpi-display.js';
-import { ScenariosFeature } from './features/scenarios.js';
+import { TabManager } from './ui/tabs.js';
+import { Calculator } from './core/calculator.js';
+import { InputManager } from './core/input-manager.js';
+import { ExportManager } from './features/export.js';
+import { ScenarioManager } from './features/scenarios.js';
 import { MonteCarloFeature } from './features/monte-carlo.js';
-import { WaterfallFeature } from './features/waterfall.js';
-import { PortfolioFeature } from './features/portfolio.js';
-import { CurrencyPortfolioFeature } from './features/currency-portfolio.js';
-import { SavedScenariosFeature } from './features/saved.js';
-import { ExportFeature } from './features/export.js';
+import { TaxCalculator } from './features/tax-calculator.js';
 import { HistoricalFeature } from './features/historical.js';
-import { DataService } from './services/data-service.js';
-import { ValidationService } from './services/validation-service.js';
-import { HistoricalDataService } from './services/historical-data-service.js';
-import { CurrencyService } from './services/currency-service.js';
-import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
+import { PortfolioFeature } from './features/portfolio.js';
+import { WaterfallFeature } from './features/waterfall.js';
+import { SavedScenariosFeature } from './features/saved-scenarios.js';
 
 class ROICalculatorApp {
     constructor() {
-        this.config = Config;
-        this.state = new StateManager();
-        this.calculator = new Calculator(this.state);
-        this.dataService = new DataService();
-        this.validationService = new ValidationService();
-        this.historicalDataService = new HistoricalDataService();
-        
-        // Currency services
-        this.currencyService = new CurrencyService();
-        this.fxRiskAnalysis = new FXRiskAnalysis(this.currencyService);
-        
-        // UI Managers
-        this.tabManager = new TabManager();
-        this.chartManager = new ChartManager();
-        this.formManager = new FormManager(this.validationService);
-        this.kpiDisplay = new KPIDisplay();
-        
-        // Features
-        this.portfolioFeature = new PortfolioFeature(this.chartManager);
-        this.currencyPortfolioFeature = new CurrencyPortfolioFeature(
-            this.portfolioFeature,
-            this.currencyService,
-            this.fxRiskAnalysis
-        );
-        
-        this.features = {
-            scenarios: new ScenariosFeature(this.calculator, this.chartManager),
-            monteCarlo: new MonteCarloFeature(this.calculator, this.chartManager),
-            waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolio: this.portfolioFeature,
-            currencyPortfolio: this.currencyPortfolioFeature,
-            saved: new SavedScenariosFeature(this.calculator, this.dataService),
-            export: new ExportFeature(this.calculator, this.chartManager),
-            historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService)
-        };
-        
+        this.version = Config.version;
         this.initialized = false;
+        this.retryCount = 0;
+        this.maxRetries = 3;
+        
+        console.log(`ROI Calculator v${this.version} initializing...`);
     }
     
     async init() {
         try {
-            console.log('Initializing ROI Calculator Application with Currency Support...');
+            // Wait a bit more to ensure DOM is fully ready
+            await this.waitForDOM();
             
-            // Wait for libraries
+            // Wait for required libraries to load
             await this.waitForLibraries();
             
-            // Initialize currency service
-            await this.currencyService.initialize();
-            
-            // Initialize state with defaults
-            this.state.loadDefaults(this.config.defaults);
+            // Initialize core components
+            this.initializeCore();
             
             // Initialize UI components
-            await this.initializeUI();
+            this.initializeUI();
             
-            // Initialize currency portfolio feature
-            await this.currencyPortfolioFeature.initialize();
+            // Initialize features
+            await this.initializeFeatures();
             
-            // Set up event system
-            this.setupEventSystem();
+            // Set initial state
+            this.setInitialState();
             
-            // Load saved data
-            this.loadSavedData();
-            
-            // Initial calculation
-            this.calculate();
-            
+            // Mark as initialized
             this.initialized = true;
-            console.log('Application initialized successfully');
+            console.log('ROI Calculator initialized successfully');
             
         } catch (error) {
-            console.error('Error initializing application:', error);
-            this.showError('Er is een fout opgetreden bij het laden van de applicatie.');
+            console.error('Failed to initialize application:', error);
+            
+            // Retry initialization if we haven't exceeded max retries
+            if (this.retryCount < this.maxRetries) {
+                this.retryCount++;
+                console.log(`Retrying initialization (attempt ${this.retryCount}/${this.maxRetries})...`);
+                setTimeout(() => this.init(), 1000);
+            } else {
+                this.showError('De applicatie kon niet worden geladen. Ververs de pagina om het opnieuw te proberen.');
+            }
         }
     }
     
-    async initializeUI() {
-        // Initialize tabs
+    async waitForDOM() {
+        // Extra wait to ensure DOM is completely ready
+        if (document.readyState !== 'complete') {
+            await new Promise(resolve => {
+                window.addEventListener('load', resolve);
+            });
+        }
+        
+        // Additional small delay for safety
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    initializeCore() {
+        console.log('Initializing core components...');
+        
+        // Verify essential DOM elements exist
+        const essentialElements = {
+            container: document.querySelector('.container'),
+            tabContent: document.querySelector('.tab-content'),
+            mainElement: document.querySelector('main'),
+            calculator: document.getElementById('calculator'),
+            tabs: document.querySelectorAll('.tab')
+        };
+        
+        // Check each element and provide specific error messages
+        for (const [name, element] of Object.entries(essentialElements)) {
+            if (!element || (name === 'tabs' && element.length === 0)) {
+                console.error(`Essential element missing: ${name}`);
+                throw new Error(`Required DOM element not found: ${name}`);
+            }
+        }
+        
+        console.log('All essential elements found');
+        
+        // Initialize state manager
+        this.stateManager = new StateManager();
+        
+        // Initialize calculator
+        this.calculator = new Calculator(this.stateManager);
+        
+        // Initialize input manager
+        this.inputManager = new InputManager(this.stateManager, this.calculator);
+        
+        // Tax calculator
+        this.taxCalculator = new TaxCalculator();
+        
+        console.log('Core components initialized');
+    }
+    
+    initializeUI() {
+        console.log('Initializing UI components...');
+        
+        // Initialize chart manager
+        this.chartManager = new ChartManager();
+        
+        // Initialize UI controller
+        this.uiController = new UIController(this.stateManager, this.chartManager);
+        
+        // Initialize tab manager
+        this.tabManager = new TabManager();
+        
+        console.log('UI components initialized');
+    }
+    
+    async initializeFeatures() {
+        console.log('Initializing features...');
+        
+        // Initialize feature modules
+        this.features = {
+            export: new ExportManager(this.stateManager),
+            scenarios: new ScenarioManager(this.stateManager, this.calculator, this.chartManager),
+            monteCarlo: new MonteCarloFeature(this.stateManager, this.chartManager),
+            historical: new HistoricalFeature(this.chartManager),
+            portfolio: new PortfolioFeature(this.chartManager),
+            waterfall: new WaterfallFeature(this.chartManager),
+            savedScenarios: new SavedScenariosFeature(this.stateManager)
+        };
+        
+        // Load all tab templates
         await this.tabManager.loadAllTemplates();
         
-        // Initialize charts
-        this.chartManager.initMainChart();
-        
-        // Initialize forms with state
-        this.formManager.initialize(this.state);
-        
-        // Set up tab change handling
-        this.tabManager.onTabChange((tabName) => {
-            this.handleTabChange(tabName);
-        });
-    }
-    
-    setupEventSystem() {
-        // State change listener
-        this.state.onChange(() => {
-            this.calculate();
-        });
-        
-        // Form change listener
-        this.formManager.onChange((changes) => {
-            this.state.update({ inputs: changes });
-        });
-        
-        // Feature event listeners
+        // Setup feature listeners
         Object.values(this.features).forEach(feature => {
             if (feature.setupListeners) {
-                feature.setupListeners(this.state);
+                feature.setupListeners(this.stateManager);
             }
         });
-    }
-    
-    calculate() {
-        try {
-            const inputs = this.state.getInputs();
-            const results = this.calculator.calculate(inputs);
-            
-            this.state.setResults(results);
-            this.updateUI();
-            
-        } catch (error) {
-            console.error('Calculation error:', error);
-        }
-    }
-    
-    updateUI() {
-        const results = this.state.getResults();
-        const inputs = this.state.getInputs();
-        const uiState = this.state.getUIState();
         
-        // Update KPIs
-        this.kpiDisplay.update(results, uiState.showRealValues);
-        
-        // Update charts
-        this.chartManager.updateMainChart(
-            this.calculator.getChartData(uiState.showRealValues),
-            uiState.showRealValues
-        );
+        console.log('Features initialized');
     }
     
-    handleTabChange(tabName) {
-        // Handle special case for portfolio tab
-        if (tabName === 'portfolio') {
-            // Activate both portfolio and currency features
-            if (this.features.portfolio && this.features.portfolio.activate) {
-                this.features.portfolio.activate(this.state);
+    setInitialState() {
+        console.log('Setting initial state...');
+        
+        // Set default values from config
+        const defaults = Config.defaults;
+        
+        // Safely set values only if elements exist
+        const setValueSafe = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = value;
             }
-            // Currency portfolio feature is already initialized
-            return;
+        };
+        
+        setValueSafe('startKapitaal', defaults.startKapitaal);
+        setValueSafe('lening', defaults.lening);
+        setValueSafe('rentePercentage', defaults.rentePercentage);
+        setValueSafe('looptijd', defaults.looptijd);
+        setValueSafe('rendementPercentage', defaults.rendementPercentage);
+        setValueSafe('inflatiePercentage', defaults.inflatiePercentage);
+        setValueSafe('vpbTarief', defaults.vpbTarief);
+        setValueSafe('box3Tarief', defaults.box3Tarief);
+        
+        // Set tax regime
+        const taxRegime = document.getElementById('taxRegime');
+        if (taxRegime) {
+            taxRegime.value = defaults.belastingRegime;
         }
         
-        const feature = this.features[tabName];
-        if (feature && feature.activate) {
-            feature.activate(this.state);
+        // Trigger initial calculation
+        if (this.inputManager && this.inputManager.handleInputChange) {
+            this.inputManager.handleInputChange();
         }
+        
+        console.log('Initial state set');
     }
     
-    loadSavedData() {
-        const savedScenarios = this.dataService.loadScenarios();
-        const savedSettings = this.dataService.loadSettings();
-        
-        if (savedSettings && savedSettings.inputs) {
-            this.state.update(savedSettings);
-        }
-        
-        // Make scenarios available to features
-        if (this.features.saved) {
-            this.features.saved.loadSavedScenarios(savedScenarios);
-        }
-    }
-    
-    async waitForLibraries() {
-        const requiredLibs = ['Chart', 'XLSX', 'jspdf'];
+    async waitForLibraries(timeout = 30000) {
+        console.log('Waiting for external libraries...');
+        const startTime = Date.now();
         const checkInterval = 100;
-        const maxAttempts = 50;
+        const maxAttempts = timeout / checkInterval;
+        
+        const requiredLibs = {
+            'Chart': window.Chart,
+            'XLSX': window.XLSX,
+            'jsPDF': window.jspdf || window.jsPDF
+        };
+        
         let attempts = 0;
         
         while (attempts < maxAttempts) {
-            const allLoaded = requiredLibs.every(lib => 
-                lib === 'jspdf' ? 
+            const allLoaded = Object.entries(requiredLibs).every(([lib, global]) => {
+                const loaded = lib === 'jsPDF' ? 
                     (window.jspdf || window.jsPDF) : 
-                    window[lib]
-            );
+                    window[lib];
+                
+                if (!loaded) {
+                    console.log(`Waiting for ${lib}...`);
+                }
+                
+                return loaded;
+            });
             
             if (allLoaded) {
                 console.log('All required libraries loaded');
@@ -241,33 +254,21 @@ class ROICalculatorApp {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, initializing application...');
     
-    // Check for essential elements - look for either tab-content or container class
-    const mainContainer = document.querySelector('.tab-content') || 
-                         document.querySelector('.container') ||
-                         document.querySelector('main');
-                         
-    if (!mainContainer) {
-        console.error('Main container not found. Looking for .tab-content, .container, or main element');
-        return;
-    }
-    
-    // Verify essential elements exist
-    const calculatorSection = document.getElementById('calculator');
-    const tabElements = document.querySelectorAll('.tab');
-    
-    if (!calculatorSection) {
-        console.error('Calculator section not found');
-        return;
-    }
-    
-    if (tabElements.length === 0) {
-        console.error('No tab elements found');
-        return;
-    }
-    
-    console.log('Essential elements found, creating application instance...');
-    
     // Create and initialize app
     window.roiCalculatorApp = new ROICalculatorApp();
     await window.roiCalculatorApp.init();
+});
+
+// Also listen for window load as a fallback
+window.addEventListener('load', () => {
+    console.log('Window loaded');
+    
+    // If app hasn't initialized yet, try again
+    if (!window.roiCalculatorApp || !window.roiCalculatorApp.initialized) {
+        console.log('App not initialized on window load, attempting initialization...');
+        if (!window.roiCalculatorApp) {
+            window.roiCalculatorApp = new ROICalculatorApp();
+        }
+        window.roiCalculatorApp.init();
+    }
 });
