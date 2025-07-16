@@ -1,7 +1,7 @@
 /**
  * Global Configuration for ROI Calculator
  */
-const Config = {
+export const Config = {
     // Application metadata
     app: {
         name: 'ROI Calculator Pro',
@@ -45,6 +45,28 @@ const Config = {
     
     // Tax configuration (2024 rates)
     tax: {
+        // VPB (Vennootschapsbelasting) constants
+        VPB_RATE: 0.258, // 25.8%
+        VPB_LOW_RATE: 0.19, // 19%
+        VPB_LOW_THRESHOLD: 395000, // 2024 threshold
+        
+        // Box 1 constants
+        BOX1_BRACKETS: [
+            { min: 0, max: 73031, rate: 0.3697 },
+            { min: 73031, max: Infinity, rate: 0.495 }
+        ],
+        DEFAULT_BOX1_RATE: 0.495, // 49.5%
+        
+        // Box 3 constants
+        BOX3_RENDEMENT_BRACKETS: [
+            { min: 0, max: 71650, rate: 0.0036 }, // 0.36%
+            { min: 71650, max: 1020750, rate: 0.0151 }, // 1.51%
+            { min: 1020750, max: Infinity, rate: 0.0152 } // 1.52%
+        ],
+        BOX3_BELASTING_TARIEF: 0.36, // 36%
+        DEFAULT_BOX3_RENDEMENT: 0.0604, // 6.04%
+        
+        // Legacy/alternative names for compatibility
         vpb: {
             rate: 0.258, // 25.8%
             smallBusinessThreshold: 395000,
@@ -347,8 +369,3 @@ const Config = {
 
 // Freeze config to prevent accidental modifications
 Object.freeze(Config);
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = Config;
-}
