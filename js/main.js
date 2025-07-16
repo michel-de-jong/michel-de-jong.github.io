@@ -182,10 +182,16 @@ class ROICalculatorApp {
             }
         });
         
-        // Initialize currency features
-        if (this.config.app.features.currency) {
-            await this.currencyService.initialize();
-            this.currencyPortfolioFeature.initialize();
+        // Initialize currency features if currency service is available
+        if (this.currencyService && this.currencyPortfolioFeature && this.currencyPortfolioFeature.initialize) {
+            try {
+                await this.currencyService.initialize();
+                await this.currencyPortfolioFeature.initialize();
+                console.log('Currency features initialized');
+            } catch (error) {
+                console.warn('Currency features initialization failed:', error);
+                // Continue without currency features - non-critical error
+            }
         }
     }
     
@@ -238,63 +244,55 @@ class ROICalculatorApp {
         // Update KPIs
         this.kpiDisplay.update(results, uiState.showRealValues);
         
-        // Update charts
-        this.chartManager.updateMainChart(
-            this.calculator.getChartData(uiState.showRealValues),
-            uiState.showRealValues
-        );
+        // Update main chart
+        if (results && results.chartData) {
+            this.chartManager.updateMainChart(results.chartData, uiState.showRealValues);
+        }
     }
     
     handleTabChange(tabName) {
-        // Handle special case for portfolio tab
-        if (tabName === 'portfolio') {
-            // Activate both portfolio and currency features
-            if (this.features.portfolio && this.features.portfolio.activate) {
-                this.features.portfolio.activate(this.state);
-            }
-            // Currency portfolio feature is already initialized
-            return;
-        }
+        console.log(`Tab changed to: ${tabName}`);
         
+        // Activate feature if it has an activate method
         const feature = this.features[tabName];
         if (feature && feature.activate) {
             feature.activate(this.state);
         }
+        
+        // Special handling for specific tabs
+        switch(tabName) {
+            case 'portfolio':
+                if (this.features.portfolio) {
+                    this.features.portfolio.refresh();
+                }
+                break;
+                
+            case 'historical':
+                if (this.features.historical) {
+                    this.features.historical.loadHistoricalData();
+                }
+                break;
+        }
     }
     
-    loadSavedData() {
-        const savedScenarios = this.dataService.loadScenarios();
-        const savedSettings = this.dataService.loadSettings();
-        
-        if (savedSettings && savedSettings.inputs) {
-            this.state.update(savedSettings);
-        }
-        
-        // Make scenarios available to features
-        if (this.features.saved) {
-            this.features.saved.loadSavedScenarios(savedScenarios);
-        }
-    }
-    
-    async waitForLibraries(timeout = 30000) {
-        console.log('Waiting for external libraries...');
-        const startTime = Date.now();
+    async waitForLibraries() {
+        const requiredLibs = ['Chart', 'XLSX', 'jsPDF'];
+        const maxAttempts = 50;
         const checkInterval = 100;
-        const maxAttempts = timeout / checkInterval;
-        
-        const requiredLibs = {
-            'Chart': window.Chart,
-            'XLSX': window.XLSX,
-            'jsPDF': window.jspdf || window.jsPDF
-        };
         
         let attempts = 0;
         
         while (attempts < maxAttempts) {
-            const allLoaded = Object.entries(requiredLibs).every(([lib, global]) => {
-                const loaded = lib === 'jsPDF' ? 
-                    (window.jspdf || window.jsPDF) : 
-                    window[lib];
+            const allLoaded = requiredLibs.every(lib => {
+                const loaded = window[lib] || 
+                    (lib === 'jsPDF' && window.jspdf) || 
+                    (lib === 'jsPDF' && window.jsPDF);
+                
+                // Store jsPDF reference consistently
+                if (lib === 'jsPDF' && loaded && !window.jsPDF) {
+                    window.jsPDF = (window.jspdf && window.jspdf.jsPDF) || 
+                                   (window.jspdf || window.jsPDF);
+                }
                 
                 if (!loaded) {
                     console.log(`Waiting for ${lib}...`);
@@ -313,6 +311,32 @@ class ROICalculatorApp {
         }
         
         throw new Error('Required libraries failed to load');
+    }
+    
+    loadSavedData() {
+        try {
+            // Load saved scenarios
+            const savedScenarios = this.dataService.loadScenarios();
+            if (savedScenarios && savedScenarios.length > 0) {
+                console.log(`Loaded ${savedScenarios.length} saved scenarios`);
+            }
+            
+            // Load saved portfolios
+            const savedPortfolios = this.dataService.loadPortfolios();
+            if (savedPortfolios && savedPortfolios.length > 0) {
+                console.log(`Loaded ${savedPortfolios.length} saved portfolios`);
+            }
+            
+            // Load user preferences
+            const preferences = this.dataService.loadPreferences();
+            if (preferences) {
+                this.state.update({ preferences });
+                console.log('Loaded user preferences');
+            }
+            
+        } catch (error) {
+            console.warn('Failed to load saved data:', error);
+        }
     }
     
     showError(message) {

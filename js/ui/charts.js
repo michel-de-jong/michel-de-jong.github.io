@@ -1,9 +1,15 @@
-// Chart Manager Module
+// Chart Manager Module - Handles all chart operations
 import { Config } from '../config/config.js';
-import { formatNumber } from '../utils/format-utils.js';
+import { formatNumber, formatPercentage } from '../utils/format-utils.js';
 
 export class ChartManager {
     constructor() {
+        // Available libraries check
+        if (!window.Chart) {
+            console.error('Chart.js library not loaded');
+            throw new Error('Required library Chart.js is not available');
+        }
+        
         this.charts = {
             main: null,
             scenario: null,
@@ -16,6 +22,9 @@ export class ChartManager {
         this.defaultOptions = {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: Config.ui.animations ? Config.ui.animationDuration : 0
+            },
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -27,30 +36,11 @@ export class ChartManager {
                     }
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed.y !== null) {
-                                if (context.datasetIndex === 4) { // ROI
-                                    label += context.parsed.y.toFixed(1) + '%';
-                                } else {
-                                    label += formatNumber(context.parsed.y);
-                                }
-                            }
-                            return label;
-                        }
-                    }
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
                 }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
             }
         };
     }
@@ -61,6 +51,20 @@ export class ChartManager {
         if (!canvas) {
             console.warn('Main chart canvas not found');
             return;
+        }
+        
+        // Destroy existing chart if it exists
+        if (this.charts.main) {
+            console.log('Destroying existing main chart');
+            this.charts.main.destroy();
+            this.charts.main = null;
+        }
+        
+        // Also check if there's a chart instance attached to the canvas
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            console.log('Found existing chart instance on canvas, destroying it');
+            existingChart.destroy();
         }
         
         const ctx = canvas.getContext('2d');
@@ -201,6 +205,17 @@ export class ChartManager {
         const canvas = document.getElementById('scenarioChart');
         if (!canvas) return false;
         
+        // Destroy existing chart if it exists
+        if (this.charts.scenario) {
+            this.charts.scenario.destroy();
+            this.charts.scenario = null;
+        }
+        
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
         const ctx = canvas.getContext('2d');
         
         this.charts.scenario = new Chart(ctx, {
@@ -251,126 +266,33 @@ export class ChartManager {
         return true;
     }
     
-    // Initialize Monte Carlo charts
-    initMonteCarloCharts() {
-        // Scatter plot
-        const canvas1 = document.getElementById('monteCarloChart');
-        if (!canvas1) return false;
+    // Initialize portfolio chart
+    initPortfolioChart() {
+        const canvas = document.getElementById('portfolioChart');
+        if (!canvas) return;
         
-        const ctx1 = canvas1.getContext('2d');
-        this.charts.monteCarlo = new Chart(ctx1, {
-            type: 'scatter',
-            data: {
-                datasets: [{
-                    label: 'Simulatie Resultaten',
-                    data: [],
-                    backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.5),
-                    pointRadius: 2,
-                    pointHoverRadius: 4
-                }]
-            },
-            options: this.createMonteCarloOptions()
-        });
+        // Destroy existing chart if it exists
+        if (this.charts.portfolio) {
+            this.charts.portfolio.destroy();
+            this.charts.portfolio = null;
+        }
         
-        // Distribution histogram
-        const canvas2 = document.getElementById('distributionChart');
-        if (!canvas2) return false;
-        
-        const ctx2 = canvas2.getContext('2d');
-        this.charts.distribution = new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Frequentie',
-                    data: [],
-                    backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.7),
-                    borderColor: Config.charts.colors.primary,
-                    borderWidth: 1
-                }]
-            },
-            options: this.createDistributionOptions()
-        });
-        
-        return true;
-    }
-    
-    createMonteCarloOptions() {
-        return {
-            ...this.defaultOptions,
-            plugins: {
-                ...this.defaultOptions.plugins,
-                title: {
-                    display: true,
-                    text: 'Monte Carlo Simulatie - ROI Spreiding'
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Simulatie #'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'ROI %'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + '%';
-                        }
-                    }
-                }
-            }
-        };
-    }
-    
-    createDistributionOptions() {
-        return {
-            ...this.defaultOptions,
-            plugins: {
-                ...this.defaultOptions.plugins,
-                title: {
-                    display: true,
-                    text: 'ROI Verdeling (Histogram)'
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'ROI %'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Aantal Simulaties'
-                    }
-                }
-            }
-        };
-    }
-    
-    // Initialize waterfall chart
-    initWaterfallChart() {
-        const canvas = document.getElementById('waterfallChart');
-        if (!canvas) return false;
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
         
         const ctx = canvas.getContext('2d');
         
-        this.charts.waterfall = new Chart(ctx, {
-            type: 'bar',
+        this.charts.portfolio = new Chart(ctx, {
+            type: 'doughnut',
             data: {
                 labels: [],
                 datasets: [{
-                    label: 'Cashflow',
                     data: [],
-                    backgroundColor: [],
-                    borderColor: [],
-                    borderWidth: 1
+                    backgroundColor: Config.charts.colors.currencyPalette,
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
@@ -379,10 +301,157 @@ export class ChartManager {
                     ...this.defaultOptions.plugins,
                     title: {
                         display: true,
-                        text: 'Cashflow Waterfall'
+                        text: 'Asset Allocatie'
                     },
-                    legend: {
-                        display: false
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + formatNumber(value) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize Monte Carlo charts
+    initMonteCarloCharts() {
+        // Destroy existing charts if they exist
+        if (this.charts.monteCarlo) {
+            this.charts.monteCarlo.destroy();
+            this.charts.monteCarlo = null;
+        }
+        if (this.charts.distribution) {
+            this.charts.distribution.destroy();
+            this.charts.distribution = null;
+        }
+        
+        // Initialize paths chart
+        const pathsCanvas = document.getElementById('monteCarloChart');
+        if (pathsCanvas) {
+            const existingChart = Chart.getChart(pathsCanvas);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            const ctx = pathsCanvas.getContext('2d');
+            this.charts.monteCarlo = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: []
+                },
+                options: {
+                    ...this.defaultOptions,
+                    animation: false,
+                    plugins: {
+                        ...this.defaultOptions.plugins,
+                        title: {
+                            display: true,
+                            text: 'Monte Carlo Simulatie Paden'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0
+                        },
+                        point: {
+                            radius: 0
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize distribution chart
+        const distCanvas = document.getElementById('distributionChart');
+        if (distCanvas) {
+            const existingChart = Chart.getChart(distCanvas);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            const ctx = distCanvas.getContext('2d');
+            this.charts.distribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Frequentie',
+                        data: [],
+                        backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.8),
+                        borderColor: Config.charts.colors.primary,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...this.defaultOptions,
+                    plugins: {
+                        ...this.defaultOptions.plugins,
+                        title: {
+                            display: true,
+                            text: 'Verdeling Eindwaarden'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequentie'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Eindwaarde (€)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize waterfall chart
+    initWaterfallChart() {
+        const canvas = document.getElementById('waterfallChart');
+        if (!canvas) return;
+        
+        // Destroy existing chart if it exists
+        if (this.charts.waterfall) {
+            this.charts.waterfall.destroy();
+            this.charts.waterfall = null;
+        }
+        
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        
+        this.charts.waterfall = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                ...this.defaultOptions,
+                plugins: {
+                    ...this.defaultOptions.plugins,
+                    title: {
+                        display: true,
+                        text: 'Cashflow Waterfall'
                     }
                 },
                 scales: {
@@ -400,111 +469,93 @@ export class ChartManager {
                 }
             }
         });
-        
-        return true;
     }
     
-    // Initialize portfolio chart
-    initPortfolioChart() {
-        const canvas = document.getElementById('portfolioChart');
-        if (!canvas) return false;
-        
-        const ctx = canvas.getContext('2d');
-        
-        this.charts.portfolio = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [],
-                datasets: [{
-                    data: [],
-                    backgroundColor: [
-                        Config.charts.colors.primary,
-                        Config.charts.colors.secondary,
-                        Config.charts.colors.danger,
-                        Config.charts.colors.warning,
-                        Config.charts.colors.purple,
-                        Config.charts.colors.info
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                ...this.defaultOptions,
-                plugins: {
-                    ...this.defaultOptions.plugins,
-                    title: {
-                        display: true,
-                        text: 'Portfolio Verdeling'
-                    },
-                    legend: {
-                        position: 'right'
-                    }
-                }
+    // Update scenario chart
+    updateScenarioChart(scenarios) {
+        if (!this.charts.scenario) {
+            if (!this.initScenarioChart()) {
+                return;
             }
-        });
+        }
         
-        return true;
+        const data = [
+            scenarios.best.totaalROI,
+            scenarios.base.totaalROI,
+            scenarios.worst.totaalROI
+        ];
+        
+        this.charts.scenario.data.datasets[0].data = data;
+        this.charts.scenario.update('none');
     }
     
-    // Update waterfall chart
-    updateWaterfallChart(waterfallData) {
-        if (!this.charts.waterfall || !waterfallData.data) return;
+    // Update portfolio chart
+    updatePortfolioChart(assets) {
+        if (!this.charts.portfolio) {
+            this.initPortfolioChart();
+            if (!this.charts.portfolio) return;
+        }
         
-        const data = waterfallData.data;
-        let cumulative = 0;
-        const chartData = [];
-        const colors = [];
-        const borderColors = [];
+        const labels = assets.map(a => a.name);
+        const data = assets.map(a => a.amount);
         
-        data.forEach((item) => {
-            if (item.type === 'start') {
-                cumulative = item.value;
-                chartData.push([0, item.value]);
-                colors.push(this.createAlpha('#6c757d', 0.5));
-                borderColors.push('#6c757d');
-            } else if (item.type === 'total') {
-                item.value = cumulative;
-                chartData.push([0, cumulative]);
-                colors.push(this.createAlpha(Config.charts.colors.purple, 0.7));
-                borderColors.push(Config.charts.colors.purple);
-            } else {
-                chartData.push([cumulative, cumulative + item.value]);
-                cumulative += item.value;
-                if (item.type === 'positive') {
-                    colors.push(this.createAlpha(Config.charts.colors.secondary, 0.5));
-                    borderColors.push(Config.charts.colors.secondary);
-                } else {
-                    colors.push(this.createAlpha(Config.charts.colors.danger, 0.5));
-                    borderColors.push(Config.charts.colors.danger);
-                }
-            }
-        });
-        
-        this.charts.waterfall.data.labels = data.map(d => d.label);
-        this.charts.waterfall.data.datasets[0].data = chartData;
-        this.charts.waterfall.data.datasets[0].backgroundColor = colors;
-        this.charts.waterfall.data.datasets[0].borderColor = borderColors;
-        this.charts.waterfall.update('none');
+        this.charts.portfolio.data.labels = labels;
+        this.charts.portfolio.data.datasets[0].data = data;
+        this.charts.portfolio.update('none');
     }
     
     // Update Monte Carlo charts
-    updateMonteCarloCharts(stats) {
-        // Update scatter plot
+    updateMonteCarloCharts(results) {
+        if (!results) return;
+        
+        // Update paths chart
         if (this.charts.monteCarlo) {
-            this.charts.monteCarlo.data.datasets[0].data = stats.results.map(r => ({
-                x: r.simulation,
-                y: r.roi
-            }));
+            const datasets = [];
+            const numPathsToShow = Math.min(100, results.paths.length);
+            
+            for (let i = 0; i < numPathsToShow; i++) {
+                datasets.push({
+                    data: results.paths[i],
+                    borderColor: `rgba(30, 60, 114, ${0.1 + (i / numPathsToShow) * 0.2})`,
+                    borderWidth: 1,
+                    fill: false,
+                    pointRadius: 0
+                });
+            }
+            
+            // Add percentile lines
+            datasets.push({
+                label: 'P95',
+                data: results.percentiles.p95,
+                borderColor: Config.charts.colors.success,
+                borderWidth: 3,
+                fill: false
+            });
+            
+            datasets.push({
+                label: 'P50 (Mediaan)',
+                data: results.percentiles.p50,
+                borderColor: Config.charts.colors.warning,
+                borderWidth: 3,
+                fill: false
+            });
+            
+            datasets.push({
+                label: 'P5',
+                data: results.percentiles.p5,
+                borderColor: Config.charts.colors.danger,
+                borderWidth: 3,
+                fill: false
+            });
+            
+            this.charts.monteCarlo.data.labels = results.labels;
+            this.charts.monteCarlo.data.datasets = datasets;
             this.charts.monteCarlo.update('none');
         }
         
-        // Create histogram data
-        if (this.charts.distribution) {
-            const histogramData = this.createHistogram(
-                stats.results.map(r => r.roi), 
-                Config.monteCarlo.histogramBins
-            );
+        // Update distribution chart
+        if (this.charts.distribution && results.finalValues) {
+            const histogramData = this.createHistogram(results.finalValues, 20);
             this.charts.distribution.data.labels = histogramData.labels;
             this.charts.distribution.data.datasets[0].data = histogramData.data;
             this.charts.distribution.update('none');
