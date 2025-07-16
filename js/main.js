@@ -1,4 +1,4 @@
-// Main entry point for ROI Calculator
+// Main entry point for ROI Calculator with Currency Support
 import { Config } from './config/config.js';
 import { StateManager } from './core/state-manager.js';
 import { Calculator } from './core/calculator.js';
@@ -10,12 +10,15 @@ import { ScenariosFeature } from './features/scenarios.js';
 import { MonteCarloFeature } from './features/monte-carlo.js';
 import { WaterfallFeature } from './features/waterfall.js';
 import { PortfolioFeature } from './features/portfolio.js';
+import { CurrencyPortfolioFeature } from './features/currency-portfolio.js';
 import { SavedScenariosFeature } from './features/saved.js';
 import { ExportFeature } from './features/export.js';
 import { HistoricalFeature } from './features/historical.js';
 import { DataService } from './services/data-service.js';
 import { ValidationService } from './services/validation-service.js';
 import { HistoricalDataService } from './services/historical-data-service.js';
+import { CurrencyService } from './services/currency-service.js';
+import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
 
 class ROICalculatorApp {
     constructor() {
@@ -26,6 +29,10 @@ class ROICalculatorApp {
         this.validationService = new ValidationService();
         this.historicalDataService = new HistoricalDataService();
         
+        // Currency services
+        this.currencyService = new CurrencyService();
+        this.fxRiskAnalysis = new FXRiskAnalysis(this.currencyService);
+        
         // UI Managers
         this.tabManager = new TabManager();
         this.chartManager = new ChartManager();
@@ -33,11 +40,19 @@ class ROICalculatorApp {
         this.kpiDisplay = new KPIDisplay();
         
         // Features
+        this.portfolioFeature = new PortfolioFeature(this.chartManager);
+        this.currencyPortfolioFeature = new CurrencyPortfolioFeature(
+            this.portfolioFeature,
+            this.currencyService,
+            this.fxRiskAnalysis
+        );
+        
         this.features = {
             scenarios: new ScenariosFeature(this.calculator, this.chartManager),
             monteCarlo: new MonteCarloFeature(this.calculator, this.chartManager),
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolio: new PortfolioFeature(this.chartManager),
+            portfolio: this.portfolioFeature,
+            currencyPortfolio: this.currencyPortfolioFeature,
             saved: new SavedScenariosFeature(this.calculator, this.dataService),
             export: new ExportFeature(this.calculator, this.chartManager),
             historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService)
@@ -48,16 +63,22 @@ class ROICalculatorApp {
     
     async init() {
         try {
-            console.log('Initializing ROI Calculator Application...');
+            console.log('Initializing ROI Calculator Application with Currency Support...');
             
             // Wait for libraries
             await this.waitForLibraries();
+            
+            // Initialize currency service
+            await this.currencyService.initialize();
             
             // Initialize state with defaults
             this.state.loadDefaults(this.config.defaults);
             
             // Initialize UI components
             await this.initializeUI();
+            
+            // Initialize currency portfolio feature
+            await this.currencyPortfolioFeature.initialize();
             
             // Set up event system
             this.setupEventSystem();
@@ -141,6 +162,16 @@ class ROICalculatorApp {
     }
     
     handleTabChange(tabName) {
+        // Handle special case for portfolio tab
+        if (tabName === 'portfolio') {
+            // Activate both portfolio and currency features
+            if (this.features.portfolio && this.features.portfolio.activate) {
+                this.features.portfolio.activate(this.state);
+            }
+            // Currency portfolio feature is already initialized
+            return;
+        }
+        
         const feature = this.features[tabName];
         if (feature && feature.activate) {
             feature.activate(this.state);
@@ -169,10 +200,15 @@ class ROICalculatorApp {
         
         while (attempts < maxAttempts) {
             const allLoaded = requiredLibs.every(lib => 
-                lib === 'jspdf' ? window.jspdf : window[lib]
+                lib === 'jspdf' ? 
+                    (window.jspdf || window.jsPDF) : 
+                    window[lib]
             );
             
-            if (allLoaded) return;
+            if (allLoaded) {
+                console.log('All required libraries loaded');
+                return;
+            }
             
             await new Promise(resolve => setTimeout(resolve, checkInterval));
             attempts++;
@@ -182,22 +218,37 @@ class ROICalculatorApp {
     }
     
     showError(message) {
-        // Could be replaced with a better UI component
-        alert(message);
+        const errorContainer = document.getElementById('errorContainer');
+        if (errorContainer) {
+            errorContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible">
+                    <strong>Fout:</strong> ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            `;
+            errorContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                errorContainer.style.display = 'none';
+            }, 5000);
+        } else {
+            alert(message);
+        }
     }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
-
-function initApp() {
-    window.app = new ROICalculatorApp();
-    window.app.init();
-}
-
-// Export for use in other modules if needed
-export { ROICalculatorApp };
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM loaded, initializing application...');
+    
+    // Check for essential elements
+    const mainContainer = document.getElementById('calculator-container');
+    if (!mainContainer) {
+        console.error('Main container not found');
+        return;
+    }
+    
+    // Create and initialize app
+    window.roiCalculatorApp = new ROICalculatorApp();
+    await window.roiCalculatorApp.init();
+});

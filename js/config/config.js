@@ -1,173 +1,326 @@
-// Configuration Module - ES6 Module version
+// Configuration file for ROI Calculator with Currency Support
+
 export const Config = {
-    // Default Values
-    defaults: {
-        startKapitaal: 50000,
-        lening: 100000,
-        renteLening: 8,
-        looptijd: 10,
-        leningLooptijd: 10,
-        rendementType: 'maandelijks',
-        rendement: 3,
-        aflossingsType: 'annuitair',
-        herinvestering: 80,
-        vasteKosten: 2500,
-        herinvesteringDrempel: 1000,
-        inflatie: 2.5,
-        belastingType: 'vpb',
-        showRealValues: false,
-        
-        // Privé Belasting Defaults
-        priveSubType: 'box1',
-        box1Tarief: 37.07,
-        box3Rendement: 6.04,
-        box3Tarief: 31,
-        box3Vrijstelling: 57000
-    },
-    
-    // Tax Configuration
-    tax: {
-        // VPB - Vennootschapsbelasting
-        VPB_RATE: 0.258,
-        VPB_LOW_RATE: 0.19,
-        VPB_LOW_THRESHOLD: 200000,
-        
-        // Box 1 - Inkomstenbelasting
-        BOX1_BRACKETS: [
-            { min: 0, max: 37149, rate: 0.3693 },
-            { min: 37149, max: 73031, rate: 0.3693 },
-            { min: 73031, max: Infinity, rate: 0.495 }
-        ],
-        
-        // Box 3 - Vermogensbelasting
-        BOX3_RENDEMENT_BRACKETS: [
-            { min: 0, max: 57000, rate: 0 },
-            { min: 57000, max: 114000, rate: 0.0604 },
-            { min: 114000, max: Infinity, rate: 0.0651 }
-        ],
-        BOX3_BELASTING_TARIEF: 0.31,
-        
-        // Default rates
-        DEFAULT_BOX1_RATE: 0.3707,
-        DEFAULT_BOX3_RATE: 0.31,
-        DEFAULT_BOX3_RENDEMENT: 0.0604
-    },
-    
-    // Chart Configuration
-    charts: {
-        defaultHeight: 400,
-        tallHeight: 500,
-        colors: {
-            primary: '#1e3c72',
-            secondary: '#28a745',
-            danger: '#dc3545',
-            warning: '#ffc107',
-            info: '#17a2b8',
-            purple: '#6f42c1',
-            orange: '#fd7e14'
-        },
-        gradients: {
-            purple: ['#667eea', '#764ba2'],
-            green: ['#11998e', '#38ef7d'],
-            blue: ['#2193b0', '#6dd5ed'],
-            orange: ['#f093fb', '#f5576c'],
-            yellow: ['#f7971e', '#ffd200']
-        }
-    },
-    
-    // Monte Carlo Configuration
-    monteCarlo: {
-        defaultSimulations: 10000,
-        minSimulations: 1000,
-        maxSimulations: 100000,
-        histogramBins: 50
-    },
-    
-    // Export Configuration
-    export: {
-        excelFilename: 'ROI_Analyse',
-        pdfFilename: 'ROI_Rapport',
-        imageFormat: 'png',
-        dateFormat: 'nl-NL'
-    },
-    
-    // Validation Rules
-    validation: {
-        startKapitaal: { min: 0, max: null, step: 1000 },
-        lening: { min: 0, max: null, step: 1000 },
-        renteLening: { min: 0, max: 20, step: 0.1 },
-        looptijd: { min: 1, max: 50, step: 1 },
-        leningLooptijd: { min: 1, max: 50, step: 1 },
-        rendement: { min: -10, max: 50, step: 0.1 },
-        herinvestering: { min: 0, max: 100, step: 5 },
-        vasteKosten: { min: 0, max: null, step: 100 },
-        herinvesteringDrempel: { min: 0, max: null, step: 100 },
-        inflatie: { min: 0, max: 10, step: 0.1 },
-        box1Tarief: { min: 0, max: 60, step: 0.1 },
-        box3Rendement: { min: 0, max: 20, step: 0.1 },
-        box3Tarief: { min: 0, max: 50, step: 0.1 },
-        box3Vrijstelling: { min: 0, max: null, step: 1000 }
-    },
-    
-    // Locale Configuration
-    locale: {
+    // Application metadata
+    app: {
+        name: 'ROI Calculator Pro',
+        version: '2.0.0',
+        author: 'Financial Tools BV',
         language: 'nl-NL',
-        currency: 'EUR',
-        numberFormat: {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        },
-        percentFormat: {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1
+        features: {
+            currency: true,
+            fxRisk: true,
+            hedging: true
         }
     },
     
-    // Storage Configuration
-    storage: {
-        prefix: 'roi_calculator_',
-        scenariosKey: 'saved_scenarios',
-        settingsKey: 'user_settings',
-        maxScenarios: 50
+    // Default input values
+    defaults: {
+        // Basic inputs
+        startKapitaal: 100000,
+        lening: 0,
+        renteLening: 5,
+        looptijd: 10,
+        rendement: 8,
+        rendementsType: 'maandelijks',
+        vasteKosten: 1000,
+        
+        // Tax settings
+        belastingType: 'zakelijk',
+        vpbTarief: 25.8,  // 2024 VPB rate
+        priveSubType: 'box3',
+        box1Tarief: 49.5,
+        box3Tarief: 36,
+        box3Rendement: 6.04,
+        
+        // Advanced settings
+        inflatiePercentage: 2.5,
+        inflatieToggle: false,
+        herinvesterenToggle: true,
+        
+        // Monte Carlo settings
+        mcIterations: 10000,
+        mcVolatility: 3,
+        mcConfidenceLevel: 95,
+        
+        // Currency settings
+        baseCurrency: 'EUR',
+        enableCurrencyConversion: true,
+        autoFetchRates: true,
+        riskTolerance: 'moderate'
     },
     
-    // Performance Settings
-    performance: {
-        debounceDelay: 300,
-        throttleDelay: 100,
-        maxChartDataPoints: 1000,
-        enableWebWorkers: false
-    },
-    
-    // Tax Information for UI
-    taxInfo: {
+    // Tax configurations
+    tax: {
         vpb: {
-            name: 'Vennootschapsbelasting',
-            description: 'Voor holdings en BV\'s - 25.8% over winst',
-            features: ['Rente aftrekbaar', 'Winst na aftrek kosten', 'Geen belasting over herinvestering']
+            rate: 25.8,
+            description: 'Vennootschapsbelasting 2024'
         },
         box1: {
-            name: 'Box 1 - Inkomstenbelasting',
-            description: 'Voor particulieren - progressief tarief over winst',
-            features: ['Beperkt aftrekbare rente', 'Progressieve tarieven', 'Winst is direct belastbaar']
+            brackets: [
+                { limit: 73031, rate: 36.97 },
+                { limit: Infinity, rate: 49.5 }
+            ],
+            description: 'Inkomstenbelasting Box 1 2024'
         },
         box3: {
-            name: 'Box 3 - Vermogensbelasting',
-            description: 'Forfaitair rendement - 31% over fictief rendement',
-            features: ['Onafhankelijk van daadwerkelijk rendement', 'Gebaseerd op vermogen 1 januari', 'Heffingsvrije voet €57.000']
+            rate: 36,
+            assumedReturn: 6.04,
+            exemption: 57000, // Per person 2024
+            description: 'Vermogensbelasting Box 3 2024'
         }
+    },
+    
+    // Currency configurations
+    currency: {
+        // Default supported currencies
+        defaultCurrencies: ['EUR', 'USD', 'GBP', 'JPY', 'CHF'],
+        
+        // Exchange rate API settings
+        exchangeRateAPIs: {
+            primary: {
+                name: 'ExchangeRate-API',
+                endpoint: 'https://api.exchangerate-api.com/v4/latest/',
+                rateLimit: 1500, // requests per month (free tier)
+                requiresAuth: false
+            },
+            secondary: {
+                name: 'Frankfurter',
+                endpoint: 'https://api.frankfurter.app/',
+                rateLimit: null, // No rate limit
+                requiresAuth: false
+            }
+        },
+        
+        // FX Risk parameters
+        fxRisk: {
+            defaultVolatilityWindow: 30, // days
+            defaultConfidenceLevels: [0.90, 0.95, 0.99],
+            defaultTimeHorizons: [1, 7, 30, 90, 365], // days
+            correlationWindow: 90 // days
+        },
+        
+        // Hedging configurations
+        hedging: {
+            instruments: {
+                forward: {
+                    typicalCost: 0.01, // 1% of notional
+                    coverage: 1.0
+                },
+                option: {
+                    typicalCost: 0.03, // 3% of notional (varies with volatility)
+                    coverage: 0.9
+                },
+                swap: {
+                    typicalCost: 0.005, // 0.5% of notional
+                    coverage: 1.0
+                },
+                natural: {
+                    typicalCost: 0.02, // 2% opportunity cost
+                    coverage: 0.7
+                }
+            },
+            
+            // Risk tolerance thresholds
+            riskToleranceThresholds: {
+                conservative: {
+                    maxCurrencyExposure: 10, // % of portfolio
+                    maxVolatility: 10, // annual %
+                    recommendedHedgeRatio: 0.8
+                },
+                moderate: {
+                    maxCurrencyExposure: 20,
+                    maxVolatility: 15,
+                    recommendedHedgeRatio: 0.6
+                },
+                aggressive: {
+                    maxCurrencyExposure: 30,
+                    maxVolatility: 20,
+                    recommendedHedgeRatio: 0.4
+                }
+            }
+        }
+    },
+    
+    // Chart configurations
+    charts: {
+        colors: {
+            primary: '#1e3c72',
+            secondary: '#2a5298',
+            accent: '#7e8ce0',
+            positive: '#48d1cc',
+            negative: '#e74c3c',
+            warning: '#f39c12',
+            
+            // Currency specific colors
+            currencyPalette: [
+                '#1e3c72', '#2a5298', '#7e8ce0', '#36b3d1', 
+                '#48d1cc', '#f39c12', '#e74c3c', '#9b59b6', 
+                '#2ecc71', '#34495e'
+            ]
+        },
+        
+        defaultOptions: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
+                }
+            }
+        }
+    },
+    
+    // Export configurations
+    export: {
+        pdf: {
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+            compress: true,
+            
+            // PDF metadata
+            properties: {
+                title: 'ROI Calculator Report',
+                subject: 'Investment Analysis with Currency Risk',
+                author: 'ROI Calculator Pro',
+                keywords: 'investment, ROI, currency, risk analysis',
+                creator: 'ROI Calculator Pro v2.0'
+            }
+        },
+        
+        excel: {
+            defaultFilename: 'roi_analysis_{date}.xlsx',
+            includeCharts: true,
+            includeCurrencyAnalysis: true
+        }
+    },
+    
+    // Monte Carlo simulation settings
+    monteCarlo: {
+        iterations: {
+            min: 1000,
+            max: 100000,
+            default: 10000,
+            step: 1000
+        },
+        
+        volatility: {
+            min: 1,
+            max: 50,
+            default: 15,
+            step: 1
+        },
+        
+        // Currency volatility adjustments
+        currencyVolatilityMultiplier: 1.2, // Currency adds 20% more volatility
+        
+        confidenceLevels: [90, 95, 99]
+    },
+    
+    // Historical data settings
+    historical: {
+        sources: {
+            stocks: ['Alpha Vantage', 'Yahoo Finance'],
+            forex: ['ECB', 'Frankfurter', 'ExchangeRate-API'],
+            rates: ['ECB', 'FRED'],
+            inflation: ['CBS', 'Eurostat']
+        },
+        
+        defaultPeriod: 365, // days
+        maxPeriod: 3650, // 10 years
+        
+        cacheDuration: 3600000 // 1 hour
+    },
+    
+    // UI Settings
+    ui: {
+        animations: true,
+        tooltips: true,
+        
+        // Number formatting
+        numberFormat: {
+            currency: {
+                style: 'currency',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            },
+            percentage: {
+                style: 'percent',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            },
+            number: {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }
+        },
+        
+        // Loading states
+        loadingMessages: {
+            fetchingRates: 'Fetching exchange rates...',
+            analyzingRisk: 'Analyzing FX risk...',
+            calculatingHedge: 'Calculating optimal hedge...',
+            runningStressTest: 'Running stress test scenarios...'
+        }
+    },
+    
+    // Validation rules
+    validation: {
+        amounts: {
+            min: 0,
+            max: 1e12 // 1 trillion
+        },
+        
+        percentages: {
+            min: -100,
+            max: 1000
+        },
+        
+        periods: {
+            min: 1,
+            max: 100
+        },
+        
+        // Currency specific validations
+        currency: {
+            minExposure: 100, // Minimum amount for FX analysis
+            maxCurrencies: 20 // Maximum currencies in portfolio
+        }
+    },
+    
+    // Feature flags
+    features: {
+        currencyConversion: true,
+        fxRiskAnalysis: true,
+        hedgingStrategies: true,
+        stressTesting: true,
+        correlationAnalysis: true,
+        historicalBacktesting: true,
+        
+        // Experimental features
+        experimental: {
+            aiRecommendations: false,
+            optionsValuation: false,
+            realTimeAlerts: false
+        }
+    },
+    
+    // API keys (should be stored securely in production)
+    apiKeys: {
+        alphaVantage: process.env.ALPHA_VANTAGE_KEY || 'demo',
+        exchangeRateAPI: process.env.EXCHANGE_RATE_API_KEY || null
     }
 };
-
-// Freeze configuration to prevent modifications
-Object.freeze(Config);
-Object.freeze(Config.defaults);
-Object.freeze(Config.tax);
-Object.freeze(Config.charts);
-Object.freeze(Config.monteCarlo);
-Object.freeze(Config.export);
-Object.freeze(Config.validation);
-Object.freeze(Config.locale);
-Object.freeze(Config.storage);
-Object.freeze(Config.performance);
-Object.freeze(Config.taxInfo);

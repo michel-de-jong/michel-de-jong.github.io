@@ -1,5 +1,5 @@
 /* 
- * Main CSS File - ROI Calculator
+ * Main CSS File - ROI Calculator with Currency Support
  * This file imports all modular CSS files
  */
 
@@ -29,6 +29,7 @@
 @import 'pages/monte-carlo.css';
 @import 'pages/waterfall.css';
 @import 'pages/portfolio.css';
+@import 'pages/currency-portfolio.css';
 @import 'pages/saved.css';
 @import 'pages/export.css';
 @import 'pages/historical.css';
@@ -40,5 +41,5 @@
 /* Print styles */
 @import 'utilities/print.css';
 
-/* Responsive styles - moet als laatste */
+/* Responsive styles - must be last */
 @import url('responsive.css');

@@ -1,29 +1,61 @@
 <section id="portfolio" class="tab-pane" role="tabpanel">
-    <h2>🏦 Multi-Asset Portfolio Builder</h2>
-    <p class="tab-description">Bouw een gediversifieerde portfolio met verschillende assets en analyseer risico/rendement verhoudingen</p>
+    <h2>🏦 Multi-Asset Portfolio Builder with Currency Support</h2>
+    <p class="tab-description">Build a diversified multi-currency portfolio and analyze FX risk exposure</p>
     
+    <!-- Base Currency Selection -->
+    <div class="currency-settings">
+        <h3 class="section-header">
+            <span class="header-icon">💱</span>
+            Currency Settings
+        </h3>
+        <div class="currency-controls">
+            <div class="form-group">
+                <label for="baseCurrencySelector">Base Currency</label>
+                <select id="baseCurrencySelector" class="currency-selector">
+                    <!-- Options populated by JavaScript -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="riskToleranceSelector">Risk Tolerance</label>
+                <select id="riskToleranceSelector">
+                    <option value="conservative">Conservative</option>
+                    <option value="moderate" selected>Moderate</option>
+                    <option value="aggressive">Aggressive</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Portfolio Builder -->
     <div class="portfolio-builder">
         <h3 class="section-header">
             <span class="header-icon">📊</span>
-            Portfolio Samenstelling
+            Portfolio Composition
         </h3>
         
         <div id="assetList" class="asset-list">
-            <div class="asset-row">
+            <div class="asset-row" data-asset-id="default-1">
                 <div class="asset-field">
-                    <label>Asset Naam</label>
-                    <input type="text" placeholder="Bijv. Aandelen" class="asset-name">
+                    <label>Asset Name</label>
+                    <input type="text" placeholder="e.g. US Stocks" class="asset-name">
                 </div>
                 <div class="asset-field">
-                    <label>Bedrag (€)</label>
+                    <label>Currency</label>
+                    <select class="asset-currency currency-selector">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="asset-field">
+                    <label>Amount</label>
                     <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
+                    <div class="converted-value" style="display: none;"></div>
                 </div>
                 <div class="asset-field">
-                    <label>Rendement %</label>
+                    <label>Return %</label>
                     <input type="number" placeholder="7.5" class="asset-return" step="0.1">
                 </div>
                 <div class="asset-field">
-                    <label>Risico %</label>
+                    <label>Risk %</label>
                     <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
                 </div>
                 <button class="btn-remove" data-action="remove">×</button>
@@ -33,48 +65,108 @@
         <div class="portfolio-controls mt-3">
             <button class="btn btn-secondary" id="addAssetBtn">
                 <span class="btn-icon">➕</span>
-                Asset Toevoegen
+                Add Asset
             </button>
             <button class="btn btn-success" id="calculatePortfolioBtn">
                 <span class="btn-icon">📊</span>
-                Portfolio Berekenen
+                Calculate Portfolio
             </button>
         </div>
     </div>
     
+    <!-- Portfolio Metrics -->
     <div class="portfolio-metrics">
         <h3 class="section-header">
             <span class="header-icon">📈</span>
-            Portfolio Prestaties
+            Portfolio Performance
         </h3>
         
         <div class="kpi-grid mt-4">
             <div class="kpi-card">
                 <div class="kpi-icon">💰</div>
-                <div class="kpi-label">Portfolio Waarde</div>
+                <div class="kpi-label">Portfolio Value</div>
                 <div class="kpi-value" id="portfolioWaarde">€ 0</div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-icon">📈</div>
-                <div class="kpi-label">Gewogen Rendement</div>
+                <div class="kpi-label">Weighted Return</div>
                 <div class="kpi-value" id="portfolioRendement">0%</div>
             </div>
             <div class="kpi-card orange">
                 <div class="kpi-icon">⚠️</div>
-                <div class="kpi-label">Portfolio Risico</div>
+                <div class="kpi-label">Portfolio Risk</div>
                 <div class="kpi-value" id="portfolioRisico">0%</div>
             </div>
         </div>
     </div>
     
+    <!-- Currency Exposure -->
+    <div class="currency-exposure-section">
+        <h3 class="section-header">
+            <span class="header-icon">🌍</span>
+            Currency Exposure
+        </h3>
+        <div id="currencyExposureContainer" class="currency-exposure-container">
+            <!-- Currency exposure bars populated by JavaScript -->
+        </div>
+    </div>
+    
+    <!-- FX Risk Analysis -->
+    <div class="fx-risk-section">
+        <h3 class="section-header">
+            <span class="header-icon">⚡</span>
+            FX Risk Analysis
+        </h3>
+        <div class="fx-risk-controls">
+            <button class="btn btn-primary" id="analyzeFXRiskBtn">
+                <span class="btn-icon">🔍</span>
+                Analyze FX Risk
+            </button>
+            <button class="btn btn-secondary" id="runStressTestBtn">
+                <span class="btn-icon">🧪</span>
+                Run Stress Test
+            </button>
+            <button class="btn btn-success" id="calculateHedgeBtn">
+                <span class="btn-icon">🛡️</span>
+                Calculate Optimal Hedge
+            </button>
+        </div>
+        
+        <div id="fxRiskAnalysisResults" class="fx-risk-results" style="display: none;">
+            <!-- Risk analysis results populated by JavaScript -->
+        </div>
+        
+        <div id="stressTestResults" class="stress-test-results" style="display: none;">
+            <!-- Stress test results populated by JavaScript -->
+        </div>
+    </div>
+    
+    <!-- Active Hedges -->
+    <div class="active-hedges-section">
+        <h3 class="section-header">
+            <span class="header-icon">🛡️</span>
+            Active Hedging Strategies
+        </h3>
+        <div id="activeHedgesContainer" class="active-hedges-container">
+            <p class="no-hedges">No active hedging strategies</p>
+        </div>
+    </div>
+    
+    <!-- Portfolio Visualization -->
     <div class="portfolio-visualization">
         <h3 class="section-header">
             <span class="header-icon">🎯</span>
-            Asset Verdeling
+            Asset Distribution
         </h3>
         
         <div class="chart-container mt-4">
             <canvas id="portfolioChart"></canvas>
         </div>
+    </div>
+    
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-message">Loading...</div>
     </div>
 </section>
