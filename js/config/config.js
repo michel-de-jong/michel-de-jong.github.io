@@ -1,143 +1,161 @@
-// Configuration file for ROI Calculator with Currency Support
-
-export const Config = {
+/**
+ * Global Configuration for ROI Calculator
+ */
+const Config = {
     // Application metadata
     app: {
         name: 'ROI Calculator Pro',
         version: '2.0.0',
-        author: 'Financial Tools BV',
-        language: 'nl-NL',
-        features: {
-            currency: true,
-            fxRisk: true,
-            hedging: true
-        }
+        author: 'Your Company',
+        year: 2024
     },
     
-    // Default input values
+    // Default calculation parameters
     defaults: {
-        // Basic inputs
+        // Basic parameters
         startKapitaal: 100000,
-        lening: 0,
-        renteLening: 5,
-        looptijd: 10,
-        rendement: 8,
-        rendementsType: 'maandelijks',
-        vasteKosten: 1000,
+        maandelijksInleg: 1000,
+        jaarlijksRendement: 8,
+        jaren: 10,
         
-        // Tax settings
-        belastingType: 'zakelijk',
-        vpbTarief: 25.8,  // 2024 VPB rate
-        priveSubType: 'box3',
-        box1Tarief: 49.5,
-        box3Tarief: 36,
-        box3Rendement: 6.04,
+        // Tax parameters
+        belastingType: 'vpb',
+        vpbRate: 25.8,
+        box3Vrijstelling: 57000,
         
-        // Advanced settings
-        inflatiePercentage: 2.5,
-        inflatieToggle: false,
-        herinvesterenToggle: true,
+        // Inflation
+        inflatie: 2,
         
-        // Monte Carlo settings
-        mcIterations: 10000,
-        mcVolatility: 3,
-        mcConfidenceLevel: 95,
+        // Leverage
+        useLeverage: false,
+        leveragePercentage: 50,
+        rentePercentage: 4,
         
-        // Currency settings
-        baseCurrency: 'EUR',
-        enableCurrencyConversion: true,
-        autoFetchRates: true,
-        riskTolerance: 'moderate'
+        // Risk management
+        cashReserve: 10,
+        maxLeverage: 70,
+        
+        // Monte Carlo
+        monteCarloRuns: 1000,
+        volatility: 15,
+        
+        // Currency
+        baseCurrency: 'EUR'
     },
     
-    // Tax configurations
+    // Tax configuration (2024 rates)
     tax: {
         vpb: {
-            rate: 25.8,
-            description: 'Vennootschapsbelasting 2024'
+            rate: 0.258, // 25.8%
+            smallBusinessThreshold: 395000,
+            smallBusinessRate: 0.19 // 19%
+        },
+        box3: {
+            vrijstelling: {
+                single: 57000,
+                couple: 114000
+            },
+            brackets: [
+                { limit: 71650, rate: 0.0036 }, // 0.36%
+                { limit: 1020750, rate: 0.0151 }, // 1.51%
+                { limit: Infinity, rate: 0.0152 } // 1.52%
+            ],
+            forfaitairRendement: 0.0636 // 6.36%
         },
         box1: {
             brackets: [
-                { limit: 73031, rate: 36.97 },
-                { limit: Infinity, rate: 49.5 }
+                { limit: 10656, rate: 0.0928 },
+                { limit: 23317, rate: 0.3693 },
+                { limit: 73031, rate: 0.3693 },
+                { limit: Infinity, rate: 0.495 }
             ],
-            description: 'Inkomstenbelasting Box 1 2024'
-        },
-        box3: {
-            rate: 36,
-            assumedReturn: 6.04,
-            exemption: 57000, // Per person 2024
-            description: 'Vermogensbelasting Box 3 2024'
+            arbeidskorting: {
+                max: 5977,
+                threshold: 10741,
+                phaseoutRate: 0.06510
+            }
         }
     },
     
-    // Currency configurations
-    currency: {
-        // Default supported currencies
-        defaultCurrencies: ['EUR', 'USD', 'GBP', 'JPY', 'CHF'],
+    // Monte Carlo simulation settings
+    monteCarlo: {
+        defaultRuns: 1000,
+        minRuns: 100,
+        maxRuns: 10000,
+        confidenceIntervals: [0.05, 0.25, 0.5, 0.75, 0.95],
+        histogramBins: 20,
         
-        // Exchange rate API settings
-        exchangeRateAPIs: {
-            primary: {
-                name: 'ExchangeRate-API',
-                endpoint: 'https://api.exchangerate-api.com/v4/latest/',
-                rateLimit: 1500, // requests per month (free tier)
-                requiresAuth: false
+        // Risk levels for volatility
+        riskProfiles: {
+            conservative: {
+                volatility: 10,
+                label: 'Conservatief'
             },
-            secondary: {
-                name: 'Frankfurter',
-                endpoint: 'https://api.frankfurter.app/',
-                rateLimit: null, // No rate limit
-                requiresAuth: false
+            moderate: {
+                volatility: 15,
+                label: 'Gematigd'
+            },
+            aggressive: {
+                volatility: 25,
+                label: 'Agressief'
+            },
+            veryAggressive: {
+                volatility: 35,
+                label: 'Zeer Agressief'
             }
+        }
+    },
+    
+    // Scenario analysis
+    scenarios: {
+        bestCase: {
+            factor: 1.5,
+            label: 'Best Case',
+            icon: '🚀'
+        },
+        baseCase: {
+            factor: 1.0,
+            label: 'Base Case',
+            icon: '📊'
+        },
+        worstCase: {
+            factor: 0.5,
+            label: 'Worst Case',
+            icon: '⚠️'
+        }
+    },
+    
+    // Currency settings
+    currency: {
+        base: 'EUR',
+        supported: ['EUR', 'USD', 'GBP', 'CHF', 'JPY'],
+        display: {
+            EUR: { symbol: '€', position: 'before' },
+            USD: { symbol: '$', position: 'before' },
+            GBP: { symbol: '£', position: 'before' },
+            CHF: { symbol: 'CHF', position: 'after' },
+            JPY: { symbol: '¥', position: 'before' }
         },
         
-        // FX Risk parameters
-        fxRisk: {
-            defaultVolatilityWindow: 30, // days
-            defaultConfidenceLevels: [0.90, 0.95, 0.99],
-            defaultTimeHorizons: [1, 7, 30, 90, 365], // days
-            correlationWindow: 90 // days
-        },
+        // Exchange rate sources (for display only - not functional in offline version)
+        exchangeRateAPI: null,
         
-        // Hedging configurations
-        hedging: {
-            instruments: {
-                forward: {
-                    typicalCost: 0.01, // 1% of notional
-                    coverage: 1.0
-                },
-                option: {
-                    typicalCost: 0.03, // 3% of notional (varies with volatility)
-                    coverage: 0.9
-                },
-                swap: {
-                    typicalCost: 0.005, // 0.5% of notional
-                    coverage: 1.0
-                },
-                natural: {
-                    typicalCost: 0.02, // 2% opportunity cost
-                    coverage: 0.7
-                }
+        // Risk profiles for currency exposure
+        riskProfiles: {
+            conservative: {
+                maxCurrencyExposure: 10, // % of portfolio
+                maxVolatility: 10, // annual %
+                recommendedHedgeRatio: 0.8
             },
-            
-            // Risk tolerance thresholds
-            riskToleranceThresholds: {
-                conservative: {
-                    maxCurrencyExposure: 10, // % of portfolio
-                    maxVolatility: 10, // annual %
-                    recommendedHedgeRatio: 0.8
-                },
-                moderate: {
-                    maxCurrencyExposure: 20,
-                    maxVolatility: 15,
-                    recommendedHedgeRatio: 0.6
-                },
-                aggressive: {
-                    maxCurrencyExposure: 30,
-                    maxVolatility: 20,
-                    recommendedHedgeRatio: 0.4
-                }
+            moderate: {
+                maxCurrencyExposure: 20,
+                maxVolatility: 15,
+                recommendedHedgeRatio: 0.6
+            },
+            aggressive: {
+                maxCurrencyExposure: 30,
+                maxVolatility: 20,
+                recommendedHedgeRatio: 0.4
             }
         }
     },
@@ -151,6 +169,11 @@ export const Config = {
             positive: '#48d1cc',
             negative: '#e74c3c',
             warning: '#f39c12',
+            danger: '#e74c3c',
+            success: '#2ecc71',
+            info: '#3498db',
+            purple: '#9b59b6',
+            orange: '#f39c12',
             
             // Currency specific colors
             currencyPalette: [
@@ -189,91 +212,55 @@ export const Config = {
             orientation: 'portrait',
             unit: 'mm',
             format: 'a4',
-            compress: true,
-            
-            // PDF metadata
-            properties: {
-                title: 'ROI Calculator Report',
-                subject: 'Investment Analysis with Currency Risk',
-                author: 'ROI Calculator Pro',
-                keywords: 'investment, ROI, currency, risk analysis',
-                creator: 'ROI Calculator Pro v2.0'
-            }
+            compress: true
         },
-        
         excel: {
-            defaultFilename: 'roi_analysis_{date}.xlsx',
-            includeCharts: true,
-            includeCurrencyAnalysis: true
+            creator: 'ROI Calculator Pro',
+            defaultDateFormat: 'dd/mm/yyyy'
+        },
+        csv: {
+            delimiter: ',',
+            encoding: 'utf-8'
         }
     },
     
-    // Monte Carlo simulation settings
-    monteCarlo: {
-        iterations: {
-            min: 1000,
-            max: 100000,
-            default: 10000,
-            step: 1000
-        },
-        
-        volatility: {
-            min: 1,
-            max: 50,
-            default: 15,
-            step: 1
-        },
-        
-        // Currency volatility adjustments
-        currencyVolatilityMultiplier: 1.2, // Currency adds 20% more volatility
-        
-        confidenceLevels: [90, 95, 99]
-    },
-    
-    // Historical data settings
-    historical: {
-        sources: {
-            stocks: ['Alpha Vantage', 'Yahoo Finance'],
-            forex: ['ECB', 'Frankfurter', 'ExchangeRate-API'],
-            rates: ['ECB', 'FRED'],
-            inflation: ['CBS', 'Eurostat']
-        },
-        
-        defaultPeriod: 365, // days
-        maxPeriod: 3650, // 10 years
-        
-        cacheDuration: 3600000 // 1 hour
-    },
-    
-    // UI Settings
+    // UI settings
     ui: {
         animations: true,
-        tooltips: true,
+        animationDuration: 300,
+        toastDuration: 3000,
         
-        // Number formatting
-        numberFormat: {
-            currency: {
-                style: 'currency',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            },
-            percentage: {
-                style: 'percent',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            },
-            number: {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }
+        // Breakpoints for responsive design
+        breakpoints: {
+            mobile: 480,
+            tablet: 768,
+            desktop: 1024,
+            wide: 1440
         },
         
-        // Loading states
-        loadingMessages: {
-            fetchingRates: 'Fetching exchange rates...',
-            analyzingRisk: 'Analyzing FX risk...',
-            calculatingHedge: 'Calculating optimal hedge...',
-            runningStressTest: 'Running stress test scenarios...'
+        // Theme colors (CSS variables)
+        theme: {
+            primary: '#1e3c72',
+            secondary: '#2a5298',
+            accent: '#7e8ce0',
+            background: '#f8f9fa',
+            text: '#333333',
+            border: '#dee2e6'
+        }
+    },
+    
+    // Performance settings
+    performance: {
+        debounceDelay: 300,
+        maxDataPoints: 1000,
+        chartUpdateThrottle: 100,
+        
+        // LocalStorage settings
+        storage: {
+            prefix: 'roi_calculator_',
+            maxScenarios: 50,
+            maxPortfolios: 20,
+            compressionEnabled: true
         }
     },
     
@@ -281,46 +268,87 @@ export const Config = {
     validation: {
         amounts: {
             min: 0,
-            max: 1e12 // 1 trillion
+            max: 1000000000 // 1 billion
         },
-        
         percentages: {
             min: -100,
-            max: 1000
-        },
-        
-        periods: {
-            min: 1,
             max: 100
         },
-        
-        // Currency specific validations
-        currency: {
-            minExposure: 100, // Minimum amount for FX analysis
-            maxCurrencies: 20 // Maximum currencies in portfolio
+        years: {
+            min: 1,
+            max: 50
+        },
+        leverage: {
+            min: 0,
+            max: 90 // 90% max leverage
+        },
+        name: {
+            minLength: 1,
+            maxLength: 100
         }
     },
     
     // Feature flags
     features: {
-        currencyConversion: true,
-        fxRiskAnalysis: true,
-        hedgingStrategies: true,
-        stressTesting: true,
-        correlationAnalysis: true,
-        historicalBacktesting: true,
-        
-        // Experimental features
-        experimental: {
-            aiRecommendations: false,
-            optionsValuation: false,
-            realTimeAlerts: false
+        advancedTax: true,
+        currencySupport: true,
+        monteCarlo: true,
+        scenarios: true,
+        portfolio: true,
+        export: true,
+        historicalData: true,
+        waterfall: true,
+        darkMode: false // Future feature
+    },
+    
+    // API endpoints (for future use)
+    api: {
+        baseURL: null,
+        endpoints: {
+            marketData: '/api/market-data',
+            exchangeRates: '/api/exchange-rates',
+            benchmarks: '/api/benchmarks'
         }
     },
     
-    // API keys (should be stored securely in production)
-    apiKeys: {
-        alphaVantage: 'demo', // Replace with your API key or use localStorage.getItem('alphavantage_api_key')
-        exchangeRateAPI: null // Not required for free tier
+    // Help and documentation
+    help: {
+        tooltips: true,
+        onboarding: true,
+        links: {
+            documentation: '/docs',
+            support: '/support',
+            feedback: '/feedback'
+        }
+    },
+    
+    // Error messages
+    errors: {
+        validation: {
+            required: 'Dit veld is verplicht',
+            number: 'Voer een geldig getal in',
+            positive: 'Waarde moet positief zijn',
+            percentage: 'Voer een percentage tussen -100 en 100 in',
+            maxValue: 'Waarde is te hoog',
+            minValue: 'Waarde is te laag'
+        },
+        calculation: {
+            general: 'Er is een fout opgetreden bij de berekening',
+            leverage: 'Leverage percentage is te hoog',
+            monteCarlo: 'Monte Carlo simulatie mislukt'
+        },
+        storage: {
+            save: 'Kon data niet opslaan',
+            load: 'Kon data niet laden',
+            quota: 'Opslaglimiet bereikt'
+        }
     }
 };
+
+// Freeze config to prevent accidental modifications
+Object.freeze(Config);
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Config;
+}
