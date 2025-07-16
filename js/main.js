@@ -241,12 +241,31 @@ class ROICalculatorApp {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOM loaded, initializing application...');
     
-    // Check for essential elements
-    const mainContainer = document.getElementById('calculator-container');
+    // Check for essential elements - look for either tab-content or container class
+    const mainContainer = document.querySelector('.tab-content') || 
+                         document.querySelector('.container') ||
+                         document.querySelector('main');
+                         
     if (!mainContainer) {
-        console.error('Main container not found');
+        console.error('Main container not found. Looking for .tab-content, .container, or main element');
         return;
     }
+    
+    // Verify essential elements exist
+    const calculatorSection = document.getElementById('calculator');
+    const tabElements = document.querySelectorAll('.tab');
+    
+    if (!calculatorSection) {
+        console.error('Calculator section not found');
+        return;
+    }
+    
+    if (tabElements.length === 0) {
+        console.error('No tab elements found');
+        return;
+    }
+    
+    console.log('Essential elements found, creating application instance...');
     
     // Create and initialize app
     window.roiCalculatorApp = new ROICalculatorApp();
