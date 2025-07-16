@@ -1,37 +1,45 @@
-// ROI Calculator Main Application Entry Point
-import Config from './config.js';
+// Main entry point for ROI Calculator with Currency Support
+import { Config } from './config/config.js';
 import { StateManager } from './core/state-manager.js';
-import { UIController } from './ui/ui-controller.js';
-import { ChartManager } from './ui/charts.js';
-import { TabManager } from './ui/tabs.js';
 import { Calculator } from './core/calculator.js';
-import { InputManager } from './core/input-manager.js';
-import { ExportManager } from './features/export.js';
-import { ScenarioManager } from './features/scenarios.js';
+import { TabManager } from './ui/tabs.js';
+import { ChartManager } from './ui/charts.js';
+import { FormManager } from './ui/forms.js';
+import { KPIDisplay } from './ui/kpi-display.js';
+import { ScenariosFeature } from './features/scenarios.js';
 import { MonteCarloFeature } from './features/monte-carlo.js';
-import { TaxCalculator } from './features/tax-calculator.js';
-import { HistoricalFeature } from './features/historical.js';
-import { PortfolioFeature } from './features/portfolio.js';
 import { WaterfallFeature } from './features/waterfall.js';
-import { SavedScenariosFeature } from './features/saved-scenarios.js';
+import { PortfolioFeature } from './features/portfolio.js';
+import { CurrencyPortfolioFeature } from './features/currency-portfolio.js';
+import { SavedScenariosFeature } from './features/saved.js';
+import { ExportFeature } from './features/export.js';
+import { HistoricalFeature } from './features/historical.js';
+import { DataService } from './services/data-service.js';
+import { ValidationService } from './services/validation-service.js';
+import { HistoricalDataService } from './services/historical-data-service.js';
+import { CurrencyService } from './services/currency-service.js';
+import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
 
 class ROICalculatorApp {
     constructor() {
-        this.version = Config.version;
+        this.config = Config;
         this.initialized = false;
         this.retryCount = 0;
         this.maxRetries = 3;
         
-        console.log(`ROI Calculator v${this.version} initializing...`);
+        console.log(`ROI Calculator v${this.config.app.version} initializing...`);
     }
     
     async init() {
         try {
-            // Wait a bit more to ensure DOM is fully ready
+            // Wait for DOM to be fully ready
             await this.waitForDOM();
             
             // Wait for required libraries to load
             await this.waitForLibraries();
+            
+            // Initialize services
+            this.initializeServices();
             
             // Initialize core components
             this.initializeCore();
@@ -42,8 +50,14 @@ class ROICalculatorApp {
             // Initialize features
             await this.initializeFeatures();
             
-            // Set initial state
-            this.setInitialState();
+            // Load saved data
+            this.loadSavedData();
+            
+            // Setup event handlers
+            this.setupEventHandlers();
+            
+            // Initial calculation
+            this.performCalculation();
             
             // Mark as initialized
             this.initialized = true;
@@ -75,6 +89,18 @@ class ROICalculatorApp {
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
+    initializeServices() {
+        console.log('Initializing services...');
+        
+        this.dataService = new DataService();
+        this.validationService = new ValidationService();
+        this.historicalDataService = new HistoricalDataService();
+        
+        // Currency services
+        this.currencyService = new CurrencyService();
+        this.fxRiskAnalysis = new FXRiskAnalysis(this.currencyService);
+    }
+    
     initializeCore() {
         console.log('Initializing core components...');
         
@@ -97,48 +123,53 @@ class ROICalculatorApp {
         
         console.log('All essential elements found');
         
-        // Initialize state manager
-        this.stateManager = new StateManager();
+        // Initialize state and calculator
+        this.state = new StateManager();
+        this.calculator = new Calculator(this.state);
         
-        // Initialize calculator
-        this.calculator = new Calculator(this.stateManager);
-        
-        // Initialize input manager
-        this.inputManager = new InputManager(this.stateManager, this.calculator);
-        
-        // Tax calculator
-        this.taxCalculator = new TaxCalculator();
-        
-        console.log('Core components initialized');
+        // Load default values
+        this.state.loadDefaults(this.config.defaults);
     }
     
     initializeUI() {
         console.log('Initializing UI components...');
         
-        // Initialize chart manager
-        this.chartManager = new ChartManager();
-        
-        // Initialize UI controller
-        this.uiController = new UIController(this.stateManager, this.chartManager);
-        
-        // Initialize tab manager
+        // UI Managers
         this.tabManager = new TabManager();
+        this.chartManager = new ChartManager();
+        this.formManager = new FormManager(this.validationService);
+        this.kpiDisplay = new KPIDisplay();
         
-        console.log('UI components initialized');
+        // Initialize form manager with state
+        this.formManager.initialize(this.state);
+        
+        // Initialize main chart
+        this.chartManager.initMainChart();
     }
     
     async initializeFeatures() {
         console.log('Initializing features...');
         
-        // Initialize feature modules
+        // Initialize base portfolio feature
+        this.portfolioFeature = new PortfolioFeature(this.chartManager);
+        
+        // Initialize currency portfolio feature
+        this.currencyPortfolioFeature = new CurrencyPortfolioFeature(
+            this.portfolioFeature,
+            this.currencyService,
+            this.fxRiskAnalysis
+        );
+        
+        // Initialize all features
         this.features = {
-            export: new ExportManager(this.stateManager),
-            scenarios: new ScenarioManager(this.stateManager, this.calculator, this.chartManager),
-            monteCarlo: new MonteCarloFeature(this.stateManager, this.chartManager),
-            historical: new HistoricalFeature(this.chartManager),
-            portfolio: new PortfolioFeature(this.chartManager),
-            waterfall: new WaterfallFeature(this.chartManager),
-            savedScenarios: new SavedScenariosFeature(this.stateManager)
+            scenarios: new ScenariosFeature(this.calculator, this.chartManager),
+            monteCarlo: new MonteCarloFeature(this.calculator, this.chartManager),
+            waterfall: new WaterfallFeature(this.calculator, this.chartManager),
+            portfolio: this.portfolioFeature,
+            currencyPortfolio: this.currencyPortfolioFeature,
+            saved: new SavedScenariosFeature(this.calculator, this.dataService),
+            export: new ExportFeature(this.calculator, this.chartManager),
+            historical: new HistoricalFeature(this.chartManager)
         };
         
         // Load all tab templates
@@ -147,48 +178,102 @@ class ROICalculatorApp {
         // Setup feature listeners
         Object.values(this.features).forEach(feature => {
             if (feature.setupListeners) {
-                feature.setupListeners(this.stateManager);
+                feature.setupListeners(this.state);
             }
         });
         
-        console.log('Features initialized');
+        // Initialize currency features
+        if (this.config.app.features.currency) {
+            await this.currencyService.initialize();
+            this.currencyPortfolioFeature.initialize();
+        }
     }
     
-    setInitialState() {
-        console.log('Setting initial state...');
+    setupEventHandlers() {
+        console.log('Setting up event handlers...');
         
-        // Set default values from config
-        const defaults = Config.defaults;
+        // State change handler
+        this.state.onChange((state) => {
+            this.performCalculation();
+        });
         
-        // Safely set values only if elements exist
-        const setValueSafe = (id, value) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.value = value;
+        // Tab change handler
+        this.tabManager.onChange((tabName) => {
+            this.handleTabChange(tabName);
+        });
+        
+        // Form change handler
+        this.formManager.onChange((inputs) => {
+            this.state.update({ inputs });
+        });
+        
+        // Real values toggle
+        const realValuesCheckbox = document.getElementById('realValues');
+        if (realValuesCheckbox) {
+            realValuesCheckbox.addEventListener('change', (e) => {
+                this.state.update({ ui: { showRealValues: e.target.checked } });
+                this.updateUI();
+            });
+        }
+    }
+    
+    performCalculation() {
+        try {
+            const inputs = this.state.getInputs();
+            const results = this.calculator.calculate(inputs);
+            
+            this.state.setResults(results);
+            this.updateUI();
+            
+        } catch (error) {
+            console.error('Calculation error:', error);
+        }
+    }
+    
+    updateUI() {
+        const results = this.state.getResults();
+        const inputs = this.state.getInputs();
+        const uiState = this.state.getUIState();
+        
+        // Update KPIs
+        this.kpiDisplay.update(results, uiState.showRealValues);
+        
+        // Update charts
+        this.chartManager.updateMainChart(
+            this.calculator.getChartData(uiState.showRealValues),
+            uiState.showRealValues
+        );
+    }
+    
+    handleTabChange(tabName) {
+        // Handle special case for portfolio tab
+        if (tabName === 'portfolio') {
+            // Activate both portfolio and currency features
+            if (this.features.portfolio && this.features.portfolio.activate) {
+                this.features.portfolio.activate(this.state);
             }
-        };
-        
-        setValueSafe('startKapitaal', defaults.startKapitaal);
-        setValueSafe('lening', defaults.lening);
-        setValueSafe('rentePercentage', defaults.rentePercentage);
-        setValueSafe('looptijd', defaults.looptijd);
-        setValueSafe('rendementPercentage', defaults.rendementPercentage);
-        setValueSafe('inflatiePercentage', defaults.inflatiePercentage);
-        setValueSafe('vpbTarief', defaults.vpbTarief);
-        setValueSafe('box3Tarief', defaults.box3Tarief);
-        
-        // Set tax regime
-        const taxRegime = document.getElementById('taxRegime');
-        if (taxRegime) {
-            taxRegime.value = defaults.belastingRegime;
+            // Currency portfolio feature is already initialized
+            return;
         }
         
-        // Trigger initial calculation
-        if (this.inputManager && this.inputManager.handleInputChange) {
-            this.inputManager.handleInputChange();
+        const feature = this.features[tabName];
+        if (feature && feature.activate) {
+            feature.activate(this.state);
+        }
+    }
+    
+    loadSavedData() {
+        const savedScenarios = this.dataService.loadScenarios();
+        const savedSettings = this.dataService.loadSettings();
+        
+        if (savedSettings && savedSettings.inputs) {
+            this.state.update(savedSettings);
         }
         
-        console.log('Initial state set');
+        // Make scenarios available to features
+        if (this.features.saved) {
+            this.features.saved.loadSavedScenarios(savedScenarios);
+        }
     }
     
     async waitForLibraries(timeout = 30000) {
