@@ -1,432 +1,310 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROI Calculator Debug Tool</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .debug-section {
-            background: white;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .debug-result {
-            background: #f0f0f0;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 14px;
-        }
-        .error { color: red; }
-        .success { color: green; }
-        .warning { color: orange; }
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background: #0056b3;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .fix-button {
-            background: #28a745;
-        }
-        .fix-button:hover {
-            background: #218838;
-        }
-    </style>
+    <meta name="description" content="Professionele ROI Rekentool voor Nederlandse Holdings - Investeringsanalyse met scenario's, Monte Carlo simulatie en portfolio management">
+    <meta name="keywords" content="ROI calculator, investeringsanalyse, holding, Nederland, Monte Carlo, portfolio">
+    <title>ROI Rekentool Suite</title>
+    
+    <!-- Main Stylesheet (imports all modular CSS) -->
+    <link rel="stylesheet" href="css/main.css">
+    
+    <!-- Preload critical resources - PROPERLY FIXED -->
+    <link rel="preload" href="js/main.js" as="script" crossorigin>
+    <link rel="preload" href="css/main.css" as="style">
+    
+    <!-- Fallback for older browsers -->
+    <script nomodule>
+        alert('Deze applicatie vereist een moderne browser met ES6 module support. Update uw browser voor de beste ervaring.');
+    </script>
 </head>
 <body>
-    <h1>ROI Calculator Debug Tool</h1>
+    <!-- Error Container -->
+    <div id="errorContainer" style="display: none; position: fixed; top: 10px; right: 10px; z-index: 1000;"></div>
+    <header>
+        <div class="container">
+            <h1>ROI Rekentool Suite</h1>
+            <p class="subtitle">Professionele Investeringsanalyse</p>
+        </div>
+    </header>
     
-    <div class="debug-section">
-        <h2>1. Check Input Elements</h2>
-        <button onclick="checkInputs()">Check All Inputs</button>
-        <div id="inputResults"></div>
-    </div>
-
-    <div class="debug-section">
-        <h2>2. Check CSS Issues</h2>
-        <button onclick="checkCSS()">Check CSS Problems</button>
-        <div id="cssResults"></div>
-    </div>
-
-    <div class="debug-section">
-        <h2>3. Check JavaScript Initialization</h2>
-        <button onclick="checkJS()">Check JavaScript</button>
-        <div id="jsResults"></div>
-    </div>
-
-    <div class="debug-section">
-        <h2>4. Test Input Functionality</h2>
-        <button onclick="testInput()">Test Input Field</button>
-        <div id="testResults"></div>
-    </div>
-
-    <div class="debug-section">
-        <h2>5. Apply Fixes</h2>
-        <button class="fix-button" onclick="applyFixes()">Apply All Fixes</button>
-        <div id="fixResults"></div>
-    </div>
-
-    <script>
-        function checkInputs() {
-            const results = document.getElementById('inputResults');
-            results.innerHTML = '';
-            
-            const inputIds = [
-                'startKapitaal', 'lening', 'renteLening', 'looptijd', 'leningLooptijd',
-                'rendementType', 'rendement', 'aflossingsType', 'herinvestering',
-                'herinvesteringDrempel', 'vasteKosten', 'belastingType', 'inflatie'
-            ];
-            
-            let foundCount = 0;
-            let issueCount = 0;
-            
-            inputIds.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    foundCount++;
-                    const isDisabled = element.disabled;
-                    const isReadOnly = element.readOnly;
-                    const computedStyle = window.getComputedStyle(element);
-                    const pointerEvents = computedStyle.pointerEvents;
-                    const userSelect = computedStyle.userSelect;
-                    
-                    let status = 'success';
-                    let issues = [];
-                    
-                    if (isDisabled) {
-                        status = 'error';
-                        issues.push('disabled');
-                        issueCount++;
-                    }
-                    if (isReadOnly) {
-                        status = 'error';
-                        issues.push('readonly');
-                        issueCount++;
-                    }
-                    if (pointerEvents === 'none') {
-                        status = 'error';
-                        issues.push('pointer-events: none');
-                        issueCount++;
-                    }
-                    if (userSelect === 'none') {
-                        status = 'warning';
-                        issues.push('user-select: none');
-                    }
-                    
-                    // Check if parent has hidden class
-                    const formGroup = element.closest('.form-group');
-                    if (formGroup && formGroup.classList.contains('hidden')) {
-                        status = 'error';
-                        issues.push('parent has .hidden class');
-                        issueCount++;
-                    }
-                    
-                    results.innerHTML += `
-                        <div class="debug-result ${status}">
-                            ${id}: ${issues.length ? issues.join(', ') : 'OK'}
+    <div class="container">
+        <nav class="tabs" role="navigation" aria-label="Hoofdnavigatie">
+            <button class="tab active" data-tab="calculator" aria-selected="true">Basis Calculator</button>
+            <button class="tab" data-tab="scenarios" aria-selected="false">Scenario Analyse</button>
+            <button class="tab" data-tab="montecarlo" aria-selected="false">Monte Carlo</button>
+            <button class="tab" data-tab="waterfall" aria-selected="false">Cashflow Waterfall</button>
+            <button class="tab" data-tab="portfolio" aria-selected="false">Multi-Asset Portfolio</button>
+            <button class="tab" data-tab="historical" aria-selected="false">Historische Prestaties</button>
+            <button class="tab" data-tab="saved" aria-selected="false">Opgeslagen</button>
+            <button class="tab" data-tab="export" aria-selected="false">Export</button>
+        </nav>
+        
+        <main class="tab-content">
+            <!-- Tab 1: Basis Calculator -->
+            <section id="calculator" class="tab-pane active" role="tabpanel">
+                <!-- Kapitaal Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">💰 Kapitaal</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="startKapitaal">Startkapitaal (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="startKapitaal" min="0" step="1000" aria-describedby="startKapitaal-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="startKapitaal-tooltip">Het eigen vermogen dat u inbrengt bij aanvang van de investering</span>
+                            </div>
                         </div>
-                    `;
-                } else {
-                    results.innerHTML += `
-                        <div class="debug-result error">
-                            ${id}: NOT FOUND
-                        </div>
-                    `;
-                }
-            });
-            
-            results.innerHTML = `
-                <div class="debug-result">
-                    Found ${foundCount}/${inputIds.length} inputs. Issues found: ${issueCount}
+                    </div>
                 </div>
-            ` + results.innerHTML;
-        }
-
-        function checkCSS() {
-            const results = document.getElementById('cssResults');
-            results.innerHTML = '';
-            
-            // Check for overlaying elements
-            const input = document.getElementById('startKapitaal');
-            if (input) {
-                const rect = input.getBoundingClientRect();
-                const elementAtPoint = document.elementFromPoint(
-                    rect.left + rect.width / 2,
-                    rect.top + rect.height / 2
-                );
                 
-                if (elementAtPoint !== input) {
-                    results.innerHTML += `
-                        <div class="debug-result error">
-                            Input is being overlapped by: ${elementAtPoint ? elementAtPoint.tagName + '.' + elementAtPoint.className : 'unknown'}
+                <!-- Lening Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">🏦 Lening</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="lening">Lening (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="lening" min="0" step="1000" aria-describedby="lening-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="lening-tooltip">Het geleende bedrag voor leverage. Let op: verhoogt risico maar ook potentieel rendement</span>
+                            </div>
                         </div>
-                    `;
-                } else {
-                    results.innerHTML += `
-                        <div class="debug-result success">
-                            No overlapping elements detected
+                        
+                        <div class="form-group">
+                            <label for="renteLening">Rente Lening (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="renteLening" min="0" max="50" step="0.1" aria-describedby="renteLening-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="renteLening-tooltip">Jaarlijkse rente op de lening. Rentekosten zijn aftrekbaar voor VPB</span>
+                            </div>
                         </div>
-                    `;
-                }
-                
-                // Check z-index
-                const zIndex = window.getComputedStyle(input).zIndex;
-                results.innerHTML += `
-                    <div class="debug-result">
-                        Input z-index: ${zIndex}
-                    </div>
-                `;
-            }
-            
-            // Check for problematic CSS classes
-            const hiddenGroups = document.querySelectorAll('.form-group.hidden');
-            if (hiddenGroups.length > 0) {
-                results.innerHTML += `
-                    <div class="debug-result error">
-                        Found ${hiddenGroups.length} form groups with .hidden class
-                    </div>
-                `;
-            }
-        }
-
-        function checkJS() {
-            const results = document.getElementById('jsResults');
-            results.innerHTML = '';
-            
-            // Check if app is initialized
-            if (window.roiCalculatorApp) {
-                results.innerHTML += `
-                    <div class="debug-result success">
-                        ROI Calculator App found
-                    </div>
-                `;
-                
-                if (window.roiCalculatorApp.initialized) {
-                    results.innerHTML += `
-                        <div class="debug-result success">
-                            App is initialized
+                        
+                        <div class="form-group">
+                            <label for="leningLooptijd">Looptijd Lening (jaren)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="leningLooptijd" min="0" max="50" step="1" aria-describedby="leningLooptijd-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="leningLooptijd-tooltip">Aflostermijn van de lening (kan afwijken van investeringsperiode)</span>
+                            </div>
                         </div>
-                    `;
-                } else {
-                    results.innerHTML += `
-                        <div class="debug-result error">
-                            App is NOT initialized
+                        
+                        <div class="form-group">
+                            <label for="aflossingsType">Aflossingstype</label>
+                            <div class="input-wrapper">
+                                <select id="aflossingsType" aria-describedby="aflossingsType-tooltip">
+                                    <option value="annuitair">Annuïtair</option>
+                                    <option value="lineair">Lineair</option>
+                                    <option value="aflossingsvrij">Aflossingsvrij</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="aflossingsType-tooltip">Annuïtair: gelijke maandbedragen. Lineair: gelijke aflossing. Aflossingsvrij: alleen rente</span>
+                            </div>
                         </div>
-                    `;
-                }
-                
-                // Check form manager
-                if (window.roiCalculatorApp.formManager) {
-                    const formElements = window.roiCalculatorApp.formManager.formElements;
-                    results.innerHTML += `
-                        <div class="debug-result">
-                            Form elements registered: ${formElements ? formElements.size : 0}
-                        </div>
-                    `;
-                }
-            } else {
-                results.innerHTML += `
-                    <div class="debug-result error">
-                        ROI Calculator App NOT found
                     </div>
-                `;
-            }
-            
-            // Check for event listeners
-            const testInput = document.getElementById('startKapitaal');
-            if (testInput) {
-                // Try to get event listeners (this is limited in modern browsers)
-                results.innerHTML += `
-                    <div class="debug-result">
-                        Testing event listeners...
-                    </div>
-                `;
-                
-                // Create a test to see if events fire
-                let changeEventFired = false;
-                let inputEventFired = false;
-                
-                const testChange = () => { changeEventFired = true; };
-                const testInput = () => { inputEventFired = true; };
-                
-                testInput.addEventListener('change', testChange);
-                testInput.addEventListener('input', testInput);
-                
-                // Simulate events
-                testInput.dispatchEvent(new Event('input'));
-                testInput.dispatchEvent(new Event('change'));
-                
-                results.innerHTML += `
-                    <div class="debug-result ${inputEventFired ? 'success' : 'error'}">
-                        Input event: ${inputEventFired ? 'Working' : 'Not working'}
-                    </div>
-                `;
-                
-                results.innerHTML += `
-                    <div class="debug-result ${changeEventFired ? 'success' : 'error'}">
-                        Change event: ${changeEventFired ? 'Working' : 'Not working'}
-                    </div>
-                `;
-                
-                // Clean up
-                testInput.removeEventListener('change', testChange);
-                testInput.removeEventListener('input', testInput);
-            }
-        }
-
-        function testInput() {
-            const results = document.getElementById('testResults');
-            results.innerHTML = '';
-            
-            // Create a test input
-            results.innerHTML = `
-                <div style="margin: 10px 0;">
-                    <label>Test Input (type a number):</label><br>
-                    <input type="number" id="testInputField" style="padding: 8px; border: 1px solid #ccc; width: 200px;">
-                    <div id="testValue" style="margin-top: 10px;"></div>
                 </div>
-            `;
-            
-            const testField = document.getElementById('testInputField');
-            const testValue = document.getElementById('testValue');
-            
-            testField.addEventListener('input', (e) => {
-                testValue.innerHTML = `Value: ${e.target.value}`;
-            });
-            
-            // Test if we can programmatically set value
-            setTimeout(() => {
-                testField.value = 123;
-                testField.dispatchEvent(new Event('input'));
                 
-                results.innerHTML += `
-                    <div class="debug-result ${testField.value == 123 ? 'success' : 'error'}">
-                        Programmatic value setting: ${testField.value == 123 ? 'Working' : 'Not working'}
-                    </div>
-                `;
-            }, 100);
-        }
-
-        function applyFixes() {
-            const results = document.getElementById('fixResults');
-            results.innerHTML = '';
-            let fixCount = 0;
-            
-            // Fix 1: Remove hidden class from all form groups
-            const hiddenGroups = document.querySelectorAll('.form-group.hidden');
-            hiddenGroups.forEach(group => {
-                group.classList.remove('hidden');
-                group.classList.add('visible');
-                fixCount++;
-            });
-            
-            if (fixCount > 0) {
-                results.innerHTML += `
-                    <div class="debug-result success">
-                        Removed .hidden class from ${fixCount} form groups
-                    </div>
-                `;
-            }
-            
-            // Fix 2: Enable all inputs
-            const inputs = document.querySelectorAll('input[type="number"], input[type="text"], select');
-            let enabledCount = 0;
-            inputs.forEach(input => {
-                if (input.disabled) {
-                    input.disabled = false;
-                    enabledCount++;
-                }
-                if (input.readOnly) {
-                    input.readOnly = false;
-                    enabledCount++;
-                }
-                
-                // Force pointer events
-                input.style.pointerEvents = 'auto';
-                
-                // Ensure the parent form group is visible
-                const formGroup = input.closest('.form-group');
-                if (formGroup) {
-                    formGroup.style.pointerEvents = 'auto';
-                    formGroup.style.opacity = '1';
-                    formGroup.style.display = 'block';
-                }
-            });
-            
-            if (enabledCount > 0) {
-                results.innerHTML += `
-                    <div class="debug-result success">
-                        Enabled ${enabledCount} disabled/readonly inputs
-                    </div>
-                `;
-            }
-            
-            // Fix 3: Re-initialize form manager if possible
-            if (window.roiCalculatorApp && window.roiCalculatorApp.formManager) {
-                try {
-                    window.roiCalculatorApp.formManager.attachEventListeners();
-                    results.innerHTML += `
-                        <div class="debug-result success">
-                            Re-attached event listeners
+                <!-- Investering Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">📈 Investering</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="looptijd">Looptijd Investering (jaren)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="looptijd" min="0" max="50" step="1" aria-describedby="looptijd-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="looptijd-tooltip">Totale periode waarover de investering wordt doorgerekend</span>
+                            </div>
                         </div>
-                    `;
-                } catch (e) {
-                    results.innerHTML += `
-                        <div class="debug-result error">
-                            Could not re-attach event listeners: ${e.message}
+                        
+                        <div class="form-group">
+                            <label for="rendementType">Rendement Type</label>
+                            <div class="input-wrapper">
+                                <select id="rendementType" aria-describedby="rendementType-tooltip">
+                                    <option value="maandelijks">Maandelijks</option>
+                                    <option value="jaarlijks">Jaarlijks</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="rendementType-tooltip">Kies of u het rendement per maand of per jaar wilt opgeven</span>
+                            </div>
                         </div>
-                    `;
-                }
-            }
-            
-            // Fix 4: Add a simple test listener to startKapitaal
-            const startKapitaal = document.getElementById('startKapitaal');
-            if (startKapitaal) {
-                startKapitaal.addEventListener('input', (e) => {
-                    console.log('Input value changed:', e.target.value);
-                });
-                results.innerHTML += `
-                    <div class="debug-result success">
-                        Added console logging to startKapitaal input
+                        
+                        <div class="form-group">
+                            <label for="rendement">Verwacht Rendement (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="rendement" min="-10" max="50" step="0.1" aria-describedby="rendement-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="rendement-tooltip">Verwacht rendement op totale investering (eigen vermogen + lening)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="herinvestering">Herinvestering (% van winst)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="herinvestering" min="0" max="100" step="1" aria-describedby="herinvestering-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="herinvestering-tooltip">Percentage van winst dat wordt geherinvesteerd. Rest gaat naar cash reserve</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="herinvesteringDrempel">Herinvestering Drempel (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="herinvesteringDrempel" min="0" step="50" aria-describedby="herinvesteringDrempel-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="herinvesteringDrempel-tooltip">Minimaal bedrag voor herinvestering. Kleinere bedragen blijven in cash</span>
+                            </div>
+                        </div>
                     </div>
-                `;
-            }
-            
-            results.innerHTML += `
-                <div class="debug-result" style="background: #d4edda; color: #155724;">
-                    <strong>Fixes applied!</strong> Try entering values in the calculator now.
                 </div>
-            `;
-        }
-
-        // Auto-run checks on load
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                console.log('Running automatic diagnostics...');
-                checkInputs();
-                checkCSS();
-                checkJS();
-            }, 1000);
-        });
-    </script>
+                
+                <!-- Kosten & Belasting Sectie -->
+                <div class="input-section">
+                    <h3 class="section-title">💸 Kosten & Belasting</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="vasteKosten">Vaste Kosten per Jaar (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="vasteKosten" min="0" step="100" aria-describedby="vasteKosten-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="vasteKosten-tooltip">Jaarlijkse vaste kosten zoals beheer, administratie, accountant</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="belastingType">Belasting Type</label>
+                            <div class="input-wrapper">
+                                <select id="belastingType" aria-describedby="belastingType-tooltip">
+                                    <option value="vpb">Zakelijk (VPB)</option>
+                                    <option value="prive">Privé</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="belastingType-tooltip">Kies het juiste belastingregime voor uw situatie</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inflatie">Inflatie (% per jaar)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="inflatie" min="0" max="20" step="0.1" aria-describedby="inflatie-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="inflatie-tooltip">Jaarlijkse inflatie voor reële waarde berekeningen</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Privé Belasting Opties - Verborgen by default -->
+                    <div id="priveOptions" class="form-grid" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                        <div class="form-group">
+                            <label for="priveSubType">Privé Belasting Methode</label>
+                            <div class="input-wrapper">
+                                <select id="priveSubType" aria-describedby="priveSubType-tooltip">
+                                    <option value="box1">Box 1 - Inkomstenbelasting op winst</option>
+                                    <option value="box3">Box 3 - Vermogensbelasting</option>
+                                </select>
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="priveSubType-tooltip">Box 1: belasting over daadwerkelijke winst. Box 3: belasting over fictief rendement op vermogen</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box1Options">
+                            <label for="box1Tarief">Box 1 Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box1Tarief" min="0" max="60" step="0.1" aria-describedby="box1Tarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box1Tarief-tooltip">Uw marginale tarief box 1 (afhankelijk van totaal inkomen)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3Options" style="display: none;">
+                            <label for="box3Rendement">Box 3 Fictief Rendement (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Rendement" min="0" max="20" step="0.1" aria-describedby="box3Rendement-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Rendement-tooltip">Fictief rendement percentage voor box 3 (2024: 6.04% tot €57.000, daarna hoger)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3TariefGroup" style="display: none;">
+                            <label for="box3Tarief">Box 3 Tarief (%)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Tarief" min="0" max="50" step="0.1" aria-describedby="box3Tarief-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Tarief-tooltip">Belastingtarief over fictief rendement box 3 (2024: 31%)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="box3VrijstellingGroup" style="display: none;">
+                            <label for="box3Vrijstelling">Box 3 Heffingsvrije Voet (€)</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="box3Vrijstelling" min="0" step="1000" aria-describedby="box3Vrijstelling-tooltip">
+                                <span class="tooltip-icon" aria-label="Meer informatie">?</span>
+                                <span class="tooltip" id="box3Vrijstelling-tooltip">Heffingsvrije voet box 3 (2024: €57.000 voor alleenstaanden)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="inflatie-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="inflatieToggle" aria-label="Toon reële waardes">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>Toon reële waardes (inflatie gecorrigeerd)</span>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-label">Totaal Vermogen</div>
+                        <div class="kpi-value" id="kpiTotaalVermogen">€ 0</div>
+                        <div class="kpi-subtitle" id="kpiTotaalVermogenReeel"></div>
+                    </div>
+                    <div class="kpi-card green">
+                        <div class="kpi-label">ROI</div>
+                        <div class="kpi-value" id="kpiROI">0%</div>
+                        <div class="kpi-subtitle" id="kpiROIReeel"></div>
+                    </div>
+                    <div class="kpi-card blue">
+                        <div class="kpi-label">Leverage Factor</div>
+                        <div class="kpi-value" id="kpiLeverage">0x</div>
+                    </div>
+                    <div class="kpi-card orange">
+                        <div class="kpi-label">Cash Reserve</div>
+                        <div class="kpi-value" id="kpiCashReserve">€ 0</div>
+                        <div class="kpi-subtitle" id="kpiCashReserveReeel"></div>
+                    </div>
+                    <div class="kpi-card yellow">
+                        <div class="kpi-label">Koopkrachtverlies</div>
+                        <div class="kpi-value" id="kpiKoopkracht">€ 0</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="mainChart" aria-label="Vermogensontwikkeling grafiek"></canvas>
+                </div>
+            </section>
+            
+            <!-- Other tabs will be loaded here dynamically -->
+            <div id="additionalTabs"></div>
+        </main>
+    </div>
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" 
+            integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" 
+            integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+            integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    
+    <!-- Main Application Module - This is the only script tag needed! -->
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
