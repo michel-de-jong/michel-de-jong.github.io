@@ -5,16 +5,39 @@ export class FormManager {
         this.listeners = [];
         this.formElements = new Map();
         this.debounceTimers = new Map();
+        this.initialized = false;
     }
     
     initialize(stateManager) {
+        if (this.initialized) {
+            console.log('FormManager already initialized');
+            return;
+        }
+        
         this.stateManager = stateManager;
+        
+        // Ensure DOM is ready before setting up elements
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setup();
+            });
+        } else {
+            this.setup();
+        }
+    }
+    
+    setup() {
+        console.log('Setting up FormManager...');
         this.setupFormElements();
         this.loadInitialValues();
         this.attachEventListeners();
+        this.initialized = true;
+        console.log('FormManager setup complete');
     }
     
     setupFormElements() {
+        console.log('Setting up form elements...');
+        
         // Main calculator form elements
         const formIds = [
             'startKapitaal', 'lening', 'renteLening', 'looptijd', 'leningLooptijd',
@@ -24,16 +47,29 @@ export class FormManager {
             'box3Tarief', 'box3Vrijstelling'
         ];
         
+        let foundCount = 0;
         formIds.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 this.formElements.set(id, element);
+                foundCount++;
+                console.log(`Found element: ${id}`);
+            } else {
+                console.warn(`Form element not found: ${id}`);
             }
         });
+        
+        console.log(`Found ${foundCount}/${formIds.length} form elements`);
     }
     
     loadInitialValues() {
+        if (!this.stateManager) {
+            console.error('StateManager not available');
+            return;
+        }
+        
         const inputs = this.stateManager.getInputs();
+        console.log('Loading initial values:', inputs);
         
         this.formElements.forEach((element, id) => {
             if (inputs.hasOwnProperty(id)) {
@@ -50,30 +86,59 @@ export class FormManager {
     }
     
     attachEventListeners() {
+        console.log('Attaching event listeners to form elements...');
+        
         this.formElements.forEach((element, id) => {
-            if (element.type === 'checkbox') {
-                element.addEventListener('change', (e) => this.handleChange(id, e));
+            // Remove any existing listeners first
+            const newElement = element.cloneNode(true);
+            element.parentNode.replaceChild(newElement, element);
+            this.formElements.set(id, newElement);
+            
+            // Attach new listeners
+            if (newElement.type === 'checkbox') {
+                newElement.addEventListener('change', (e) => {
+                    console.log(`Checkbox ${id} changed:`, e.target.checked);
+                    this.handleChange(id, e);
+                });
             } else {
-                element.addEventListener('change', (e) => this.handleChange(id, e));
-                element.addEventListener('input', (e) => this.handleInput(id, e));
+                // For text/number inputs, use both change and input events
+                newElement.addEventListener('change', (e) => {
+                    console.log(`Input ${id} changed:`, e.target.value);
+                    this.handleChange(id, e);
+                });
+                
+                newElement.addEventListener('input', (e) => {
+                    console.log(`Input ${id} input event:`, e.target.value);
+                    this.handleInput(id, e);
+                });
             }
         });
         
         // Special handling for tax type changes
         const belastingType = this.formElements.get('belastingType');
         if (belastingType) {
-            belastingType.addEventListener('change', () => this.updateTaxOptionsVisibility());
+            belastingType.addEventListener('change', () => {
+                console.log('Tax type changed');
+                this.updateTaxOptionsVisibility();
+            });
         }
         
         const priveSubType = this.formElements.get('priveSubType');
         if (priveSubType) {
-            priveSubType.addEventListener('change', () => this.updatePrivateSubTypeVisibility());
+            priveSubType.addEventListener('change', () => {
+                console.log('Private sub-type changed');
+                this.updatePrivateSubTypeVisibility();
+            });
         }
+        
+        console.log('Event listeners attached successfully');
     }
     
     handleChange(id, event) {
         const element = event.target;
         const value = this.getElementValue(element);
+        
+        console.log(`Handling change for ${id}:`, value);
         
         // Validate immediately on change
         if (this.validateField(id, value)) {
@@ -87,6 +152,7 @@ export class FormManager {
         
         // Debounce input events
         this.debounce(id, () => {
+            console.log(`Debounced input for ${id}:`, value);
             if (this.validateField(id, value)) {
                 this.notifyListeners({ [id]: value });
             }
@@ -107,126 +173,90 @@ export class FormManager {
         const validation = this.validationService.validateField(id, value);
         
         if (!validation.valid) {
-            this.showFieldError(id, validation.message);
+            this.showFieldError(id, validation.error);
             return false;
-        } else {
-            this.clearFieldError(id);
-            return true;
         }
+        
+        this.clearFieldError(id);
+        return true;
     }
     
-    showFieldError(id, message) {
+    showFieldError(id, error) {
         const element = this.formElements.get(id);
-        if (!element) return;
-        
-        const formGroup = element.closest('.form-group');
-        if (formGroup) {
-            formGroup.classList.add('error');
+        if (element) {
+            element.classList.add('is-invalid');
             
-            // Remove existing error message
-            const existingError = formGroup.querySelector('.error-message');
-            if (existingError) {
-                existingError.remove();
+            // Find or create error message element
+            let errorEl = element.parentElement.querySelector('.invalid-feedback');
+            if (!errorEl) {
+                errorEl = document.createElement('div');
+                errorEl.className = 'invalid-feedback';
+                element.parentElement.appendChild(errorEl);
             }
-            
-            // Add new error message
-            const errorElement = document.createElement('span');
-            errorElement.className = 'error-message';
-            errorElement.textContent = message;
-            element.parentNode.appendChild(errorElement);
+            errorEl.textContent = error;
         }
     }
     
     clearFieldError(id) {
         const element = this.formElements.get(id);
-        if (!element) return;
-        
-        const formGroup = element.closest('.form-group');
-        if (formGroup) {
-            formGroup.classList.remove('error');
-            
-            const errorElement = formGroup.querySelector('.error-message');
-            if (errorElement) {
-                errorElement.remove();
+        if (element) {
+            element.classList.remove('is-invalid');
+            const errorEl = element.parentElement.querySelector('.invalid-feedback');
+            if (errorEl) {
+                errorEl.remove();
             }
         }
     }
     
     updateTaxOptionsVisibility() {
-        const belastingType = this.formElements.get('belastingType')?.value;
-        const priveOptions = document.getElementById('priveOptions');
+        const belastingType = this.formElements.get('belastingType');
+        if (!belastingType) return;
         
-        if (priveOptions) {
-            priveOptions.style.display = belastingType === 'prive' ? 'grid' : 'none';
-            
-            if (belastingType === 'prive') {
-                this.updatePrivateSubTypeVisibility();
-            }
+        const taxType = belastingType.value;
+        console.log('Updating tax options visibility for:', taxType);
+        
+        // Hide all tax options first
+        document.querySelectorAll('.tax-options').forEach(el => {
+            el.style.display = 'none';
+        });
+        
+        // Show relevant tax options
+        const taxOptionsId = `${taxType}Options`;
+        const taxOptions = document.getElementById(taxOptionsId);
+        if (taxOptions) {
+            taxOptions.style.display = 'block';
         }
     }
     
     updatePrivateSubTypeVisibility() {
-        const priveSubType = this.formElements.get('priveSubType')?.value;
+        const priveSubType = this.formElements.get('priveSubType');
+        if (!priveSubType) return;
         
+        const subType = priveSubType.value;
+        console.log('Updating private sub-type visibility for:', subType);
+        
+        // Toggle visibility of Box 1 and Box 3 options
         const box1Options = document.getElementById('box1Options');
         const box3Options = document.getElementById('box3Options');
-        const box3TariefGroup = document.getElementById('box3TariefGroup');
-        const box3VrijstellingGroup = document.getElementById('box3VrijstellingGroup');
         
-        if (priveSubType === 'box1') {
-            if (box1Options) box1Options.style.display = 'block';
-            if (box3Options) box3Options.style.display = 'none';
-            if (box3TariefGroup) box3TariefGroup.style.display = 'none';
-            if (box3VrijstellingGroup) box3VrijstellingGroup.style.display = 'none';
-        } else if (priveSubType === 'box3') {
-            if (box1Options) box1Options.style.display = 'none';
-            if (box3Options) box3Options.style.display = 'block';
-            if (box3TariefGroup) box3TariefGroup.style.display = 'block';
-            if (box3VrijstellingGroup) box3VrijstellingGroup.style.display = 'block';
+        if (box1Options) {
+            box1Options.style.display = subType === 'box1' ? 'block' : 'none';
+        }
+        
+        if (box3Options) {
+            box3Options.style.display = subType === 'box3' ? 'block' : 'none';
         }
     }
     
-    // Get all form values
-    getFormData() {
-        const data = {};
-        
-        this.formElements.forEach((element, id) => {
-            data[id] = this.getElementValue(element);
-        });
-        
-        return data;
+    onChange(listener) {
+        this.listeners.push(listener);
     }
     
-    // Set form values
-    setFormData(data) {
-        Object.entries(data).forEach(([id, value]) => {
-            const element = this.formElements.get(id);
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = value;
-                } else {
-                    element.value = value;
-                }
-            }
-        });
-        
-        this.updateTaxOptionsVisibility();
-    }
-    
-    // Subscribe to form changes
-    onChange(callback) {
-        this.listeners.push(callback);
-        
-        return () => {
-            this.listeners = this.listeners.filter(l => l !== callback);
-        };
-    }
-    
-    // Notify listeners - FIXED VERSION WITH INFLATIE TOGGLE HANDLING
     notifyListeners(changes) {
-        // Special handling for inflatieToggle
-        if ('inflatieToggle' in changes) {
-            // Update UI state for real values display
+        console.log('Notifying listeners of changes:', changes);
+        
+        // Handle special cases
+        if (changes.inflatieToggle !== undefined) {
             changes.showRealValues = changes.inflatieToggle;
             // Update state to handle UI changes
             if (this.stateManager) {
@@ -259,6 +289,29 @@ export class FormManager {
         this.debounceTimers.set(id, timer);
     }
     
+    // Get form data
+    getFormData() {
+        const data = {};
+        this.formElements.forEach((element, id) => {
+            data[id] = this.getElementValue(element);
+        });
+        return data;
+    }
+    
+    // Set form data
+    setFormData(data) {
+        Object.keys(data).forEach(id => {
+            const element = this.formElements.get(id);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = data[id];
+                } else {
+                    element.value = data[id];
+                }
+            }
+        });
+    }
+    
     // Disable/enable form
     setEnabled(enabled) {
         this.formElements.forEach(element => {
@@ -268,7 +321,30 @@ export class FormManager {
     
     // Reset form to defaults
     reset() {
-        const defaults = this.stateManager.getInputs();
-        this.setFormData(defaults);
+        if (this.stateManager) {
+            const defaults = this.stateManager.getInputs();
+            this.setFormData(defaults);
+        }
+    }
+    
+    // Validate all fields
+    validateAll() {
+        let allValid = true;
+        const errors = [];
+        
+        this.formElements.forEach((element, id) => {
+            const value = this.getElementValue(element);
+            const validation = this.validationService.validateField(id, value);
+            
+            if (!validation.valid) {
+                allValid = false;
+                errors.push({ field: id, error: validation.error });
+                this.showFieldError(id, validation.error);
+            } else {
+                this.clearFieldError(id);
+            }
+        });
+        
+        return { valid: allValid, errors };
     }
 }
