@@ -203,8 +203,8 @@ class ROICalculatorApp {
             this.performCalculation();
         });
         
-        // Tab change handler
-        this.tabManager.onChange((tabName) => {
+        // Tab change handler - Fixed: using onTabChange instead of onChange
+        this.tabManager.onTabChange((tabName) => {
             this.handleTabChange(tabName);
         });
         
@@ -319,19 +319,22 @@ class ROICalculatorApp {
             const savedScenarios = this.dataService.loadScenarios();
             if (savedScenarios && savedScenarios.length > 0) {
                 console.log(`Loaded ${savedScenarios.length} saved scenarios`);
+                
+                // Pass scenarios to saved feature if available
+                if (this.features && this.features.saved) {
+                    this.features.saved.loadSavedScenarios(savedScenarios);
+                }
             }
             
-            // Load saved portfolios
-            const savedPortfolios = this.dataService.loadPortfolios();
-            if (savedPortfolios && savedPortfolios.length > 0) {
-                console.log(`Loaded ${savedPortfolios.length} saved portfolios`);
-            }
+            // Note: loadPortfolios method doesn't exist in DataService
+            // This functionality seems to be handled by the PortfolioFeature itself
+            // If you need to load saved portfolios, implement it in DataService or use PortfolioFeature
             
-            // Load user preferences
-            const preferences = this.dataService.loadPreferences();
-            if (preferences) {
-                this.state.update({ preferences });
-                console.log('Loaded user preferences');
+            // Load user settings/preferences
+            const settings = this.dataService.loadSettings();
+            if (settings) {
+                this.state.update({ settings });
+                console.log('Loaded user settings');
             }
             
         } catch (error) {
