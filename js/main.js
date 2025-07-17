@@ -27,6 +27,9 @@ class ROICalculatorApp {
         this.retryCount = 0;
         this.maxRetries = 3;
         
+        // Performance: Track initialization time
+        this.initStartTime = performance.now();
+        
         console.log(`ROI Calculator v${this.config.app.version} initializing...`);
     }
     
@@ -50,8 +53,8 @@ class ROICalculatorApp {
             // Initialize features
             await this.initializeFeatures();
             
-            // Load saved data
-            this.loadSavedData();
+            // Performance: Lazy load saved data
+            this.scheduleSavedDataLoad();
             
             // Setup event handlers
             this.setupEventHandlers();
@@ -61,7 +64,10 @@ class ROICalculatorApp {
             
             // Mark as initialized
             this.initialized = true;
-            console.log('ROI Calculator initialized successfully');
+            
+            // Performance: Log initialization time
+            const initTime = performance.now() - this.initStartTime;
+            console.log(`ROI Calculator initialized successfully in ${initTime.toFixed(2)}ms`);
             
         } catch (error) {
             console.error('Failed to initialize application:', error);
@@ -193,6 +199,11 @@ class ROICalculatorApp {
                 // Continue without currency features - non-critical error
             }
         }
+        
+        // Portfolio Feature Integration: Set up data service in portfolio feature
+        if (this.portfolioFeature && this.portfolioFeature.setDataService) {
+            this.portfolioFeature.setDataService(this.dataService);
+        }
     }
     
     setupEventHandlers() {
@@ -221,6 +232,17 @@ class ROICalculatorApp {
                 this.updateUI();
             });
         }
+        
+        // Portfolio events integration
+        document.addEventListener('portfolioLoaded', (e) => {
+            console.log('Portfolio loaded event:', e.detail);
+            this.handlePortfolioLoaded(e.detail);
+        });
+        
+        document.addEventListener('portfolioSaved', (e) => {
+            console.log('Portfolio saved event:', e.detail);
+            this.handlePortfolioSaved(e.detail);
+        });
     }
     
     performCalculation() {
@@ -313,9 +335,24 @@ class ROICalculatorApp {
         throw new Error('Required libraries failed to load');
     }
     
+    // Performance: Lazy load saved data after initial render
+    scheduleSavedDataLoad() {
+        // Use requestIdleCallback if available, otherwise setTimeout
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => this.loadSavedData(), { timeout: 2000 });
+        } else {
+            setTimeout(() => this.loadSavedData(), 500);
+        }
+    }
+    
     loadSavedData() {
         try {
-            // Load saved scenarios
+            console.log('Loading saved data...');
+            
+            // Performance: Check storage quota before loading
+            this.checkStorageQuota();
+            
+            // Load saved scenarios with limit check
             const savedScenarios = this.dataService.loadScenarios();
             if (savedScenarios && savedScenarios.length > 0) {
                 console.log(`Loaded ${savedScenarios.length} saved scenarios`);
@@ -324,11 +361,15 @@ class ROICalculatorApp {
                 if (this.features && this.features.saved) {
                     this.features.saved.loadSavedScenarios(savedScenarios);
                 }
+                
+                // Performance: Warn if approaching limit
+                if (savedScenarios.length > this.config.performance.storage.maxScenarios * 0.8) {
+                    console.warn(`Approaching scenario limit (${savedScenarios.length}/${this.config.performance.storage.maxScenarios})`);
+                }
             }
             
-            // Note: loadPortfolios method doesn't exist in DataService
-            // This functionality seems to be handled by the PortfolioFeature itself
-            // If you need to load saved portfolios, implement it in DataService or use PortfolioFeature
+            // Portfolio Feature Integration: Coordinate portfolio loading
+            this.loadPortfolioData();
             
             // Load user settings/preferences
             const settings = this.dataService.loadSettings();
@@ -337,8 +378,144 @@ class ROICalculatorApp {
                 console.log('Loaded user settings');
             }
             
+            // Load preferences
+            const preferences = this.dataService.loadPreferences();
+            if (preferences) {
+                this.state.update({ preferences });
+                console.log('Loaded user preferences');
+            }
+            
         } catch (error) {
             console.warn('Failed to load saved data:', error);
+            
+            // Performance: Handle quota exceeded errors
+            if (error.name === 'QuotaExceededError') {
+                this.handleStorageQuotaExceeded();
+            }
+        }
+    }
+    
+    // Portfolio Feature Integration: Unified portfolio loading
+    loadPortfolioData() {
+        try {
+            const savedPortfolios = this.dataService.loadPortfolios();
+            
+            if (savedPortfolios && savedPortfolios.length > 0) {
+                console.log(`Loaded ${savedPortfolios.length} saved portfolios from DataService`);
+                
+                // Check if PortfolioFeature has its own loading mechanism
+                if (this.features && this.features.portfolio) {
+                    if (this.features.portfolio.loadSavedPortfolios) {
+                        // Use PortfolioFeature's own loading method
+                        this.features.portfolio.loadSavedPortfolios(savedPortfolios);
+                    } else if (this.features.portfolio.setPortfolios) {
+                        // Set portfolios directly
+                        this.features.portfolio.setPortfolios(savedPortfolios);
+                    }
+                }
+                
+                // Performance: Warn if approaching limit
+                if (savedPortfolios.length > this.config.performance.storage.maxPortfolios * 0.8) {
+                    console.warn(`Approaching portfolio limit (${savedPortfolios.length}/${this.config.performance.storage.maxPortfolios})`);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading portfolio data:', error);
+        }
+    }
+    
+    // Portfolio event handlers
+    handlePortfolioLoaded(detail) {
+        if (detail && detail.assets) {
+            // Update state with loaded portfolio
+            this.state.update({ 
+                currentPortfolio: detail.assets,
+                portfolioLastModified: new Date().toISOString()
+            });
+        }
+    }
+    
+    handlePortfolioSaved(detail) {
+        if (detail && detail.portfolio) {
+            // Save portfolio through DataService
+            const success = this.dataService.savePortfolio(detail.portfolio);
+            if (success) {
+                this.showSuccess('Portfolio succesvol opgeslagen');
+            } else {
+                this.showError('Fout bij het opslaan van portfolio');
+            }
+        }
+    }
+    
+    // Performance: Check storage quota
+    checkStorageQuota() {
+        if ('storage' in navigator && 'estimate' in navigator.storage) {
+            navigator.storage.estimate().then(estimate => {
+                const percentUsed = (estimate.usage / estimate.quota) * 100;
+                console.log(`Storage used: ${percentUsed.toFixed(2)}%`);
+                
+                if (percentUsed > 90) {
+                    console.warn('Storage quota nearly exceeded');
+                    this.showWarning('Opslagruimte bijna vol. Overweeg oude gegevens te verwijderen.');
+                }
+            });
+        }
+    }
+    
+    // Performance: Handle storage quota exceeded
+    handleStorageQuotaExceeded() {
+        console.error('Storage quota exceeded');
+        
+        // Get storage info
+        const storageInfo = this.dataService.getStorageInfo();
+        
+        this.showError(
+            `Opslaglimiet bereikt. U heeft ${storageInfo.scenarioCount} scenario's ` +
+            `en ${storageInfo.portfolioCount} portfolio's opgeslagen. ` +
+            `Verwijder oude gegevens om ruimte vrij te maken.`
+        );
+        
+        // Offer to clean up old data
+        if (confirm('Wilt u oude scenario\'s automatisch opruimen?')) {
+            this.cleanupOldData();
+        }
+    }
+    
+    // Performance: Clean up old data
+    cleanupOldData() {
+        try {
+            // Get all scenarios and sort by date
+            const scenarios = this.dataService.loadScenarios();
+            const maxScenarios = Math.floor(this.config.performance.storage.maxScenarios * 0.7); // Keep 70%
+            
+            if (scenarios.length > maxScenarios) {
+                // Sort by timestamp and keep only the most recent
+                scenarios.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const toKeep = scenarios.slice(0, maxScenarios);
+                
+                // Clear and re-save
+                this.dataService.clearScenarios();
+                toKeep.forEach(scenario => this.dataService.saveScenario(scenario));
+                
+                this.showSuccess(`${scenarios.length - maxScenarios} oude scenario's verwijderd`);
+            }
+            
+            // Do the same for portfolios
+            const portfolios = this.dataService.loadPortfolios();
+            const maxPortfolios = Math.floor(this.config.performance.storage.maxPortfolios * 0.7);
+            
+            if (portfolios.length > maxPortfolios) {
+                portfolios.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const toKeep = portfolios.slice(0, maxPortfolios);
+                
+                this.dataService.clearPortfolios();
+                toKeep.forEach(portfolio => this.dataService.savePortfolio(portfolio));
+                
+                this.showSuccess(`${portfolios.length - maxPortfolios} oude portfolio's verwijderd`);
+            }
+        } catch (error) {
+            console.error('Error cleaning up data:', error);
+            this.showError('Fout bij het opruimen van gegevens');
         }
     }
     
@@ -358,6 +535,40 @@ class ROICalculatorApp {
             }, 5000);
         } else {
             alert(message);
+        }
+    }
+    
+    showSuccess(message) {
+        const successContainer = document.getElementById('successContainer') || document.getElementById('errorContainer');
+        if (successContainer) {
+            successContainer.innerHTML = `
+                <div class="alert alert-success alert-dismissible">
+                    <strong>Succes:</strong> ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            `;
+            successContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                successContainer.style.display = 'none';
+            }, 3000);
+        }
+    }
+    
+    showWarning(message) {
+        const warningContainer = document.getElementById('warningContainer') || document.getElementById('errorContainer');
+        if (warningContainer) {
+            warningContainer.innerHTML = `
+                <div class="alert alert-warning alert-dismissible">
+                    <strong>Waarschuwing:</strong> ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            `;
+            warningContainer.style.display = 'block';
+            
+            setTimeout(() => {
+                warningContainer.style.display = 'none';
+            }, 4000);
         }
     }
 }
