@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROI Calculator - Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3c72;
+            border-bottom: 2px solid #1e3c72;
+            padding-bottom: 10px;
+        }
+        .check {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: #f8f9fa;
+            border-left: 4px solid #dee2e6;
+        }
+        .check.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .check.error {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .check.warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .check h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        .detail {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: rgba(0,0,0,0.05);
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2a5298;
+        }
+        .file-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .file-item {
+            padding: 3px 0;
+            font-size: 14px;
+        }
+        .file-item.missing {
+            color: #dc3545;
+        }
+        .file-item.found {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 ROI Calculator Diagnostic Tool</h1>
+        <p>This tool will help diagnose issues with your ROI Calculator deployment.</p>
+        
+        <div id="diagnostics"></div>
+        
+        <div style="margin-top: 30px;">
+            <button onclick="runDiagnostics()">Run Diagnostics</button>
+            <button onclick="checkFiles()">Check All Files</button>
+            <button onclick="testModuleLoading()">Test Module Loading</button>
+            <button onclick="copyReport()">Copy Report</button>
+        </div>
+        
+        <div id="fileCheckResults" style="display:none; margin-top: 20px;">
+            <h3>File Check Results:</h3>
+            <div class="file-list" id="fileList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load deployment config if available
+        if (window.DEPLOYMENT_CONFIG) {
+            console.log('Deployment config loaded');
+        }
+        
+        // Core files to check (adjusted for being in debug directory)
+        const coreFiles = [
+            '../js/main.js',
+            '../js/config/config.js',  // Production config
+            '../js/core/state.js',
+            '../js/core/calculator.js',
+            '../js/ui/tabs.js',
+            '../js/ui/charts.js',
+            '../js/ui/forms.js',
+            '../js/ui/kpi.js',
+            '../js/services/data-service.js',
+            '../js/services/validation-service.js',
+            '../js/services/historical-data.js',
+            '../js/services/currency-service.js',
+            '../js/services/fx-risk-analysis.js',
+            '../js/features/scenarios.js',
+            '../js/features/montecarlo.js',
+            '../js/features/waterfall.js',
+            '../js/features/portfolio.js',
+            '../js/features/historical.js',
+            '../js/features/saved.js',
+            '../js/features/export.js',
+            '../js/features/currency-portfolio.js',
+            '../css/main.css',
+            '../index.html',
+            'deployment-config.js',  // Debug config
+            'diagnostic.html'
+        ];
+
+        function getBasePath() {
+            // Use deployment config if available
+            if (window.getDeploymentBasePath) {
+                return window.getDeploymentBasePath();
+            }
+            
+            const path = window.location.pathname;
+            if (window.location.hostname.includes('github.io')) {
+                const pathParts = path.split('/').filter(p => p && !p.includes('.html'));
+                // Remove 'debug' from path parts since we're in debug directory
+                const filtered = pathParts.filter(p => p !== 'debug');
+                if (filtered.length > 0) {
+                    return `/${filtered[0]}`;
+                }
+            }
+            return '';
+        }
+
+        function addCheck(title, status, details) {
+            const diagnostics = document.getElementById('diagnostics');
+            const check = document.createElement('div');
+            check.className = `check ${status}`;
+            
+            let html = `<h3>${title}</h3>`;
+            if (Array.isArray(details)) {
+                details.forEach(detail => {
+                    html += `<div class="detail">${detail}</div>`;
+                });
+            } else {
+                html += `<div class="detail">${details}</div>`;
+            }
+            
+            check.innerHTML = html;
+            diagnostics.appendChild(check);
+        }
+
+        function runDiagnostics() {
+            const diagnostics = document.getElementById('diagnostics');
+            diagnostics.innerHTML = '';
+            
+            // Check 1: Environment
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const hasDeploymentConfig = typeof window.DEPLOYMENT_CONFIG !== 'undefined';
+            
+            addCheck(
+                'Environment Detection',
+                isGitHubPages ? 'warning' : 'success',
+                [
+                    `Hostname: ${window.location.hostname}`,
+                    `Path: ${window.location.pathname}`,
+                    `Detected Base Path: ${getBasePath()}`,
+                    `Environment: ${isGitHubPages ? 'GitHub Pages' : 'Local/Other'}`,
+                    `Deployment Config: ${hasDeploymentConfig ? 'Loaded' : 'Not Found'}`,
+                    hasDeploymentConfig && window.DEPLOYMENT_CONFIG.GITHUB_REPO_NAME ? 
+                        `Configured Repo: ${window.DEPLOYMENT_CONFIG.GITHUB_REPO_NAME}` : 
+                        'Repository name: Auto-detect'
+                ]
+            );
+            
+            // Check 2: Browser Support
+            const hasModuleSupport = 'noModule' in HTMLScriptElement.prototype;
+            addCheck(
+                'Browser Compatibility',
+                hasModuleSupport ? 'success' : 'error',
+                [
+                    `ES6 Modules: ${hasModuleSupport ? 'Supported' : 'Not Supported'}`,
+                    `User Agent: ${navigator.userAgent}`
+                ]
+            );
+            
+            // Check 3: External Dependencies
+            const hasChart = typeof Chart !== 'undefined';
+            const hasXLSX = typeof XLSX !== 'undefined';
+            const hasjsPDF = typeof jspdf !== 'undefined';
+            
+            addCheck(
+                'External Libraries',
+                (hasChart || hasXLSX || hasjsPDF) ? 'warning' : 'error',
+                [
+                    `Chart.js: ${hasChart ? 'Loaded' : 'Not Loaded'}`,
+                    `XLSX: ${hasXLSX ? 'Loaded' : 'Not Loaded'}`,
+                    `jsPDF: ${hasjsPDF ? 'Loaded' : 'Not Loaded'}`
+                ]
+            );
+            
+            // Check 4: Console Errors
+            const errors = [];
+            const originalError = console.error;
+            console.error = function(...args) {
+                errors.push(args.join(' '));
+                originalError.apply(console, args);
+            };
+            
+            setTimeout(() => {
+                console.error = originalError;
+                addCheck(
+                    'Console Errors',
+                    errors.length === 0 ? 'success' : 'error',
+                    errors.length === 0 ? 'No console errors detected' : errors
+                );
+            }, 100);
+            
+            // Check 5: Configuration Files
+            const basePath = getBasePath();
+            Promise.all([
+                fetch(`${basePath}/js/config/config.js`, { method: 'HEAD' }),
+                fetch(`${basePath}/debug/deployment-config.js`, { method: 'HEAD' })
+            ]).then(([prodConfig, debugConfig]) => {
+                addCheck(
+                    'Configuration Files',
+                    prodConfig.ok || debugConfig.ok ? 'success' : 'warning',
+                    [
+                        `Production config (js/config/config.js): ${prodConfig.ok ? 'Found' : 'Not Found'} (${prodConfig.status})`,
+                        `Debug config (debug/deployment-config.js): ${debugConfig.ok ? 'Found' : 'Not Found'} (${debugConfig.status})`,
+                        'Note: Debug config is optional'
+                    ]
+                );
+            });
+        }
+
+        async function checkFiles() {
+            const fileList = document.getElementById('fileList');
+            const fileCheckResults = document.getElementById('fileCheckResults');
+            fileList.innerHTML = '';
+            fileCheckResults.style.display = 'block';
+            
+            const basePath = getBasePath();
+            
+            for (const file of coreFiles) {
+                // Adjust path based on whether file is relative
+                const fullPath = file.startsWith('../') 
+                    ? `${basePath}/${file.substring(3)}` 
+                    : `${basePath}/debug/${file}`;
+                    
+                try {
+                    const response = await fetch(fullPath, { method: 'HEAD' });
+                    const item = document.createElement('div');
+                    item.className = `file-item ${response.ok ? 'found' : 'missing'}`;
+                    item.textContent = `${response.ok ? '✓' : '✗'} ${file} (${response.status})`;
+                    fileList.appendChild(item);
+                } catch (error) {
+                    const item = document.createElement('div');
+                    item.className = 'file-item missing';
+                    item.textContent = `✗ ${file} (Network Error)`;
+                    fileList.appendChild(item);
+                }
+            }
+        }
+
+        async function testModuleLoading() {
+            const diagnostics = document.getElementById('diagnostics');
+            diagnostics.innerHTML = '';
+            
+            const basePath = getBasePath();
+            const testModule = `${basePath}/js/main.js`;
+            
+            addCheck(
+                'Module Loading Test',
+                'warning',
+                [
+                    `Base path: ${basePath}`,
+                    `Attempting to load: ${testModule}`,
+                    `Current location: ${window.location.href}`
+                ]
+            );
+            
+            try {
+                // Try dynamic import
+                const module = await import(testModule);
+                addCheck(
+                    'Module Import',
+                    'success',
+                    `Successfully loaded module from: ${testModule}`
+                );
+            } catch (error) {
+                addCheck(
+                    'Module Import',
+                    'error',
+                    [
+                        `Failed to load module: ${testModule}`,
+                        `Error: ${error.message}`,
+                        'This is likely the cause of your 404 errors'
+                    ]
+                );
+                
+                // Suggest fixes
+                addCheck(
+                    'Suggested Fixes',
+                    'warning',
+                    [
+                        '1. Verify all files are committed to your repository',
+                        '2. Check that GitHub Pages is enabled and deployed',
+                        '3. Ensure file names match exactly (case-sensitive)',
+                        '4. Wait 5-10 minutes for GitHub Pages to update',
+                        `5. Your repository name appears to be: ${basePath.slice(1) || 'root'}`,
+                        '6. Check debug/deployment-config.js for correct GITHUB_REPO_NAME'
+                    ]
+                );
+            }
+        }
+
+        function copyReport() {
+            const checks = document.querySelectorAll('.check');
+            let report = 'ROI Calculator Diagnostic Report\n';
+            report += '================================\n\n';
+            report += `URL: ${window.location.href}\n`;
+            report += `Base Path: ${getBasePath()}\n`;
+            report += `Time: ${new Date().toISOString()}\n\n`;
+            
+            checks.forEach(check => {
+                const title = check.querySelector('h3').textContent;
+                const details = Array.from(check.querySelectorAll('.detail'))
+                    .map(d => d.textContent)
+                    .join('\n  ');
+                report += `${title}\n  ${details}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(report).then(() => {
+                alert('Diagnostic report copied to clipboard!');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = report;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Diagnostic report copied to clipboard!');
+            });
+        }
+
+        // Run basic diagnostics on load
+        window.addEventListener('load', () => {
+            runDiagnostics();
+        });
+    </script>
+</body>
+</html>
