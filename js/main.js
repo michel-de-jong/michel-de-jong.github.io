@@ -1,5 +1,5 @@
 // Main Application Entry Point
-import { StateManager } from './core/state-manager.js';  // FIXED: Added hyphen
+import { StateManager } from './core/state-manager.js';
 import { Calculator } from './core/calculator.js';
 import { TabManager } from './ui/tabs.js';
 import { ChartManager } from './ui/charts.js';
@@ -17,7 +17,7 @@ import { MonteCarloFeature } from './features/monte-carlo.js';
 import { WaterfallFeature } from './features/waterfall.js';
 import { PortfolioFeature } from './features/portfolio.js';
 import { HistoricalFeature } from './features/historical.js';
-import { SavedFeature } from './features/saved.js';
+import { SavedScenariosFeature } from './features/saved.js';
 import { ExportFeature } from './features/export.js';
 import { CurrencyPortfolioFeature } from './features/currency-portfolio.js';
 
@@ -199,7 +199,7 @@ class ROICalculatorApp {
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
             portfolio: new PortfolioFeature(this.chartManager),
             historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
-            saved: new SavedFeature(this.calculator, this.dataService),
+            saved: new SavedScenariosFeature(this.calculator, this.dataService),
             export: new ExportFeature(this.calculator, this.chartManager)
         };
         
