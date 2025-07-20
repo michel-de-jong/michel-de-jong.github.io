@@ -15,6 +15,21 @@ export class KPIDisplay {
         };
     }
     
+    initialize() {
+        console.log('Initializing KPIDisplay...');
+        // Verify all KPI elements are found
+        const missingElements = Object.entries(this.kpiElements)
+            .filter(([key, element]) => !element)
+            .map(([key]) => key);
+
+        if (missingElements.length > 0) {
+            console.warn('Missing KPI elements:', missingElements);
+        }
+        
+        // Set initial state
+        this.setLoading(false);
+    }
+
     update(results, showRealValues = false) {
         // Update nominal values
         if (this.kpiElements.totaalVermogen) {
