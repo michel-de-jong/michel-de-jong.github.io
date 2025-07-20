@@ -163,8 +163,16 @@ class ROICalculatorApp {
         this.formManager.onChange((inputs) => {
             clearTimeout(formChangeTimeout);
             formChangeTimeout = setTimeout(() => {
-                console.log('Form inputs changed:', inputs);
-                this.state.updateFromInputs(inputs);
+                try {
+                    console.log('Form inputs changed:', inputs);
+                    if (this.state && typeof this.state.updateFromInputs === 'function') {
+                        this.state.updateFromInputs(inputs);
+                    } else {
+                        console.error('State manager or updateFromInputs not properly initialized');
+                    }
+                } catch (error) {
+                    console.error('Error updating form inputs:', error);
+                }
             }, 300);
         });
         

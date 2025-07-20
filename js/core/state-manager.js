@@ -163,4 +163,35 @@ export class StateManager {
                 return {};
         }
     }
+
+    // Get all state
+    getAll() {
+        return {
+            inputs: this.getInputs(),
+            results: this.getResults(),
+            ui: this.getUIState()
+        };
+    }
+    
+    // Update from inputs
+    updateFromInputs(inputs) {
+        const updates = {};
+        
+        Object.entries(inputs).forEach(([key, value]) => {
+            // Convert string values to numbers if needed
+            const processedValue = this.processInputValue(value);
+            updates[key] = processedValue;
+        });
+        
+        this.update(updates);
+    }
+    
+    // Process input value
+    processInputValue(value) {
+        // Convert string numbers to actual numbers
+        if (!isNaN(value) && value !== '') {
+            return Number(value);
+        }
+        return value;
+    }
 }

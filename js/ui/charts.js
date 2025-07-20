@@ -644,4 +644,13 @@ export class ChartManager {
             waterfall: null
         };
     }
+    
+    // Resize all active charts
+    resize() {
+        Object.values(this.charts).forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    }
 }
