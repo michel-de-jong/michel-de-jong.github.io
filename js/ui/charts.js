@@ -45,6 +45,25 @@ export class ChartManager {
         };
     }
     
+    initialize() {
+        console.log('Initializing ChartManager...');
+        this.initMainChart();
+        
+        // Pre-initialize other charts if their canvases exist
+        const scenarioCanvas = document.getElementById('scenarioChart');
+        if (scenarioCanvas) this.initScenarioChart();
+        
+        const portfolioCanvas = document.getElementById('portfolioChart');
+        if (portfolioCanvas) this.initPortfolioChart();
+        
+        const monteCarloCanvas = document.getElementById('monteCarloChart');
+        const distributionCanvas = document.getElementById('distributionChart');
+        if (monteCarloCanvas || distributionCanvas) this.initMonteCarloCharts();
+        
+        const waterfallCanvas = document.getElementById('waterfallChart');
+        if (waterfallCanvas) this.initWaterfallChart();
+    }
+
     // Initialize main chart
     initMainChart() {
         const canvas = document.getElementById('mainChart');
