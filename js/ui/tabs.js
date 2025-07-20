@@ -114,7 +114,7 @@ export class TabManager {
     /**
      * Load all templates at startup
      */
-    async loadAllTemplates() {
+    async initialize() {
         const container = document.getElementById('additionalTabs');
         if (!container) return;
         
