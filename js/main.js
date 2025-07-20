@@ -117,16 +117,18 @@ class ROICalculatorApp {
     async initializeFeatures() {
         console.log('Initializing features...');
         
-        // Initialize feature modules
+        // Initialize feature modules - Create portfolio feature first
+        const portfolioFeature = new PortfolioFeature(this.dataService);
+        
         this.features = {
             scenarios: new ScenariosFeature(this.calculator, this.chartManager),
             montecarlo: new MonteCarloFeature(this.calculator, this.chartManager),
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolio: new PortfolioFeature(this.dataService),
+            portfolio: portfolioFeature,
             historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
             saved: new SavedScenariosFeature(this.calculator, this.dataService),
             export: new ExportFeature(this.calculator, this.chartManager),
-            currencyPortfolio: new CurrencyPortfolioFeature(this.currencyService, this.fxRiskAnalysis, this.calculator)
+            currencyPortfolio: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis)
         };
         
         // Initialize each feature
@@ -162,85 +164,153 @@ class ROICalculatorApp {
             clearTimeout(formChangeTimeout);
             formChangeTimeout = setTimeout(() => {
                 console.log('Form inputs changed:', inputs);
-                this.state.update({ inputs });
+                this.state.updateFromInputs(inputs);
             }, 300);
         });
         
-        // Real values toggle
-        const realValuesCheckbox = document.getElementById('realValues');
-        if (realValuesCheckbox) {
-            realValuesCheckbox.addEventListener('change', (e) => {
-                this.state.update({ ui: { showRealValues: e.target.checked } });
-                this.updateUI();
+        // Window resize handler for charts
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.chartManager.resize();
+            }, 250);
+        });
+        
+        // Print button handler
+        const printBtn = document.getElementById('printReportBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                window.print();
             });
         }
         
-        // Portfolio events integration
-        document.addEventListener('portfolioLoaded', (e) => {
-            console.log('Portfolio loaded event:', e.detail);
-            this.handlePortfolioLoaded(e.detail);
-        });
+        // Export handlers
+        const exportHandlers = {
+            'exportPDFBtn': () => this.features.export.exportPDF(),
+            'exportExcelBtn': () => this.features.export.exportExcel(),
+            'exportCSVBtn': () => this.features.export.exportCSV()
+        };
         
-        document.addEventListener('portfolioSaved', (e) => {
-            console.log('Portfolio saved event:', e.detail);
-            this.handlePortfolioSaved(e.detail);
+        Object.entries(exportHandlers).forEach(([btnId, handler]) => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', handler);
+            }
         });
     }
     
     performCalculation() {
+        console.log('Performing calculation...');
+        
         try {
-            const inputs = this.state.getInputs();
-            console.log('Performing calculation with inputs:', inputs);
+            // Validate inputs
+            const validation = this.validationService.validateCalculatorInputs(this.state.getAll());
+            if (!validation.isValid) {
+                console.warn('Validation failed:', validation.errors);
+                this.displayValidationErrors(validation.errors);
+                return;
+            }
             
-            const results = this.calculator.calculate(inputs);
+            // Clear any previous errors
+            this.clearValidationErrors();
             
-            // Add chartData to results
-            const uiState = this.state.getUIState();
-            results.chartData = this.calculator.getChartData(uiState.showRealValues);
+            // Calculate
+            const results = this.calculator.calculate();
+            console.log('Calculation results:', results);
             
-            this.state.setResults(results);
-            this.updateUI();
+            // Update displays
+            this.updateDisplays(results);
+            
+            // Update features that depend on results
+            this.updateFeatures(results);
             
         } catch (error) {
             console.error('Calculation error:', error);
-            this.showError('Er is een fout opgetreden bij de berekening.');
+            this.showError('Er is een fout opgetreden bij de berekening. Controleer uw invoer.');
         }
     }
     
-    updateUI() {
-        const results = this.state.getResults();
-        const inputs = this.state.getInputs();
-        const uiState = this.state.getUIState();
-        
-        // Update KPIs
-        this.kpiDisplay.update(results, uiState.showRealValues);
+    updateDisplays(results) {
+        // Update KPI displays
+        this.kpiDisplay.update(results);
         
         // Update main chart
-        if (results && results.chartData) {
-            this.chartManager.updateMainChart(results.chartData, uiState.showRealValues);
+        this.chartManager.updateMainChart(results);
+        
+        // Update active tab specific displays
+        const activeTab = this.tabManager.getActiveTab();
+        this.updateTabDisplay(activeTab, results);
+    }
+    
+    updateFeatures(results) {
+        // Update scenarios if visible
+        if (this.tabManager.getActiveTab() === 'scenarios') {
+            this.features.scenarios.updateWithResults(results);
         }
+        
+        // Update waterfall if visible
+        if (this.tabManager.getActiveTab() === 'waterfall') {
+            this.features.waterfall.updateWithResults(results);
+        }
+        
+        // Store latest results for other features
+        this.latestResults = results;
     }
     
     handleTabChange(tabName) {
         console.log(`Tab changed to: ${tabName}`);
         
-        // Activate feature if it has an activate method
-        const feature = this.features[tabName];
-        if (feature && feature.activate) {
-            feature.activate(this.state);
+        // Load tab-specific content if needed
+        if (this.latestResults) {
+            this.updateTabDisplay(tabName, this.latestResults);
+        }
+        
+        // Initialize tab-specific features if first time
+        this.initializeTabFeatures(tabName);
+    }
+    
+    updateTabDisplay(tabName, results) {
+        switch (tabName) {
+            case 'overzicht':
+                this.chartManager.updateMainChart(results);
+                break;
+            case 'scenarios':
+                this.features.scenarios.updateWithResults(results);
+                break;
+            case 'montecarlo':
+                this.features.montecarlo.updateDisplay();
+                break;
+            case 'waterfall':
+                this.features.waterfall.updateWithResults(results);
+                break;
+            case 'portfolio':
+                this.features.portfolio.updateDisplay();
+                break;
+            case 'historisch':
+                this.features.historical.updateDisplay();
+                break;
         }
     }
     
-    handlePortfolioLoaded(portfolio) {
-        // Update state with portfolio data
-        if (portfolio && portfolio.inputs) {
-            this.state.update({ inputs: portfolio.inputs });
-            this.performCalculation();
+    initializeTabFeatures(tabName) {
+        // Initialize features on first access
+        if (!this.tabsInitialized) {
+            this.tabsInitialized = new Set();
         }
-    }
-    
-    handlePortfolioSaved(portfolio) {
-        this.showSuccess('Portfolio succesvol opgeslagen!');
+        
+        if (!this.tabsInitialized.has(tabName)) {
+            this.tabsInitialized.add(tabName);
+            
+            switch (tabName) {
+                case 'portfolio':
+                    this.features.portfolio.setupListeners(this.state);
+                    break;
+                case 'saved':
+                    this.features.saved.loadSavedScenarios();
+                    break;
+            }
+        }
     }
     
     performInitialCalculation() {
@@ -248,55 +318,69 @@ class ROICalculatorApp {
         this.performCalculation();
     }
     
-    showError(message) {
-        console.error(message);
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'alert alert-danger';
-        errorDiv.textContent = message;
-        
-        const container = document.querySelector('.content-section') || document.body;
-        container.insertBefore(errorDiv, container.firstChild);
-        
-        setTimeout(() => errorDiv.remove(), 5000);
+    displayValidationErrors(errors) {
+        Object.entries(errors).forEach(([field, messages]) => {
+            const element = document.getElementById(field);
+            if (element) {
+                element.classList.add('error');
+                
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = messages.join(', ');
+                element.parentElement.appendChild(errorDiv);
+            }
+        });
     }
     
-    showSuccess(message) {
-        console.log(message);
-        const successDiv = document.createElement('div');
-        successDiv.className = 'alert alert-success';
-        successDiv.textContent = message;
+    clearValidationErrors() {
+        document.querySelectorAll('.error').forEach(el => {
+            el.classList.remove('error');
+        });
         
-        const container = document.querySelector('.content-section') || document.body;
-        container.insertBefore(successDiv, container.firstChild);
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.remove();
+        });
+    }
+    
+    showError(message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-error';
+        alertDiv.textContent = message;
         
-        setTimeout(() => successDiv.remove(), 5000);
+        const container = document.getElementById('alertContainer') || document.body;
+        container.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
     }
     
     showFatalError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fatal-error';
-        errorDiv.innerHTML = `
-            <div class="error-content">
+        const errorOverlay = document.createElement('div');
+        errorOverlay.className = 'fatal-error-overlay';
+        errorOverlay.innerHTML = `
+            <div class="fatal-error-content">
                 <h2>Er is een fout opgetreden</h2>
                 <p>${message}</p>
                 <button onclick="location.reload()">Pagina herladen</button>
             </div>
         `;
-        document.body.appendChild(errorDiv);
+        
+        document.body.appendChild(errorOverlay);
     }
 }
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
+    console.log('DOM loaded, initializing ROI Calculator...');
     
-    // Create and initialize app
-    window.app = new ROICalculatorApp();
-    window.app.init().catch(error => {
-        console.error('Failed to initialize app:', error);
-        document.body.innerHTML = '<div class="error">Kon de applicatie niet laden. Ververs de pagina.</div>';
-    });
+    // Create global app instance
+    window.roiCalculatorApp = new ROICalculatorApp();
+    
+    // Start initialization
+    window.roiCalculatorApp.init();
 });
 
-// Export for debugging
+// Export for debugging in console
 export { ROICalculatorApp };

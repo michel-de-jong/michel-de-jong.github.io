@@ -25,8 +25,10 @@ export class CurrencyPortfolioFeature {
     }
     
     async initialize() {
-        // Initialize currency service
-        await this.currencyService.initialize();
+        // Initialize currency service if it has an initialize method
+        if (this.currencyService && typeof this.currencyService.initialize === 'function') {
+            await this.currencyService.initialize();
+        }
         
         // Load saved currency portfolio data
         this.loadSavedData();
@@ -238,11 +240,17 @@ export class CurrencyPortfolioFeature {
         }
         
         // Update UI displays
-        document.getElementById('portfolioWaarde').textContent = 
-            `${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} ${formatNumber(totalValue)}`;
+        const portfolioWaardeEl = document.getElementById('portfolioWaarde');
+        if (portfolioWaardeEl) {
+            portfolioWaardeEl.textContent = 
+                `${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} ${formatNumber(totalValue)}`;
+        }
         
-        document.getElementById('portfolioRendement').textContent = 
-            totalValue > 0 ? `${(weightedReturn / totalValue).toFixed(2)}%` : '0%';
+        const portfolioRendementEl = document.getElementById('portfolioRendement');
+        if (portfolioRendementEl) {
+            portfolioRendementEl.textContent = 
+                totalValue > 0 ? `${(weightedReturn / totalValue).toFixed(2)}%` : '0%';
+        }
         
         // Update currency exposure display
         this.updateCurrencyExposureDisplay(currencyExposures, totalValue);
@@ -308,25 +316,21 @@ export class CurrencyPortfolioFeature {
                 this.currencyPortfolio.baseCurrency
             );
             
-            // Generate hedging recommendations
-            const hedgingRecommendations = await this.fxRiskAnalysis.generateHedgingRecommendations(
-                exposureAnalysis,
-                this.uiState.riskTolerance
-            );
-            
             // Store analysis results
             this.currencyPortfolio.lastAnalysis = {
                 timestamp: new Date(),
-                exposureAnalysis,
-                riskAttribution,
-                hedgingRecommendations
+                exposure: exposureAnalysis,
+                riskAttribution: riskAttribution
             };
             
-            // Update UI with results
-            this.displayRiskAnalysisResults();
+            // Update UI with analysis results
+            this.displayRiskAnalysis(exposureAnalysis, riskAttribution);
+            
+            // Show risk analysis panel
+            this.uiState.showRiskAnalysis = true;
             
         } catch (error) {
-            console.error('FX risk analysis error:', error);
+            console.error('FX Risk Analysis error:', error);
             alert('Er is een fout opgetreden bij de risicoanalyse');
         } finally {
             this.hideLoading();
@@ -336,153 +340,209 @@ export class CurrencyPortfolioFeature {
     /**
      * Display risk analysis results
      */
-    displayRiskAnalysisResults() {
-        const results = this.currencyPortfolio.lastAnalysis;
-        if (!results) return;
-        
+    displayRiskAnalysis(exposureAnalysis, riskAttribution) {
         const container = document.getElementById('fxRiskAnalysisResults');
         if (!container) return;
         
-        const { exposureAnalysis, riskAttribution, hedgingRecommendations } = results;
-        
-        container.innerHTML = `
-            <div class="risk-analysis-section">
-                <h4>Currency Exposure Analysis</h4>
-                <div class="analysis-metrics">
-                    <div class="metric-card">
-                        <div class="metric-label">Portfolio Value</div>
-                        <div class="metric-value">${this.getCurrencySymbol(exposureAnalysis.baseCurrency)} ${formatNumber(exposureAnalysis.totalValue)}</div>
+        // Generate risk metrics HTML
+        const metricsHTML = `
+            <div class="risk-metrics-grid">
+                <div class="metric-card">
+                    <h4>Portfolio VaR (95%)</h4>
+                    <div class="metric-value">
+                        ${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                        ${formatNumber(exposureAnalysis.valueAtRisk.amount)}
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Diversification Index</div>
-                        <div class="metric-value">${(exposureAnalysis.diversificationIndex * 100).toFixed(1)}%</div>
-                    </div>
-                    <div class="metric-card risk">
-                        <div class="metric-label">Aggregate FX Risk (VaR 95%)</div>
-                        <div class="metric-value">${this.getCurrencySymbol(exposureAnalysis.baseCurrency)} ${formatNumber(exposureAnalysis.aggregateRisk)}</div>
+                    <div class="metric-subtitle">
+                        ${(exposureAnalysis.valueAtRisk.percentage * 100).toFixed(2)}% of portfolio
                     </div>
                 </div>
                 
-                <div class="currency-risk-table">
-                    <h5>Currency Risk Breakdown</h5>
-                    <table class="risk-table">
-                        <thead>
-                            <tr>
-                                <th>Currency</th>
-                                <th>Exposure</th>
-                                <th>% of Portfolio</th>
-                                <th>Volatility</th>
-                                <th>VaR (95%, 30d)</th>
-                                <th>Sharpe Ratio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${exposureAnalysis.exposures.map(exp => `
-                                <tr class="${exp.currency === exposureAnalysis.baseCurrency ? 'base-currency' : ''}">
-                                    <td><strong>${exp.currency}</strong></td>
-                                    <td>${formatNumber(exp.value)}</td>
-                                    <td>${exp.percentage.toFixed(1)}%</td>
-                                    <td>${exp.riskMetrics.volatility.toFixed(2)}%</td>
-                                    <td>${formatNumber(exp.riskMetrics.var95)}</td>
-                                    <td>${exp.riskMetrics.sharpeRatio.toFixed(2)}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="risk-analysis-section">
-                <h4>Risk Attribution</h4>
-                <div class="analysis-metrics">
-                    <div class="metric-card">
-                        <div class="metric-label">Total FX Risk</div>
-                        <div class="metric-value">${formatNumber(riskAttribution.totalFXRisk)}</div>
+                <div class="metric-card">
+                    <h4>Expected Shortfall</h4>
+                    <div class="metric-value">
+                        ${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                        ${formatNumber(exposureAnalysis.expectedShortfall)}
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Concentration Risk</div>
-                        <div class="metric-value">${riskAttribution.concentrationRisk.toFixed(1)}%</div>
-                    </div>
-                    <div class="metric-card positive">
-                        <div class="metric-label">Diversification Benefit</div>
-                        <div class="metric-value">${riskAttribution.diversificationBenefit.toFixed(1)}%</div>
-                    </div>
+                    <div class="metric-subtitle">Average loss beyond VaR</div>
                 </div>
                 
-                <div class="risk-contributors">
-                    <h5>Top Risk Contributors</h5>
-                    ${riskAttribution.riskContributions
-                        .filter(c => c.fxRiskContribution > 0)
-                        .slice(0, 5)
-                        .map(contrib => `
-                            <div class="risk-contributor">
-                                <div class="contributor-info">
-                                    <span class="currency">${contrib.currency}</span>
-                                    <span class="contribution">${contrib.percentageOfTotal.toFixed(1)}% of total risk</span>
-                                </div>
-                                <div class="contributor-bar">
-                                    <div class="contributor-fill" style="width: ${contrib.percentageOfTotal}%"></div>
-                                </div>
-                            </div>
-                        `).join('')}
-                </div>
-            </div>
-            
-            <div class="risk-analysis-section">
-                <h4>Hedging Recommendations</h4>
-                <div class="hedging-summary">
-                    <p>Risk Tolerance: <strong>${hedgingRecommendations.riskTolerance}</strong></p>
-                    <p>Total Hedging Cost Estimate: <strong>${formatNumber(hedgingRecommendations.totalHedgingCost)}</strong></p>
-                    <p>Expected Risk Reduction: <strong>${hedgingRecommendations.riskReduction.toFixed(1)}%</strong></p>
-                </div>
-                
-                ${hedgingRecommendations.recommendations.length > 0 ? `
-                    <div class="hedging-recommendations">
-                        ${hedgingRecommendations.recommendations.map((rec, index) => `
-                            <div class="hedging-card">
-                                <div class="hedging-header">
-                                    <span class="hedge-currency">${rec.currency}</span>
-                                    <span class="hedge-priority priority-${rec.priority > 150 ? 'high' : rec.priority > 100 ? 'medium' : 'low'}">
-                                        Priority: ${rec.priority > 150 ? 'High' : rec.priority > 100 ? 'Medium' : 'Low'}
-                                    </span>
-                                </div>
-                                <div class="hedging-details">
-                                    <p><strong>Current Exposure:</strong> ${formatNumber(rec.currentExposure)} (${rec.exposurePercentage.toFixed(1)}%)</p>
-                                    <p><strong>Recommended Hedge:</strong> ${formatNumber(rec.recommendedHedge)} (${rec.hedgePercentage.toFixed(1)}%)</p>
-                                    <p><strong>Reason:</strong> ${rec.reason}</p>
-                                    <p><strong>Estimated Cost:</strong> ${formatNumber(rec.estimatedCost)}</p>
-                                    <div class="hedge-instruments">
-                                        <strong>Suggested Instruments:</strong>
-                                        ${rec.instruments.map(inst => `
-                                            <span class="instrument-tag ${inst.suitability}">${this.getInstrumentName(inst.instrument)}</span>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-sm implement-hedge-btn" data-index="${index}">
-                                    Implement Hedge
-                                </button>
-                            </div>
-                        `).join('')}
+                <div class="metric-card">
+                    <h4>Correlation Risk</h4>
+                    <div class="metric-value ${this.getCorrelationRiskClass(exposureAnalysis.correlationRisk)}">
+                        ${exposureAnalysis.correlationRisk}
                     </div>
-                ` : '<p class="no-recommendations">No hedging required based on current risk tolerance and portfolio composition.</p>'}
+                    <div class="metric-subtitle">Currency pair correlation</div>
+                </div>
             </div>
         `;
         
-        // Add event listeners for hedge implementation buttons
-        container.querySelectorAll('.implement-hedge-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
-                this.implementHedge(hedgingRecommendations.recommendations[index]);
-            });
-        });
+        // Generate exposure breakdown HTML
+        const exposureHTML = `
+            <div class="exposure-breakdown">
+                <h4>Currency Exposure Breakdown</h4>
+                ${exposureAnalysis.currencyBreakdown.map(currency => `
+                    <div class="exposure-item">
+                        <div class="exposure-currency">${currency.code}</div>
+                        <div class="exposure-details">
+                            <div class="exposure-value">
+                                ${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                                ${formatNumber(currency.valueInBase)}
+                            </div>
+                            <div class="exposure-metrics">
+                                <span>Vol: ${(currency.volatility * 100).toFixed(1)}%</span>
+                                <span>VaR: ${formatNumber(currency.valueAtRisk)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
         
-        // Show the results section
-        container.style.display = 'block';
-        this.uiState.showRiskAnalysis = true;
+        // Generate risk attribution HTML
+        const attributionHTML = `
+            <div class="risk-attribution">
+                <h4>Risk Attribution</h4>
+                ${riskAttribution.map(item => `
+                    <div class="attribution-item">
+                        <div class="attribution-currency">${item.currency}</div>
+                        <div class="attribution-bar">
+                            <div class="attribution-fill" 
+                                 style="width: ${item.percentageOfTotal}%"></div>
+                        </div>
+                        <div class="attribution-value">
+                            ${item.percentageOfTotal.toFixed(1)}%
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        container.innerHTML = metricsHTML + exposureHTML + attributionHTML;
     }
     
     /**
-     * Run stress test scenarios
+     * Calculate optimal hedging strategy
+     */
+    async calculateHedgingStrategy() {
+        if (!this.currencyPortfolio.lastAnalysis) {
+            alert('Voer eerst een risicoanalyse uit');
+            return;
+        }
+        
+        this.showLoading('Calculating hedging strategy...');
+        
+        try {
+            const hedgingRecommendations = 
+                await this.fxRiskAnalysis.calculateOptimalHedge(
+                    this.currencyPortfolio.assets,
+                    this.currencyPortfolio.baseCurrency,
+                    this.uiState.riskTolerance
+                );
+            
+            this.displayHedgingRecommendations(hedgingRecommendations);
+            
+        } catch (error) {
+            console.error('Hedging calculation error:', error);
+            alert('Er is een fout opgetreden bij het berekenen van de hedging strategie');
+        } finally {
+            this.hideLoading();
+        }
+    }
+    
+    /**
+     * Display hedging recommendations
+     */
+    displayHedgingRecommendations(recommendations) {
+        const container = document.getElementById('hedgingRecommendations');
+        if (!container) return;
+        
+        const html = `
+            <div class="hedging-recommendations">
+                <h3>Aanbevolen Hedging Strategie</h3>
+                
+                <div class="hedging-summary">
+                    <div class="summary-item">
+                        <label>Totale hedge ratio:</label>
+                        <span>${(recommendations.totalHedgeRatio * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="summary-item">
+                        <label>Geschatte kosten:</label>
+                        <span>${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                              ${formatNumber(recommendations.estimatedCost)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <label>Risk reductie:</label>
+                        <span>${(recommendations.riskReduction * 100).toFixed(0)}%</span>
+                    </div>
+                </div>
+                
+                <div class="hedging-strategies">
+                    ${recommendations.strategies.map((strategy, index) => `
+                        <div class="strategy-card">
+                            <h4>${strategy.currencyPair}</h4>
+                            <div class="strategy-details">
+                                <div class="detail-row">
+                                    <label>Instrument:</label>
+                                    <span>${this.getInstrumentName(strategy.instrument)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <label>Notional:</label>
+                                    <span>${formatNumber(strategy.notionalAmount)}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <label>Hedge ratio:</label>
+                                    <span>${(strategy.hedgeRatio * 100).toFixed(0)}%</span>
+                                </div>
+                                <div class="detail-row">
+                                    <label>Kosten:</label>
+                                    <span>${formatNumber(strategy.cost)}</span>
+                                </div>
+                            </div>
+                            <button class="implement-hedge-btn" 
+                                    data-strategy-index="${index}">
+                                Implementeer hedge
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+        // Add event listeners for implementation buttons
+        container.querySelectorAll('.implement-hedge-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.strategyIndex);
+                this.implementHedgingStrategy(recommendations.strategies[index]);
+            });
+        });
+    }
+    
+    /**
+     * Implement selected hedging strategy
+     */
+    implementHedgingStrategy(strategy) {
+        const hedgeId = generateId();
+        const hedge = {
+            id: hedgeId,
+            ...strategy,
+            implementationDate: new Date(),
+            status: 'active'
+        };
+        
+        this.currencyPortfolio.hedgingStrategies.push(hedge);
+        this.savePortfolioData();
+        
+        // Update UI
+        this.updateHedgingStrategiesDisplay();
+        
+        alert(`Hedging strategie geïmplementeerd voor ${strategy.currencyPair}`);
+    }
+    
+    /**
+     * Run currency stress test
      */
     async runStressTest() {
         if (this.currencyPortfolio.assets.length === 0) {
@@ -490,13 +550,14 @@ export class CurrencyPortfolioFeature {
             return;
         }
         
-        this.showLoading('Running stress test scenarios...');
+        this.showLoading('Running stress test...');
         
         try {
-            const stressTestResults = await this.fxRiskAnalysis.performStressTest(
-                this.currencyPortfolio.assets,
-                this.currencyPortfolio.baseCurrency
-            );
+            const stressTestResults = 
+                await this.fxRiskAnalysis.performStressTest(
+                    this.currencyPortfolio.assets,
+                    this.currencyPortfolio.baseCurrency
+                );
             
             this.displayStressTestResults(stressTestResults);
             
@@ -515,231 +576,160 @@ export class CurrencyPortfolioFeature {
         const container = document.getElementById('stressTestResults');
         if (!container) return;
         
-        container.innerHTML = `
+        const html = `
             <div class="stress-test-results">
-                <h4>Currency Stress Test Results</h4>
-                <div class="current-value">
-                    <strong>Current Portfolio Value:</strong> 
-                    ${this.getCurrencySymbol(results.baseCurrency)} ${formatNumber(results.currentValue)}
+                <h3>Currency Stress Test Results</h3>
+                
+                <div class="stress-summary">
+                    <div class="summary-card worst-case">
+                        <h4>Worst Case Scenario</h4>
+                        <div class="scenario-value">
+                            ${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                            ${formatNumber(results.worstCase.portfolioValue)}
+                        </div>
+                        <div class="scenario-loss">
+                            Loss: ${formatNumber(results.worstCase.loss)} 
+                            (${(results.worstCase.percentageLoss * 100).toFixed(1)}%)
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card best-case">
+                        <h4>Best Case Scenario</h4>
+                        <div class="scenario-value">
+                            ${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                            ${formatNumber(results.bestCase.portfolioValue)}
+                        </div>
+                        <div class="scenario-gain">
+                            Gain: ${formatNumber(results.bestCase.gain)} 
+                            (${(results.bestCase.percentageGain * 100).toFixed(1)}%)
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="stress-scenarios">
-                    ${results.scenarios.map(scenario => `
-                        <div class="stress-scenario">
-                            <h5>${scenario.scenario.charAt(0).toUpperCase() + scenario.scenario.slice(1)} Scenario (±${scenario.magnitude}%)</h5>
-                            <div class="scenario-results">
-                                <div class="scenario-direction appreciation">
-                                    <div class="direction-label">Currency Appreciation</div>
-                                    <div class="impact-value ${scenario.appreciation.percentageChange > 0 ? 'positive' : 'negative'}">
-                                        ${scenario.appreciation.percentageChange > 0 ? '+' : ''}${scenario.appreciation.percentageChange.toFixed(2)}%
-                                    </div>
-                                    <div class="absolute-value">
-                                        ${formatNumber(scenario.appreciation.value)}
-                                    </div>
-                                </div>
-                                <div class="scenario-direction depreciation">
-                                    <div class="direction-label">Currency Depreciation</div>
-                                    <div class="impact-value ${scenario.depreciation.percentageChange > 0 ? 'positive' : 'negative'}">
-                                        ${scenario.depreciation.percentageChange > 0 ? '+' : ''}${scenario.depreciation.percentageChange.toFixed(2)}%
-                                    </div>
-                                    <div class="absolute-value">
-                                        ${formatNumber(scenario.depreciation.value)}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="stress-test-summary">
-                    <div class="summary-card worst-case">
-                        <h5>Worst Case Scenario</h5>
-                        <p>${results.worstCase.scenario} - ${results.worstCase.direction}</p>
-                        <p class="impact-value">${results.worstCase.percentageChange.toFixed(2)}%</p>
-                        <p>Portfolio Value: ${formatNumber(results.worstCase.value)}</p>
-                    </div>
-                    <div class="summary-card best-case">
-                        <h5>Best Case Scenario</h5>
-                        <p>${results.bestCase.scenario} - ${results.bestCase.direction}</p>
-                        <p class="impact-value">+${results.bestCase.percentageChange.toFixed(2)}%</p>
-                        <p>Portfolio Value: ${formatNumber(results.bestCase.value)}</p>
-                    </div>
-                </div>
-                
-                ${results.recommendations.length > 0 ? `
-                    <div class="stress-test-recommendations">
-                        <h5>Recommendations</h5>
-                        <ul>
-                            ${results.recommendations.map(rec => `
-                                <li>
-                                    <strong>${rec.scenario}:</strong> 
-                                    ${rec.impact.toFixed(1)}% potential loss - 
-                                    ${rec.recommendation}
-                                </li>
+                    <h4>Scenario Analysis</h4>
+                    <table class="stress-table">
+                        <thead>
+                            <tr>
+                                <th>Scenario</th>
+                                <th>Portfolio Value</th>
+                                <th>Change</th>
+                                <th>Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.scenarios.map(scenario => `
+                                <tr class="${this.getScenarioClass(scenario.impact)}">
+                                    <td>${scenario.name}</td>
+                                    <td>${this.getCurrencySymbol(this.currencyPortfolio.baseCurrency)} 
+                                        ${formatNumber(scenario.portfolioValue)}</td>
+                                    <td>${formatNumber(scenario.change)}</td>
+                                    <td>${(scenario.percentageChange * 100).toFixed(1)}%</td>
+                                </tr>
                             `).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-        
-        container.style.display = 'block';
-    }
-    
-    /**
-     * Implement a specific hedge
-     */
-    async implementHedge(recommendation) {
-        const modal = this.createHedgeImplementationModal(recommendation);
-        document.body.appendChild(modal);
-        
-        // Handle form submission
-        const form = modal.querySelector('#hedgeImplementationForm');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            const hedgeData = {
-                currency: recommendation.currency,
-                amount: parseFloat(formData.get('hedgeAmount')),
-                instrument: formData.get('instrument'),
-                maturity: formData.get('maturity'),
-                notes: formData.get('notes')
-            };
-            
-            // Add to hedging strategies
-            this.currencyPortfolio.hedgingStrategies.push({
-                id: generateId(),
-                ...hedgeData,
-                createdAt: new Date(),
-                recommendation: recommendation
-            });
-            
-            // Update UI
-            this.updateHedgingStrategiesDisplay();
-            
-            // Close modal
-            modal.remove();
-            
-            // Save data
-            this.savePortfolioData();
-            
-            alert('Hedging strategy toegevoegd');
-        });
-        
-        // Handle modal close
-        modal.querySelector('.close-modal').addEventListener('click', () => {
-            modal.remove();
-        });
-    }
-    
-    /**
-     * Create hedge implementation modal
-     */
-    createHedgeImplementationModal(recommendation) {
-        const modal = document.createElement('div');
-        modal.className = 'modal hedge-implementation-modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Implement Hedge for ${recommendation.currency}</h3>
-                    <button class="close-modal">&times;</button>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="modal-body">
-                    <form id="hedgeImplementationForm">
-                        <div class="form-group">
-                            <label>Currency Exposure</label>
-                            <input type="text" value="${formatNumber(recommendation.currentExposure)} (${recommendation.exposurePercentage.toFixed(1)}%)" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Recommended Hedge Amount</label>
-                            <input type="number" name="hedgeAmount" value="${recommendation.recommendedHedge}" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Hedging Instrument</label>
-                            <select name="instrument" required>
-                                ${recommendation.instruments.map(inst => `
-                                    <option value="${inst.instrument}">${this.getInstrumentName(inst.instrument)} - ${inst.reason}</option>
-                                `).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Maturity (days)</label>
-                            <select name="maturity" required>
-                                <option value="30">30 days</option>
-                                <option value="60">60 days</option>
-                                <option value="90" selected>90 days</option>
-                                <option value="180">180 days</option>
-                                <option value="365">1 year</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Notes</label>
-                            <textarea name="notes" rows="3" placeholder="Additional notes..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <p><strong>Estimated Cost:</strong> ${formatNumber(recommendation.estimatedCost)}</p>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="submit" class="btn btn-primary">Implement Hedge</button>
-                            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
-                        </div>
-                    </form>
+                
+                <div class="stress-recommendations">
+                    <h4>Recommendations</h4>
+                    <ul>
+                        ${results.recommendations.map(rec => 
+                            `<li>${rec}</li>`
+                        ).join('')}
+                    </ul>
                 </div>
             </div>
         `;
         
-        return modal;
+        container.innerHTML = html;
     }
     
     /**
      * Update hedging strategies display
      */
     updateHedgingStrategiesDisplay() {
-        const container = document.getElementById('activeHedgesContainer');
+        const container = document.getElementById('activeHedges');
         if (!container) return;
         
-        if (this.currencyPortfolio.hedgingStrategies.length === 0) {
-            container.innerHTML = '<p class="no-hedges">No active hedging strategies</p>';
+        const activeHedges = this.currencyPortfolio.hedgingStrategies
+            .filter(h => h.status === 'active');
+        
+        if (activeHedges.length === 0) {
+            container.innerHTML = '<p class="no-hedges">Geen actieve hedging strategieën</p>';
             return;
         }
         
-        container.innerHTML = `
-            <div class="active-hedges">
-                ${this.currencyPortfolio.hedgingStrategies.map(hedge => `
-                    <div class="hedge-card" data-hedge-id="${hedge.id}">
+        const html = `
+            <div class="active-hedges-list">
+                ${activeHedges.map(hedge => `
+                    <div class="hedge-item">
                         <div class="hedge-header">
-                            <span class="hedge-currency">${hedge.currency}</span>
+                            <span class="hedge-pair">${hedge.currencyPair}</span>
                             <span class="hedge-instrument">${this.getInstrumentName(hedge.instrument)}</span>
                         </div>
                         <div class="hedge-details">
-                            <p><strong>Amount:</strong> ${formatNumber(hedge.amount)}</p>
-                            <p><strong>Maturity:</strong> ${hedge.maturity} days</p>
-                            <p><strong>Created:</strong> ${new Date(hedge.createdAt).toLocaleDateString()}</p>
-                            ${hedge.notes ? `<p><strong>Notes:</strong> ${hedge.notes}</p>` : ''}
+                            <span>Notional: ${formatNumber(hedge.notionalAmount)}</span>
+                            <span>Ratio: ${(hedge.hedgeRatio * 100).toFixed(0)}%</span>
+                            <span>Cost: ${formatNumber(hedge.cost)}</span>
                         </div>
-                        <button class="btn btn-danger btn-sm remove-hedge-btn" data-hedge-id="${hedge.id}">
-                            Remove
-                        </button>
+                        <div class="hedge-actions">
+                            <button class="close-hedge-btn" data-hedge-id="${hedge.id}">
+                                Close hedge
+                            </button>
+                        </div>
                     </div>
                 `).join('')}
             </div>
         `;
         
-        // Add remove event listeners
-        container.querySelectorAll('.remove-hedge-btn').forEach(btn => {
+        container.innerHTML = html;
+        
+        // Add event listeners
+        container.querySelectorAll('.close-hedge-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const hedgeId = e.target.dataset.hedgeId;
-                this.removeHedge(hedgeId);
+                this.closeHedge(hedgeId);
             });
         });
     }
     
     /**
-     * Remove a hedging strategy
+     * Close a hedging position
+     */
+    closeHedge(hedgeId) {
+        const hedge = this.currencyPortfolio.hedgingStrategies
+            .find(h => h.id === hedgeId);
+        
+        if (!hedge) return;
+        
+        hedge.status = 'closed';
+        hedge.closedDate = new Date();
+        
+        this.updateHedgingStrategiesDisplay();
+        this.savePortfolioData();
+    }
+    
+    /**
+     * Update risk analysis display
+     */
+    async updateRiskAnalysis() {
+        if (!this.uiState.showRiskAnalysis || 
+            this.currencyPortfolio.assets.length === 0) {
+            return;
+        }
+        
+        await this.performFXRiskAnalysis();
+    }
+    
+    /**
+     * Remove hedge from portfolio
      */
     removeHedge(hedgeId) {
-        if (!confirm('Are you sure you want to remove this hedge?')) return;
+        const hedge = this.currencyPortfolio.hedgingStrategies
+            .find(h => h.id === hedgeId);
+        
+        if (!hedge || hedge.status === 'active') return;
         
         this.currencyPortfolio.hedgingStrategies = 
             this.currencyPortfolio.hedgingStrategies.filter(h => h.id !== hedgeId);
@@ -767,10 +757,25 @@ export class CurrencyPortfolioFeature {
         return names[instrumentType] || instrumentType;
     }
     
+    getCorrelationRiskClass(risk) {
+        if (risk === 'High') return 'risk-high';
+        if (risk === 'Medium') return 'risk-medium';
+        return 'risk-low';
+    }
+    
+    getScenarioClass(impact) {
+        if (impact < -0.1) return 'scenario-negative';
+        if (impact > 0.1) return 'scenario-positive';
+        return 'scenario-neutral';
+    }
+    
     showLoading(message) {
         const loader = document.getElementById('loadingIndicator');
         if (loader) {
-            loader.querySelector('.loading-message').textContent = message;
+            const messageEl = loader.querySelector('.loading-message');
+            if (messageEl) {
+                messageEl.textContent = message;
+            }
             loader.style.display = 'flex';
         }
     }
