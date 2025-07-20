@@ -35,10 +35,10 @@ const APP_CONFIG = {
         herinvestering: 0,
         herinvesteringDrempel: 0,
         vasteKosten: 5000,
-        belastingType: 'bv',
+        belastingType: 'vpb',     // Make sure this is set
         inflatie: 2,
         inflatieToggle: false,
-        priveSubType: 'normaal',
+        priveSubType: 'box3',     // Make sure this has a valid default
         box1Tarief: 49.5,
         box3Rendement: 6.17,
         box3Tarief: 36,

@@ -72,12 +72,25 @@ export class TaxFactory {
      * @returns {string} Tax calculator type
      */
     getTaxType(inputs) {
+        // Add input validation
+        if (!inputs || !inputs.belastingType) {
+            console.warn('Missing or invalid tax inputs');
+            return 'vpb'; // Default to vpb
+        }
+
         if (inputs.belastingType === 'vpb') {
             return 'vpb';
         } else if (inputs.belastingType === 'prive') {
+            // Validate priveSubType
+            if (!inputs.priveSubType || !['box1', 'box3'].includes(inputs.priveSubType)) {
+                console.warn('Invalid priveSubType, defaulting to box3');
+                return 'box3';
+            }
             return inputs.priveSubType === 'box1' ? 'box1' : 'box3';
         }
-        return null;
+
+        console.warn(`Unknown belastingType: ${inputs.belastingType}, defaulting to vpb`);
+        return 'vpb';
     }
     
     /**

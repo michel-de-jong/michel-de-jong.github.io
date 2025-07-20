@@ -207,6 +207,13 @@ export class Calculator {
     
     // Calculate tax using tax factory
     calculateTax(bruttoOpbrengst, maandRente, maandKosten, huidigVermogen, inputs, month) {
+        // Add debug logging
+        console.debug('Tax calculation inputs:', {
+            inputs,
+            belastingType: inputs.belastingType,
+            priveSubType: inputs.priveSubType
+        });
+
         return this.taxFactory.calculateComprehensiveTax(
             inputs,
             bruttoOpbrengst,
