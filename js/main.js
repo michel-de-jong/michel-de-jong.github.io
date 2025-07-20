@@ -1,4 +1,5 @@
 // Main Application Entry Point
+import { Config } from './config/config.js';  // Import Config from config.js
 import { StateManager } from './core/state-manager.js';
 import { Calculator } from './core/calculator.js';
 import { TabManager } from './ui/tabs.js';
@@ -21,39 +22,10 @@ import { SavedScenariosFeature } from './features/saved.js';
 import { ExportFeature } from './features/export.js';
 import { CurrencyPortfolioFeature } from './features/currency-portfolio.js';
 
-// Application Configuration
-const APP_CONFIG = {
-    defaults: {
-        startKapitaal: 100000,
-        lening: 0,
-        renteLening: 0,
-        looptijd: 10,
-        leningLooptijd: 10,
-        rendementType: 'vast',
-        rendement: 8,
-        aflossingsType: 'lineair',
-        herinvestering: 0,
-        herinvesteringDrempel: 0,
-        vasteKosten: 5000,
-        belastingType: 'vpb',     // Make sure this is set
-        inflatie: 2,
-        inflatieToggle: false,
-        priveSubType: 'box3',     // Make sure this has a valid default
-        box1Tarief: 49.5,
-        box3Rendement: 6.17,
-        box3Tarief: 36,
-        box3Vrijstelling: 57000
-    },
-    chartDefaults: {
-        responsive: true,
-        maintainAspectRatio: false
-    }
-};
-
 // Main Application Class
 class ROICalculatorApp {
     constructor() {
-        this.config = APP_CONFIG;
+        this.config = Config;  // Use Config from config.js
         this.initialized = false;
         this.initializationAttempts = 0;
         this.maxInitAttempts = 3;
@@ -68,15 +40,7 @@ class ROICalculatorApp {
         this.initializationAttempts++;
         
         try {
-            console.log(`Initializing ROI Calculator App (attempt ${this.initializationAttempts})...`);
-            
-            // Ensure DOM is fully loaded
-            await this.ensureDOMReady();
-            
-            // Verify critical DOM elements exist
-            if (!this.verifyDOMElements()) {
-                throw new Error('Critical DOM elements missing');
-            }
+            console.log('Starting ROI Calculator initialization...');
             
             // Initialize services
             this.initializeServices();
@@ -87,66 +51,27 @@ class ROICalculatorApp {
             // Initialize UI
             this.initializeUI();
             
-            // Initialize features
+            // Initialize feature modules
             await this.initializeFeatures();
             
             // Setup event handlers
             this.setupEventHandlers();
             
             // Perform initial calculation
-            this.performCalculation();
+            this.performInitialCalculation();
             
             this.initialized = true;
-            console.log('Application initialized successfully!');
+            console.log('ROI Calculator initialized successfully');
             
         } catch (error) {
             console.error('Initialization error:', error);
-            this.handleInitializationError(error);
-        }
-    }
-    
-    async ensureDOMReady() {
-        if (document.readyState === 'loading') {
-            await new Promise(resolve => {
-                document.addEventListener('DOMContentLoaded', resolve, { once: true });
-            });
-        }
-        
-        // Additional delay to ensure all elements are rendered
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    verifyDOMElements() {
-        const requiredElements = [
-            'startKapitaal',
-            'calculator',
-            'mainChart',
-            'additionalTabs'
-        ];
-        
-        const missingElements = [];
-        
-        for (const id of requiredElements) {
-            if (!document.getElementById(id)) {
-                missingElements.push(id);
+            
+            if (this.initializationAttempts < this.maxInitAttempts) {
+                console.log(`Retrying initialization (attempt ${this.initializationAttempts + 1}/${this.maxInitAttempts})...`);
+                setTimeout(() => this.init(), 1000);
+            } else {
+                this.showFatalError('Kon de applicatie niet initialiseren. Ververs de pagina om het opnieuw te proberen.');
             }
-        }
-        
-        if (missingElements.length > 0) {
-            console.error('Missing required elements:', missingElements);
-            return false;
-        }
-        
-        return true;
-    }
-    
-    handleInitializationError(error) {
-        if (this.initializationAttempts < this.maxInitAttempts) {
-            console.log(`Retrying initialization in 500ms...`);
-            setTimeout(() => this.init(), 500);
-        } else {
-            console.error('Failed to initialize after maximum attempts');
-            this.showError('Applicatie kon niet worden geladen. Ververs de pagina om het opnieuw te proberen.');
         }
     }
     
@@ -169,7 +94,7 @@ class ROICalculatorApp {
         this.state = new StateManager();
         this.calculator = new Calculator(this.state);
         
-        // Load default values
+        // Load default values from Config
         this.state.loadDefaults(this.config.defaults);
     }
     
@@ -197,32 +122,23 @@ class ROICalculatorApp {
             scenarios: new ScenariosFeature(this.calculator, this.chartManager),
             montecarlo: new MonteCarloFeature(this.calculator, this.chartManager),
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolio: new PortfolioFeature(this.chartManager),
+            portfolio: new PortfolioFeature(this.dataService),
             historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
             saved: new SavedScenariosFeature(this.calculator, this.dataService),
-            export: new ExportFeature(this.calculator, this.chartManager)
+            export: new ExportFeature(this.calculator, this.chartManager),
+            currencyPortfolio: new CurrencyPortfolioFeature(this.currencyService, this.fxRiskAnalysis, this.calculator)
         };
         
-        // Initialize currency portfolio feature
-        this.features.currencyPortfolio = new CurrencyPortfolioFeature(
-            this.features.portfolio,
-            this.currencyService,
-            this.fxRiskAnalysis
-        );
-        
-        // Setup feature listeners
-        Object.values(this.features).forEach(feature => {
-            if (feature.setupListeners) {
-                feature.setupListeners(this.state);
+        // Initialize each feature
+        for (const [name, feature] of Object.entries(this.features)) {
+            try {
+                console.log(`Initializing feature: ${name}`);
+                if (feature.initialize) {
+                    await feature.initialize();
+                }
+            } catch (error) {
+                console.error(`Error initializing feature ${name}:`, error);
             }
-        });
-        
-        // Initialize currency portfolio
-        await this.features.currencyPortfolio.initialize();
-        
-        // Set data service for portfolio
-        if (this.features.portfolio && this.dataService) {
-            this.features.portfolio.setDataService(this.dataService);
         }
     }
     
@@ -231,6 +147,7 @@ class ROICalculatorApp {
         
         // State change handler
         this.state.onChange((state) => {
+            console.log('State changed:', state);
             this.performCalculation();
         });
         
@@ -277,6 +194,10 @@ class ROICalculatorApp {
             
             const results = this.calculator.calculate(inputs);
             
+            // Add chartData to results
+            const uiState = this.state.getUIState();
+            results.chartData = this.calculator.getChartData(uiState.showRealValues);
+            
             this.state.setResults(results);
             this.updateUI();
             
@@ -322,55 +243,60 @@ class ROICalculatorApp {
         this.showSuccess('Portfolio succesvol opgeslagen!');
     }
     
+    performInitialCalculation() {
+        console.log('Performing initial calculation...');
+        this.performCalculation();
+    }
+    
     showError(message) {
-        const errorContainer = document.getElementById('errorContainer');
-        if (errorContainer) {
-            errorContainer.innerHTML = `
-                <div class="alert alert-danger alert-dismissible">
-                    ${message}
-                    <button type="button" class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
-                </div>
-            `;
-            errorContainer.style.display = 'block';
-            setTimeout(() => {
-                errorContainer.style.display = 'none';
-            }, 5000);
-        }
+        console.error(message);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger';
+        errorDiv.textContent = message;
+        
+        const container = document.querySelector('.content-section') || document.body;
+        container.insertBefore(errorDiv, container.firstChild);
+        
+        setTimeout(() => errorDiv.remove(), 5000);
     }
     
     showSuccess(message) {
-        const errorContainer = document.getElementById('errorContainer');
-        if (errorContainer) {
-            errorContainer.innerHTML = `
-                <div class="alert alert-success alert-dismissible">
-                    ${message}
-                    <button type="button" class="close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
-                </div>
-            `;
-            errorContainer.style.display = 'block';
-            setTimeout(() => {
-                errorContainer.style.display = 'none';
-            }, 3000);
-        }
+        console.log(message);
+        const successDiv = document.createElement('div');
+        successDiv.className = 'alert alert-success';
+        successDiv.textContent = message;
+        
+        const container = document.querySelector('.content-section') || document.body;
+        container.insertBefore(successDiv, container.firstChild);
+        
+        setTimeout(() => successDiv.remove(), 5000);
+    }
+    
+    showFatalError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fatal-error';
+        errorDiv.innerHTML = `
+            <div class="error-content">
+                <h2>Er is een fout opgetreden</h2>
+                <p>${message}</p>
+                <button onclick="location.reload()">Pagina herladen</button>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
     }
 }
 
 // Initialize app when DOM is ready
-const app = new ROICalculatorApp();
-
-// Try to initialize immediately if DOM is ready
-if (document.readyState !== 'loading') {
-    app.init().catch(error => {
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, initializing app...');
+    
+    // Create and initialize app
+    window.app = new ROICalculatorApp();
+    window.app.init().catch(error => {
         console.error('Failed to initialize app:', error);
+        document.body.innerHTML = '<div class="error">Kon de applicatie niet laden. Ververs de pagina.</div>';
     });
-} else {
-    // Otherwise wait for DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-        app.init().catch(error => {
-            console.error('Failed to initialize app:', error);
-        });
-    });
-}
+});
 
-// Export app instance for debugging
-window.roiApp = app;
+// Export for debugging
+export { ROICalculatorApp };

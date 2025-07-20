@@ -10,7 +10,7 @@ export const Config = {
         year: 2024
     },
     
-    // Default calculation parameters
+    // Default calculation parameters - ALL values needed by the calculator
     defaults: {
         // Basic parameters
         startKapitaal: 100000,
@@ -18,13 +18,30 @@ export const Config = {
         jaarlijksRendement: 8,
         jaren: 10,
         
+        // Extended parameters used in calculator
+        lening: 0,
+        renteLening: 0,
+        looptijd: 10,
+        leningLooptijd: 10,
+        rendementType: 'vast',
+        rendement: 8,
+        aflossingsType: 'lineair',
+        herinvestering: 0,
+        herinvesteringDrempel: 0,
+        vasteKosten: 5000,
+        
         // Tax parameters
         belastingType: 'vpb',
         vpbRate: 25.8,
+        priveSubType: 'box3',  // Default sub-type for private tax
+        box1Tarief: 49.5,
+        box3Rendement: 6.17,
+        box3Tarief: 36,
         box3Vrijstelling: 57000,
         
         // Inflation
         inflatie: 2,
+        inflatieToggle: false,
         
         // Leverage
         useLeverage: false,
@@ -38,6 +55,7 @@ export const Config = {
         // Monte Carlo
         monteCarloRuns: 1000,
         volatility: 15,
+        mcVolatility: 3,  // Default Monte Carlo volatility
         
         // Currency
         baseCurrency: 'EUR'
@@ -70,81 +88,33 @@ export const Config = {
         vpb: {
             rate: 0.258, // 25.8%
             smallBusinessThreshold: 395000,
-            smallBusinessRate: 0.19 // 19%
-        },
-        box3: {
-            vrijstelling: {
-                single: 57000,
-                couple: 114000
-            },
-            brackets: [
-                { limit: 71650, rate: 0.0036 }, // 0.36%
-                { limit: 1020750, rate: 0.0151 }, // 1.51%
-                { limit: Infinity, rate: 0.0152 } // 1.52%
-            ],
-            forfaitairRendement: 0.0636 // 6.36%
+            smallBusinessRate: 0.19
         },
         box1: {
             brackets: [
-                { limit: 10656, rate: 0.0928 },
-                { limit: 23317, rate: 0.3693 },
-                { limit: 73031, rate: 0.3693 },
-                { limit: Infinity, rate: 0.495 }
+                { min: 0, max: 73031, rate: 0.3697 },
+                { min: 73031, max: Infinity, rate: 0.495 }
             ],
-            arbeidskorting: {
-                max: 5977,
-                threshold: 10741,
-                phaseoutRate: 0.06510
-            }
+            defaultRate: 0.495
+        },
+        box3: {
+            rendementBrackets: [
+                { min: 0, max: 71650, rate: 0.0036 },
+                { min: 71650, max: 1020750, rate: 0.0151 },
+                { min: 1020750, max: Infinity, rate: 0.0152 }
+            ],
+            belastingTarief: 0.36,
+            defaultRendement: 0.0604
         }
     },
     
-    // Monte Carlo simulation settings
-    monteCarlo: {
-        defaultRuns: 1000,
-        minRuns: 100,
-        maxRuns: 10000,
-        confidenceIntervals: [0.05, 0.25, 0.5, 0.75, 0.95],
-        histogramBins: 20,
-        
-        // Risk levels for volatility
-        riskProfiles: {
-            conservative: {
-                volatility: 10,
-                label: 'Conservatief'
-            },
-            moderate: {
-                volatility: 15,
-                label: 'Gematigd'
-            },
-            aggressive: {
-                volatility: 25,
-                label: 'Agressief'
-            },
-            veryAggressive: {
-                volatility: 35,
-                label: 'Zeer Agressief'
-            }
-        }
-    },
-    
-    // Scenario analysis
-    scenarios: {
-        bestCase: {
-            factor: 1.5,
-            label: 'Best Case',
-            icon: '🚀'
-        },
-        baseCase: {
-            factor: 1.0,
-            label: 'Base Case',
-            icon: '📊'
-        },
-        worstCase: {
-            factor: 0.5,
-            label: 'Worst Case',
-            icon: '⚠️'
-        }
+    // UI configuration
+    ui: {
+        animations: true,
+        animationDuration: 300,
+        numberFormat: 'nl-NL',
+        currency: 'EUR',
+        dateFormat: 'dd-MM-yyyy'
     },
     
     // Currency settings
@@ -210,79 +180,9 @@ export const Config = {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 15,
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-                    cornerRadius: 8,
-                    displayColors: true
+                    position: 'bottom'
                 }
             }
-        }
-    },
-    
-    // Export configurations
-    export: {
-        pdf: {
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-            compress: true
-        },
-        excel: {
-            creator: 'ROI Calculator Pro',
-            defaultDateFormat: 'dd/mm/yyyy'
-        },
-        csv: {
-            delimiter: ',',
-            encoding: 'utf-8'
-        }
-    },
-    
-    // UI settings
-    ui: {
-        animations: true,
-        animationDuration: 300,
-        toastDuration: 3000,
-        
-        // Breakpoints for responsive design
-        breakpoints: {
-            mobile: 480,
-            tablet: 768,
-            desktop: 1024,
-            wide: 1440
-        },
-        
-        // Theme colors (CSS variables)
-        theme: {
-            primary: '#1e3c72',
-            secondary: '#2a5298',
-            accent: '#7e8ce0',
-            background: '#f8f9fa',
-            text: '#333333',
-            border: '#dee2e6'
-        }
-    },
-    
-    // Performance settings
-    performance: {
-        debounceDelay: 300,
-        maxDataPoints: 1000,
-        chartUpdateThrottle: 100,
-        
-        // LocalStorage settings
-        storage: {
-            prefix: 'roi_calculator_',
-            maxScenarios: 50,
-            maxPortfolios: 20,
-            compressionEnabled: true
         }
     },
     
