@@ -183,7 +183,7 @@ export class StateManager {
             updates[key] = processedValue;
         });
         
-        this.update(updates);
+        this.update({ inputs: updates });
     }
     
     // Process input value

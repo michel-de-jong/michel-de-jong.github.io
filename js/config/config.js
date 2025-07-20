@@ -6,8 +6,8 @@ export const Config = {
     app: {
         name: 'ROI Calculator Pro',
         version: '2.0.0',
-        author: 'Your Company',
-        year: 2024
+        author: 'Michel de Jong',
+        year: 2025
     },
     
     // Default calculation parameters - ALL values needed by the calculator
@@ -19,8 +19,8 @@ export const Config = {
         jaren: 10,
         
         // Extended parameters used in calculator
-        lening: 0,
-        renteLening: 0,
+        lening: 50000,
+        renteLening: 10,
         looptijd: 10,
         leningLooptijd: 10,
         rendementType: 'vast',

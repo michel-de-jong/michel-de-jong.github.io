@@ -206,6 +206,23 @@ class ROICalculatorApp {
                 btn.addEventListener('click', handler);
             }
         });
+        
+        // Inflatie toggle handler
+        const inflatieToggle = document.getElementById('inflatieToggle');
+        if (inflatieToggle) {
+            inflatieToggle.addEventListener('change', (e) => {
+                const useRealValues = e.target.checked;
+                
+                // Update chart met real/nominaal values
+                const chartData = this.calculator.getChartData(useRealValues);
+                this.chartManager.updateMainChart(chartData, useRealValues);
+                
+                // Update KPIs met real/nominaal values
+                if (this.latestResults) {
+                    this.kpiDisplay.update(this.latestResults, useRealValues);
+                }
+            });
+        }
     }
     
     performCalculation() {
@@ -243,8 +260,9 @@ class ROICalculatorApp {
         // Update KPI displays
         this.kpiDisplay.update(results);
         
-        // Update main chart
-        this.chartManager.updateMainChart(results);
+        // Update main chart - gebruik calculator.getChartData() voor de juiste data structuur
+        const chartData = this.calculator.getChartData();
+        this.chartManager.updateMainChart(chartData);
         
         // Update active tab specific displays
         const activeTab = this.tabManager.getActiveTab();
@@ -281,114 +299,106 @@ class ROICalculatorApp {
     updateTabDisplay(tabName, results) {
         switch (tabName) {
             case 'overzicht':
-                this.chartManager.updateMainChart(results);
+                // Gebruik calculator.getChartData() in plaats van results
+                const chartData = this.calculator.getChartData();
+                this.chartManager.updateMainChart(chartData);
                 break;
             case 'scenarios':
                 this.features.scenarios.updateWithResults(results);
                 break;
             case 'montecarlo':
-                this.features.montecarlo.updateDisplay();
+                this.features.montecarlo.updateWithResults(results);
                 break;
             case 'waterfall':
                 this.features.waterfall.updateWithResults(results);
                 break;
             case 'portfolio':
-                this.features.portfolio.updateDisplay();
+                this.features.portfolio.updateWithResults(results);
                 break;
-            case 'historisch':
-                this.features.historical.updateDisplay();
+            case 'historical':
+                this.features.historical.updateWithResults(results);
+                break;
+            case 'saved':
+                this.features.saved.updateWithResults(results);
                 break;
         }
     }
     
     initializeTabFeatures(tabName) {
-        // Initialize features on first access
-        if (!this.tabsInitialized) {
-            this.tabsInitialized = new Set();
-        }
-        
-        if (!this.tabsInitialized.has(tabName)) {
-            this.tabsInitialized.add(tabName);
-            
-            switch (tabName) {
-                case 'portfolio':
-                    this.features.portfolio.setupListeners(this.state);
-                    break;
-                case 'saved':
-                    this.features.saved.loadSavedScenarios();
-                    break;
-            }
+        // Initialize feature specific functionality when tab is first accessed
+        if (this.features[tabName] && this.features[tabName].activate) {
+            this.features[tabName].activate(this.state);
         }
     }
     
     performInitialCalculation() {
         console.log('Performing initial calculation...');
-        this.performCalculation();
+        
+        try {
+            // Get initial inputs from state
+            const initialInputs = this.state.getInputs();
+            console.log('Initial inputs:', initialInputs);
+            
+            // Perform calculation
+            const results = this.calculator.calculate();
+            console.log('Initial calculation results:', results);
+            
+            // Update displays
+            this.updateDisplays(results);
+            
+            // Store results for features
+            this.latestResults = results;
+            
+        } catch (error) {
+            console.error('Initial calculation error:', error);
+            // Don't show error on initial load, just log it
+        }
     }
     
     displayValidationErrors(errors) {
-        Object.entries(errors).forEach(([field, messages]) => {
-            const element = document.getElementById(field);
-            if (element) {
-                element.classList.add('error');
-                
-                // Show error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'error-message';
-                errorDiv.textContent = messages.join(', ');
-                element.parentElement.appendChild(errorDiv);
-            }
-        });
+        console.warn('Validation errors:', errors);
+        // Could implement UI feedback here
     }
     
     clearValidationErrors() {
-        document.querySelectorAll('.error').forEach(el => {
-            el.classList.remove('error');
-        });
-        
-        document.querySelectorAll('.error-message').forEach(el => {
-            el.remove();
-        });
+        // Clear any displayed validation errors
     }
     
     showError(message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-error';
-        alertDiv.textContent = message;
-        
-        const container = document.getElementById('alertContainer') || document.body;
-        container.appendChild(alertDiv);
-        
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 5000);
+        console.error('Application error:', message);
+        // Could show a user-friendly error message
+        alert(message);
     }
     
     showFatalError(message) {
-        const errorOverlay = document.createElement('div');
-        errorOverlay.className = 'fatal-error-overlay';
-        errorOverlay.innerHTML = `
-            <div class="fatal-error-content">
-                <h2>Er is een fout opgetreden</h2>
-                <p>${message}</p>
-                <button onclick="location.reload()">Pagina herladen</button>
-            </div>
-        `;
+        console.error('Fatal error:', message);
         
-        document.body.appendChild(errorOverlay);
+        // Show error in UI
+        const container = document.querySelector('.container');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-container">
+                    <h2>Er is een fout opgetreden</h2>
+                    <p>${message}</p>
+                    <button onclick="location.reload()" class="btn btn-primary">
+                        Pagina verversen
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
-// Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing ROI Calculator...');
-    
-    // Create global app instance
-    window.roiCalculatorApp = new ROICalculatorApp();
-    
-    // Start initialization
-    window.roiCalculatorApp.init();
-});
+// Initialize application when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.app = new ROICalculatorApp();
+        window.app.init();
+    });
+} else {
+    window.app = new ROICalculatorApp();
+    window.app.init();
+}
 
-// Export for debugging in console
+// Export for debugging
 export { ROICalculatorApp };
