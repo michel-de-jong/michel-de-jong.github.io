@@ -4,16 +4,16 @@ import { Calculator } from './core/calculator.js';
 import { TabManager } from './ui/tabs.js';
 import { ChartManager } from './ui/charts.js';
 import { FormManager } from './ui/forms.js';
-import { KPIDisplay } from './ui/kpi.js';
+import { KPIDisplay } from './ui/kpi-display.js';
 import { DataService } from './services/data-service.js';
 import { ValidationService } from './services/validation-service.js';
-import { HistoricalDataService } from './services/historical-data.js';
+import { HistoricalDataService } from './services/historical-data-service.js';
 import { CurrencyService } from './services/currency-service.js';
 import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
 
 // Feature Modules
 import { ScenariosFeature } from './features/scenarios.js';
-import { MonteCarloFeature } from './features/montecarlo.js';  // Keep as-is unless file is monte-carlo.js
+import { MonteCarloFeature } from './features/monte-carlo.js';
 import { WaterfallFeature } from './features/waterfall.js';
 import { PortfolioFeature } from './features/portfolio.js';
 import { HistoricalFeature } from './features/historical.js';
