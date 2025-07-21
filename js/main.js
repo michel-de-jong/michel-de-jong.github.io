@@ -265,18 +265,18 @@ class ROICalculatorApp {
         this.chartManager.updateMainChart(chartData);
         
         // Update active tab specific displays
-        const activeTab = this.tabManager.getActiveTab();
+        const activeTab = this.tabManager.getCurrentTab();
         this.updateTabDisplay(activeTab, results);
     }
     
     updateFeatures(results) {
         // Update scenarios if visible
-        if (this.tabManager.getActiveTab() === 'scenarios') {
+        if (this.tabManager.getCurrentTab() === 'scenarios') {
             this.features.scenarios.updateWithResults(results);
         }
         
         // Update waterfall if visible
-        if (this.tabManager.getActiveTab() === 'waterfall') {
+        if (this.tabManager.getCurrentTab() === 'waterfall') {
             this.features.waterfall.updateWithResults(results);
         }
         

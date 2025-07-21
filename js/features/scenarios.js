@@ -47,6 +47,9 @@ export class ScenariosFeature {
     }
     
     activate(stateManager) {
+        // Store stateManager reference
+        this.stateManager = stateManager;
+        
         // Initialize chart if needed
         if (!this.chartManager.charts.scenario) {
             const canvas = document.getElementById('scenarioChart');
