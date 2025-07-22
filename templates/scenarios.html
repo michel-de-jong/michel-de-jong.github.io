@@ -1,9 +1,14 @@
 <section id="scenarios" class="tab-pane" role="tabpanel">
     <h2>📊 Scenario Analyse</h2>
-    <p class="tab-description">Vergelijk verschillende scenario's en analyseer de impact van veranderingen in uw parameters</p>
+    <p class="tab-description">Vergelijk verschillende investeringsscenario's en test de robuustheid van uw strategie</p>
     
     <div class="scenario-comparison">
-        <div class="scenario-grid">
+        <h3 class="section-header">
+            <span class="header-icon">🔄</span>
+            Scenario Vergelijking
+        </h3>
+        
+        <div class="scenarios-grid">
             <div class="scenario-card best-case">
                 <div class="scenario-header">
                     <span class="scenario-icon">🌟</span>
@@ -15,7 +20,7 @@
                             <span class="label-icon">📈</span>
                             Rendement (%)
                         </label>
-                        <input type="number" id="bestCaseRendement" value="1.2" step="0.1" class="scenario-input">
+                        <input type="number" id="bestCaseRendement" value="1.5" step="0.1" class="scenario-input">
                         <div class="input-help">Optimistisch scenario</div>
                     </div>
                     <div class="form-group">
@@ -24,7 +29,7 @@
                             Vaste Kosten (€)
                         </label>
                         <input type="number" id="bestCaseKosten" value="4000" step="100" class="scenario-input">
-                        <div class="input-help">Lagere kosten verwacht</div>
+                        <div class="input-help">Lagere kosten mogelijk</div>
                     </div>
                     <div class="scenario-result">
                         <div class="result-label">Verwachte ROI</div>
@@ -106,7 +111,7 @@
         </h3>
         <p class="section-description">Test de robuustheid van uw investering onder verschillende negatieve scenario's</p>
         
-        <button class="btn btn-primary btn-lg" id="runStressTestBtn">
+        <button class="btn btn-primary btn-lg" id="runScenarioStressTestBtn">
             <span class="btn-icon">▶️</span>
             Start Stress Test
         </button>

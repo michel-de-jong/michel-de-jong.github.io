@@ -111,15 +111,32 @@
         </div>
     </div>
     
-    <!-- FX Risk Analysis -->
-    <div class="fx-risk-section">
+    <!-- This is the Currency Portfolio section from portfolio.html -->
+    <!-- FX Risk Analysis section - keeping the original button ID -->
+    <div class="fx-risk-analysis">
         <h3 class="section-header">
-            <span class="header-icon">⚡</span>
+            <span class="header-icon">💱</span>
             FX Risk Analysis
         </h3>
-        <div class="fx-risk-controls">
+        
+        <div class="risk-metrics">
+            <div class="metric-card">
+                <div class="metric-label">Total Currency Exposure</div>
+                <div class="metric-value" id="totalCurrencyExposure">€ 0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Hedging Coverage</div>
+                <div class="metric-value" id="hedgingCoverage">0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Net Risk Position</div>
+                <div class="metric-value" id="netRiskPosition">€ 0</div>
+            </div>
+        </div>
+        
+        <div class="risk-actions">
             <button class="btn btn-primary" id="analyzeFXRiskBtn">
-                <span class="btn-icon">🔍</span>
+                <span class="btn-icon">📊</span>
                 Analyze FX Risk
             </button>
             <button class="btn btn-secondary" id="runStressTestBtn">
@@ -140,7 +157,7 @@
             <!-- Stress test results populated by JavaScript -->
         </div>
     </div>
-    
+
     <!-- Active Hedges -->
     <div class="active-hedges-section">
         <h3 class="section-header">
@@ -151,7 +168,7 @@
             <p class="no-hedges">No active hedging strategies</p>
         </div>
     </div>
-    
+
     <!-- Portfolio Visualization -->
     <div class="portfolio-visualization">
         <h3 class="section-header">
@@ -163,7 +180,7 @@
             <canvas id="portfolioChart"></canvas>
         </div>
     </div>
-    
+
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="loading-indicator" style="display: none;">
         <div class="spinner"></div>

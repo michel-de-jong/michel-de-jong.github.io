@@ -39,8 +39,8 @@ export class ScenariosFeature {
             element.addEventListener('input', this.debounce(() => this.calculateScenarios(), 300));
         });
         
-        // Stress test button
-        const stressTestBtn = document.getElementById('runStressTestBtn');
+        // Stress test button - FIXED: Using unique ID for scenarios tab
+        const stressTestBtn = document.getElementById('runScenarioStressTestBtn');
         if (stressTestBtn) {
             stressTestBtn.addEventListener('click', () => this.runStressTest());
         }
@@ -59,32 +59,33 @@ export class ScenariosFeature {
         }
         
         // Sync inputs from main calculator
-        this.syncInputsFromCalculator();
+        this.syncFromCalculator();
         
-        // Calculate scenarios
+        // Recalculate scenarios
         this.calculateScenarios();
     }
     
-    syncInputsFromCalculator() {
+    syncFromCalculator() {
         const inputs = this.stateManager.getInputs();
         
-        // Set base case to current values
+        // Base case uses main calculator values
         this.setScenarioValue('base', 'Rendement', inputs.rendement);
         this.setScenarioValue('base', 'Kosten', inputs.vasteKosten);
         
-        // Set best case (20% better)
-        this.setScenarioValue('best', 'Rendement', inputs.rendement * 1.2);
+        // Best case (optimistic)
+        this.setScenarioValue('best', 'Rendement', inputs.rendement * 1.5);
         this.setScenarioValue('best', 'Kosten', inputs.vasteKosten * 0.8);
         
-        // Set worst case (40% worse)
-        this.setScenarioValue('worst', 'Rendement', inputs.rendement * 0.6);
+        // Worst case (pessimistic)
+        this.setScenarioValue('worst', 'Rendement', inputs.rendement * 0.5);
         this.setScenarioValue('worst', 'Kosten', inputs.vasteKosten * 1.2);
     }
     
     setScenarioValue(scenario, field, value) {
         const element = this.scenarioInputs.get(`${scenario}Case${field}`);
         if (element) {
-            element.value = typeof value === 'number' ? value.toFixed(2) : value;
+            element.value = typeof value === 'number' && field === 'Rendement' ? 
+                value.toFixed(2) : value;
         }
     }
     
