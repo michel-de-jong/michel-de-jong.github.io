@@ -163,65 +163,16 @@ class ROICalculatorApp {
         this.formManager.onChange((inputs) => {
             clearTimeout(formChangeTimeout);
             formChangeTimeout = setTimeout(() => {
-                try {
-                    console.log('Form inputs changed:', inputs);
-                    if (this.state && typeof this.state.updateFromInputs === 'function') {
-                        this.state.updateFromInputs(inputs);
-                    } else {
-                        console.error('State manager or updateFromInputs not properly initialized');
-                    }
-                } catch (error) {
-                    console.error('Error updating form inputs:', error);
-                }
+                console.log('Form changed:', inputs);
+                this.state.update({ inputs });
             }, 300);
         });
         
-        // Window resize handler for charts
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                this.chartManager.resize();
-            }, 250);
-        });
-        
-        // Print button handler
-        const printBtn = document.getElementById('printReportBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', () => {
-                window.print();
-            });
-        }
-        
-        // Export handlers
-        const exportHandlers = {
-            'exportPDFBtn': () => this.features.export.exportPDF(),
-            'exportExcelBtn': () => this.features.export.exportExcel(),
-            'exportCSVBtn': () => this.features.export.exportCSV()
-        };
-        
-        Object.entries(exportHandlers).forEach(([btnId, handler]) => {
-            const btn = document.getElementById(btnId);
-            if (btn) {
-                btn.addEventListener('click', handler);
+        // Setup feature listeners
+        for (const [name, feature] of Object.entries(this.features)) {
+            if (feature.setupListeners) {
+                feature.setupListeners(this.state);
             }
-        });
-        
-        // Inflatie toggle handler
-        const inflatieToggle = document.getElementById('inflatieToggle');
-        if (inflatieToggle) {
-            inflatieToggle.addEventListener('change', (e) => {
-                const useRealValues = e.target.checked;
-                
-                // Update chart met real/nominaal values
-                const chartData = this.calculator.getChartData(useRealValues);
-                this.chartManager.updateMainChart(chartData, useRealValues);
-                
-                // Update KPIs met real/nominaal values
-                if (this.latestResults) {
-                    this.kpiDisplay.update(this.latestResults, useRealValues);
-                }
-            });
         }
     }
     
@@ -229,30 +180,35 @@ class ROICalculatorApp {
         console.log('Performing calculation...');
         
         try {
+            // Clear previous errors
+            this.clearValidationErrors();
+            
+            // Get current inputs
+            const inputs = this.state.getInputs();
+            
             // Validate inputs
-            const validation = this.validationService.validateCalculatorInputs(this.state.getAll());
-            if (!validation.isValid) {
-                console.warn('Validation failed:', validation.errors);
-                this.displayValidationErrors(validation.errors);
+            const errors = this.validationService.validateInputs(inputs);
+            if (errors.length > 0) {
+                this.displayValidationErrors(errors);
                 return;
             }
             
-            // Clear any previous errors
-            this.clearValidationErrors();
-            
-            // Calculate
+            // Perform calculation
             const results = this.calculator.calculate();
             console.log('Calculation results:', results);
+            
+            // Store results in state
+            this.state.setResults(results);
             
             // Update displays
             this.updateDisplays(results);
             
-            // Update features that depend on results
+            // Update features
             this.updateFeatures(results);
             
         } catch (error) {
             console.error('Calculation error:', error);
-            this.showError('Er is een fout opgetreden bij de berekening. Controleer uw invoer.');
+            this.showError('Er is een fout opgetreden tijdens de berekening. Controleer uw invoer.');
         }
     }
     
@@ -270,13 +226,17 @@ class ROICalculatorApp {
     }
     
     updateFeatures(results) {
-        // Update scenarios if visible
-        if (this.tabManager.getCurrentTab() === 'scenarios') {
+        // Update scenarios if visible and method exists
+        if (this.tabManager.getCurrentTab() === 'scenarios' && 
+            this.features.scenarios && 
+            typeof this.features.scenarios.updateWithResults === 'function') {
             this.features.scenarios.updateWithResults(results);
         }
         
-        // Update waterfall if visible
-        if (this.tabManager.getCurrentTab() === 'waterfall') {
+        // Update waterfall if visible and method exists
+        if (this.tabManager.getCurrentTab() === 'waterfall' && 
+            this.features.waterfall && 
+            typeof this.features.waterfall.updateWithResults === 'function') {
             this.features.waterfall.updateWithResults(results);
         }
         
@@ -297,6 +257,7 @@ class ROICalculatorApp {
     }
     
     updateTabDisplay(tabName, results) {
+        // Check if feature exists and has updateWithResults method before calling
         switch (tabName) {
             case 'overzicht':
                 // Gebruik calculator.getChartData() in plaats van results
@@ -304,22 +265,34 @@ class ROICalculatorApp {
                 this.chartManager.updateMainChart(chartData);
                 break;
             case 'scenarios':
-                this.features.scenarios.updateWithResults(results);
+                if (this.features.scenarios && typeof this.features.scenarios.updateWithResults === 'function') {
+                    this.features.scenarios.updateWithResults(results);
+                }
                 break;
             case 'montecarlo':
-                this.features.montecarlo.updateWithResults(results);
+                if (this.features.montecarlo && typeof this.features.montecarlo.updateWithResults === 'function') {
+                    this.features.montecarlo.updateWithResults(results);
+                }
                 break;
             case 'waterfall':
-                this.features.waterfall.updateWithResults(results);
+                if (this.features.waterfall && typeof this.features.waterfall.updateWithResults === 'function') {
+                    this.features.waterfall.updateWithResults(results);
+                }
                 break;
             case 'portfolio':
-                this.features.portfolio.updateWithResults(results);
+                if (this.features.portfolio && typeof this.features.portfolio.updateWithResults === 'function') {
+                    this.features.portfolio.updateWithResults(results);
+                }
                 break;
             case 'historical':
-                this.features.historical.updateWithResults(results);
+                if (this.features.historical && typeof this.features.historical.updateWithResults === 'function') {
+                    this.features.historical.updateWithResults(results);
+                }
                 break;
             case 'saved':
-                this.features.saved.updateWithResults(results);
+                if (this.features.saved && typeof this.features.saved.updateWithResults === 'function') {
+                    this.features.saved.updateWithResults(results);
+                }
                 break;
         }
     }
