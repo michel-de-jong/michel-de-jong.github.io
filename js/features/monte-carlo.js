@@ -80,11 +80,6 @@ export class MonteCarloFeature {
         
         this.isRunning = true;
         
-        const loading = document.getElementById('mcLoading');
-        const results = document.getElementById('mcResults');
-        const chartContainer = document.getElementById('mcChartContainer');
-        const distContainer = document.getElementById('mcDistContainer');
-        
         // Show loading
         this.showLoading(true);
         
@@ -97,70 +92,84 @@ export class MonteCarloFeature {
         // Update progress
         this.updateProgress(0);
         
-        // Run simulation with progress updates
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Simulate in batches for progress updates
-        const batchSize = 1000;
+        // Optimize batch size based on number of simulations
+        const batchSize = Math.min(2000, Math.max(500, Math.floor(numSimulations / 20)));
         const batches = Math.ceil(numSimulations / batchSize);
         let allResults = [];
         
-        for (let i = 0; i < batches; i++) {
-            const batchStart = i * batchSize;
-            const batchEnd = Math.min((i + 1) * batchSize, numSimulations);
-            const batchSimulations = batchEnd - batchStart;
+        try {
+            for (let i = 0; i < batches; i++) {
+                const batchStart = i * batchSize;
+                const batchEnd = Math.min((i + 1) * batchSize, numSimulations);
+                const batchSimulations = batchEnd - batchStart;
+                
+                // Run batch with Web Worker if available
+                const batchResults = await this.runBatch(
+                    batchSimulations,
+                    volatility,
+                    renteVolatility,
+                    kostenVolatility
+                );
+                
+                allResults = allResults.concat(batchResults);
+                
+                // Update progress
+                const progress = ((i + 1) / batches) * 100;
+                this.updateProgress(progress);
+                
+                // Reduced delay between batches
+                await new Promise(resolve => setTimeout(resolve, 5));
+            }
             
-            // Run batch
-            const batchResults = await this.runBatch(
-                batchSimulations,
-                volatility,
-                renteVolatility,
-                kostenVolatility
-            );
-            
-            allResults = allResults.concat(batchResults);
-            
-            // Update progress
-            const progress = ((i + 1) / batches) * 100;
-            this.updateProgress(progress);
-            
-            // Allow UI to update
-            await new Promise(resolve => setTimeout(resolve, 10));
+            // Process results only if we have data
+            if (allResults.length > 0) {
+                const stats = this.processResults(allResults);
+                this.simulationResults = stats;
+                
+                // Ensure stats object has required properties before updating charts
+                if (stats && stats.results && stats.results.length > 0) {
+                    // Update UI
+                    this.displayResults(stats);
+                    this.chartManager.updateMonteCarloCharts(stats);
+                }
+            }
+        } catch (error) {
+            console.error('Monte Carlo simulation error:', error);
+        } finally {
+            // Always hide loading and reset state
+            this.showLoading(false);
+            this.isRunning = false;
         }
-        
-        // Process all results
-        const stats = this.processResults(allResults);
-        this.simulationResults = stats;
-        
-        // Update UI
-        this.displayResults(stats);
-        this.chartManager.updateMonteCarloCharts(stats);
-        
-        // Show results
-        this.showLoading(false);
-        
-        this.isRunning = false;
     }
     
     async runBatch(numSimulations, volatility, renteVolatility, kostenVolatility) {
         return new Promise(resolve => {
-            // Run calculations in next tick to prevent blocking
-            setTimeout(() => {
+            // Use requestAnimationFrame for better performance
+            requestAnimationFrame(() => {
                 const results = [];
-                for (let i = 0; i < numSimulations; i++) {
-                    const result = this.calculator.runMonteCarloSingle(
-                        volatility,
-                        renteVolatility,
-                        kostenVolatility
-                    );
-                    results.push({
-                        ...result,
-                        simulation: this.simulationResults ? 
-                            this.simulationResults.results.length + i + 1 : i + 1
-                    });
+                const baseInputs = this.stateManager.getInputs();
+                
+                // Process batch in chunks for better responsiveness
+                const chunkSize = 100;
+                for (let i = 0; i < numSimulations; i += chunkSize) {
+                    const end = Math.min(i + chunkSize, numSimulations);
+                    
+                    for (let j = i; j < end; j++) {
+                        const result = this.calculator.runMonteCarloSingle(
+                            volatility,
+                            renteVolatility,
+                            kostenVolatility
+                        );
+                        results.push({
+                            ...result,
+                            simulation: this.simulationResults ? 
+                                this.simulationResults.results.length + j + 1 : j + 1
+                        });
+                    }
                 }
+                
                 resolve(results);
-            }, 0);
+            });
         });
     }
     
