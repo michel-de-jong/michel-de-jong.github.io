@@ -83,27 +83,26 @@ export class MonteCarloFeature {
         // Show loading
         this.showLoading(true);
         
-        // Get parameters
-        const numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 10000;
-        const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
-        const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility')?.value) / 100 || 0.01;
-        const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility')?.value) / 100 || 0.1;
-        
-        // Update progress
-        this.updateProgress(0);
-        
-        // Optimize batch size based on number of simulations
-        const batchSize = Math.min(2000, Math.max(500, Math.floor(numSimulations / 20)));
-        const batches = Math.ceil(numSimulations / batchSize);
-        let allResults = [];
-        
         try {
+            // Get parameters
+            const numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 10000;
+            const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
+            const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility')?.value) / 100 || 0.01;
+            const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility')?.value) / 100 || 0.1;
+            
+            // Update progress
+            this.updateProgress(0);
+            
+            // Optimize batch size based on number of simulations
+            const batchSize = Math.min(2000, Math.max(500, Math.floor(numSimulations / 20)));
+            const batches = Math.ceil(numSimulations / batchSize);
+            let allResults = [];
+            
             for (let i = 0; i < batches; i++) {
                 const batchStart = i * batchSize;
                 const batchEnd = Math.min((i + 1) * batchSize, numSimulations);
                 const batchSimulations = batchEnd - batchStart;
                 
-                // Run batch with Web Worker if available
                 const batchResults = await this.runBatch(
                     batchSimulations,
                     volatility,
@@ -111,26 +110,39 @@ export class MonteCarloFeature {
                     kostenVolatility
                 );
                 
-                allResults = allResults.concat(batchResults);
+                if (Array.isArray(batchResults)) {
+                    allResults = allResults.concat(batchResults);
+                }
                 
                 // Update progress
                 const progress = ((i + 1) / batches) * 100;
                 this.updateProgress(progress);
                 
-                // Reduced delay between batches
                 await new Promise(resolve => setTimeout(resolve, 5));
             }
             
             // Process results only if we have data
-            if (allResults.length > 0) {
+            if (allResults && allResults.length > 0) {
                 const stats = this.processResults(allResults);
-                this.simulationResults = stats;
                 
-                // Ensure stats object has required properties before updating charts
-                if (stats && stats.results && stats.results.length > 0) {
-                    // Update UI
+                // Validate stats object before updating UI
+                if (stats && 
+                    typeof stats === 'object' && 
+                    Array.isArray(stats.results) && 
+                    stats.results.length > 0) {
+                
+                    this.simulationResults = stats;
                     this.displayResults(stats);
-                    this.chartManager.updateMonteCarloCharts(stats);
+                    
+                    // Only update charts if chartManager exists and has the required method
+                    if (this.chartManager && 
+                        typeof this.chartManager.updateMonteCarloCharts === 'function') {
+                        this.chartManager.updateMonteCarloCharts(stats);
+                    } else {
+                        console.warn('ChartManager not properly initialized');
+                    }
+                } else {
+                    console.warn('Invalid stats object generated');
                 }
             }
         } catch (error) {
