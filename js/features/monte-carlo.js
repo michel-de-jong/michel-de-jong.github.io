@@ -277,7 +277,7 @@ export class MonteCarloFeature {
                 if (typeof config.value === 'string') {
                     displayValue = config.value; // Already formatted (for confidence interval)
                 } else if (config.isCurrency) {
-                    displayValue = `€${formatNumber(config.value)}`; // Remove the formatNumber's € sign
+                    displayValue = formatNumber(config.value);
                 } else {
                     displayValue = formatPercentage(config.value);
                 }
