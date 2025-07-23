@@ -218,7 +218,7 @@ export class MonteCarloFeature {
             p95Values.push(this.calculatePercentile(roiValues, 95) * yearProgress);
         }
         
-        return {
+        const stats = {
             mean: this.calculateMean(roiValues),
             median: this.calculateMedian(roiValues),
             p5: this.calculatePercentile(roiValues, 5),
@@ -240,6 +240,9 @@ export class MonteCarloFeature {
                 p95: p95Values
             }
         };
+        
+        console.log('Monte Carlo Stats:', stats); // Add this line
+        return stats;
     }
     
     displayResults(stats) {
