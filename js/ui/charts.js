@@ -46,7 +46,6 @@ export class ChartManager {
     }
     
     initialize() {
-        console.log('Initializing ChartManager...');
         this.initMainChart();
         
         // Pre-initialize other charts if their canvases exist

@@ -16,7 +16,6 @@ export class KPIDisplay {
     }
     
     initialize() {
-        console.log('Initializing KPIDisplay...');
         // Verify all KPI elements are found
         const missingElements = Object.entries(this.kpiElements)
             .filter(([key, element]) => !element)

@@ -10,7 +10,6 @@ export class FormManager {
     
     initialize(stateManager) {
         if (this.initialized) {
-            console.log('FormManager already initialized');
             return;
         }
         
@@ -27,16 +26,13 @@ export class FormManager {
     }
     
     setup() {
-        console.log('Setting up FormManager...');
         this.setupFormElements();
         this.loadInitialValues();
         this.attachEventListeners();
         this.initialized = true;
-        console.log('FormManager setup complete');
     }
     
     setupFormElements() {
-        console.log('Setting up form elements...');
         
         // Main calculator form elements
         const formIds = [
@@ -53,13 +49,11 @@ export class FormManager {
             if (element) {
                 this.formElements.set(id, element);
                 foundCount++;
-                console.log(`Found element: ${id}`);
             } else {
                 console.warn(`Form element not found: ${id}`);
             }
         });
         
-        console.log(`Found ${foundCount}/${formIds.length} form elements`);
     }
     
     loadInitialValues() {
@@ -69,7 +63,6 @@ export class FormManager {
         }
         
         const inputs = this.stateManager.getInputs();
-        console.log('Loading initial values:', inputs);
         
         this.formElements.forEach((element, id) => {
             if (inputs.hasOwnProperty(id)) {
@@ -86,7 +79,6 @@ export class FormManager {
     }
     
     attachEventListeners() {
-        console.log('Attaching event listeners to form elements...');
         
         this.formElements.forEach((element, id) => {
             // Remove any existing listeners first
@@ -97,18 +89,15 @@ export class FormManager {
             // Attach new listeners
             if (newElement.type === 'checkbox') {
                 newElement.addEventListener('change', (e) => {
-                    console.log(`Checkbox ${id} changed:`, e.target.checked);
                     this.handleChange(id, e);
                 });
             } else {
                 // For text/number inputs, use both change and input events
                 newElement.addEventListener('change', (e) => {
-                    console.log(`Input ${id} changed:`, e.target.value);
                     this.handleChange(id, e);
                 });
                 
                 newElement.addEventListener('input', (e) => {
-                    console.log(`Input ${id} input event:`, e.target.value);
                     this.handleInput(id, e);
                 });
             }
@@ -118,7 +107,6 @@ export class FormManager {
         const belastingType = this.formElements.get('belastingType');
         if (belastingType) {
             belastingType.addEventListener('change', () => {
-                console.log('Tax type changed');
                 this.updateTaxOptionsVisibility();
             });
         }
@@ -126,19 +114,15 @@ export class FormManager {
         const priveSubType = this.formElements.get('priveSubType');
         if (priveSubType) {
             priveSubType.addEventListener('change', () => {
-                console.log('Private sub-type changed');
                 this.updatePrivateSubTypeVisibility();
             });
         }
         
-        console.log('Event listeners attached successfully');
     }
     
     handleChange(id, event) {
         const element = event.target;
         const value = this.getElementValue(element);
-        
-        console.log(`Handling change for ${id}:`, value);
         
         // Validate immediately on change
         if (this.validateField(id, value)) {
@@ -152,7 +136,6 @@ export class FormManager {
         
         // Debounce input events
         this.debounce(id, () => {
-            console.log(`Debounced input for ${id}:`, value);
             if (this.validateField(id, value)) {
                 this.notifyListeners({ [id]: value });
             }
@@ -213,7 +196,6 @@ export class FormManager {
         if (!belastingType) return;
         
         const taxType = belastingType.value;
-        console.log('Updating tax options visibility for:', taxType);
         
         // Hide all tax options first
         document.querySelectorAll('.tax-options').forEach(el => {
@@ -233,7 +215,6 @@ export class FormManager {
         if (!priveSubType) return;
         
         const subType = priveSubType.value;
-        console.log('Updating private sub-type visibility for:', subType);
         
         // Toggle visibility of Box 1 and Box 3 options
         const box1Options = document.getElementById('box1Options');
@@ -253,7 +234,6 @@ export class FormManager {
     }
     
     notifyListeners(changes) {
-        console.log('Notifying listeners of changes:', changes);
         
         // Handle special cases
         if (changes.inflatieToggle !== undefined) {

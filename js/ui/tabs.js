@@ -118,14 +118,11 @@ export class TabManager {
         const container = document.getElementById('additionalTabs');
         if (!container) return;
         
-        console.log('Loading all tab templates...');
-        
         const tabs = this.getAvailableTabs();
         
         for (const tabName of tabs) {
             try {
                 await this.initializeTab(tabName, container);
-                console.log(`Loaded template: ${tabName}`);
             } catch (error) {
                 console.error(`Failed to load template ${tabName}:`, error);
             }
