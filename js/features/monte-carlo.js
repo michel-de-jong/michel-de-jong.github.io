@@ -211,13 +211,26 @@ export class MonteCarloFeature {
         const p50Values = [];
         const p95Values = [];
         
-        for (let year = 0; year <= inputs.jaren; year++) {
-            const yearProgress = year / inputs.jaren;
-            p5Values.push(this.calculatePercentile(roiValues, 5) * yearProgress);
-            p50Values.push(this.calculatePercentile(roiValues, 50) * yearProgress);
-            p95Values.push(this.calculatePercentile(roiValues, 95) * yearProgress);
-        }
+        // Group all values by year
+        const yearlyValues = Array.from({length: inputs.jaren + 1}, () => []);
+        results.forEach(result => {
+            if (result.yearlyValues) {
+                result.yearlyValues.forEach((value, year) => {
+                    yearlyValues[year].push(value);
+                });
+            }
+        });
         
+        // Calculate percentiles for each year
+        yearlyValues.forEach((values, year) => {
+            if (values.length > 0) {
+                const sortedValues = [...values].sort((a, b) => a - b);
+                p5Values.push(this.calculatePercentile(sortedValues, 5));
+                p50Values.push(this.calculatePercentile(sortedValues, 50));
+                p95Values.push(this.calculatePercentile(sortedValues, 95));
+            }
+        });
+
         const stats = {
             mean: this.calculateMean(roiValues),
             median: this.calculateMedian(roiValues),
@@ -240,8 +253,21 @@ export class MonteCarloFeature {
                 p95: p95Values
             }
         };
-        
-        console.log('Monte Carlo Stats:', stats); // Add this line
+
+        // Debug log
+        console.log('Monte Carlo Stats:', {
+            median: stats.median,
+            p5: stats.p5,
+            p95: stats.p95,
+            lossProb: stats.lossProb,
+            vaR5: stats.vaR5,
+            pathsLength: {
+                p5: p5Values.length,
+                p50: p50Values.length,
+                p95: p95Values.length
+            }
+        });
+
         return stats;
     }
     
@@ -479,12 +505,13 @@ if (typeof Calculator !== 'undefined') {
             vasteKosten: Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation))
         };
         
-        // Quick calculation without full state update
+        // Calculate full yearly progression
         const results = this.calculate(scenarioInputs);
         
         return {
             roi: results.finalROI,
-            finalValue: results.finalVermogen
+            finalValue: results.finalVermogen,
+            yearlyValues: results.vermogenProgression // Make sure this exists in calculate()
         };
     };
 }
