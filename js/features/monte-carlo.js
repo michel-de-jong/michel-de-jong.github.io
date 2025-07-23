@@ -245,22 +245,26 @@ export class MonteCarloFeature {
     displayResults(stats) {
         // Display numeric results
         const elements = {
-            'mcMedianROI': formatPercentage(stats.median),
-            'mcP5ROI': formatPercentage(stats.p5),
-            'mcP95ROI': formatPercentage(stats.p95),
-            'mcLossProb': formatPercentage(stats.lossProb),
-            'mcVaR5': `€${formatNumber(stats.vaR5)}`
+            'mcMedianROI': { value: stats.median, isROI: true },
+            'mcP5ROI': { value: stats.p5, isROI: true },
+            'mcP95ROI': { value: stats.p95, isROI: true },
+            'mcLossProb': { value: stats.lossProb, isROI: false },
+            'mcVaR5': { value: stats.vaR5, isROI: false, isCurrency: true }
         };
         
-        for (const [id, value] of Object.entries(elements)) {
+        for (const [id, config] of Object.entries(elements)) {
             const element = document.getElementById(id);
             if (element) {
-                element.textContent = value;
+                // Format the value appropriately
+                const displayValue = config.isCurrency ? 
+                    `€${formatNumber(config.value)}` : 
+                    formatPercentage(config.value);
+                
+                element.textContent = displayValue;
                 
                 // Add color coding for ROI values
-                if (id.includes('ROI') && !id.includes('Loss')) {
-                    const numValue = parseFloat(stats[id.replace('mc', '').replace('ROI', '').toLowerCase()] || 0);
-                    element.className = 'result-value ' + this.getROIClass(numValue);
+                if (config.isROI) {
+                    element.className = 'result-value ' + this.getROIClass(config.value);
                 }
             }
         }
