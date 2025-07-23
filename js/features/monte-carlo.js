@@ -67,14 +67,14 @@ export class MonteCarloFeature {
             this.updateVolatilityIndicator('mcVolatility', defaultVolatility);
         }
         
-        // Set default simulations
+        // Set default simulations - UPDATED DEFAULT FROM 10000 TO 1000
         const mcSimulations = document.getElementById('mcSimulations');
         if (mcSimulations && !mcSimulations.hasAttribute('data-user-modified')) {
-            mcSimulations.value = 10000;
-            this.updateParameterScale('mcSimulations', 10000);
+            mcSimulations.value = 1000;  // Changed from 10000 to 1000
+            this.updateParameterScale('mcSimulations', 1000);
         }
     }
-    
+
     async run() {
         if (this.isRunning) return;
         
@@ -85,11 +85,13 @@ export class MonteCarloFeature {
         
         try {
             // Get parameters
-            const numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 10000;
+            let numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 1000;
+            // Ensure simulations are within new bounds
+            numSimulations = Math.max(10, Math.min(5000, numSimulations));
+            
             const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
             const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility')?.value) / 100 || 0.01;
             const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility')?.value) / 100 || 0.1;
-            
             // Update progress
             this.updateProgress(0);
             
@@ -203,7 +205,9 @@ export class MonteCarloFeature {
                 finalValues.map(v => v - inputs.startKapitaal), 
                 5
             ),
-            results: results
+            results: results,
+            finalValues: finalValues,  // ADD THIS LINE - Required for charts
+            roiValues: roiValues       // ADD THIS LINE - For potential future use
         };
     }
     
