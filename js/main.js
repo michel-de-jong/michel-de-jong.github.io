@@ -140,7 +140,6 @@ class ROICalculatorApp {
         
         // State change handler
         this.state.onChange((state) => {
-            console.log('State changed:', state);
             this.performCalculation();
         });
         
@@ -154,7 +153,6 @@ class ROICalculatorApp {
         this.formManager.onChange((inputs) => {
             clearTimeout(formChangeTimeout);
             formChangeTimeout = setTimeout(() => {
-                console.log('Form changed:', inputs);
                 this.state.update({ inputs });
             }, 300);
         });
