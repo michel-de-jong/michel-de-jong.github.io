@@ -504,7 +504,7 @@ if (typeof Calculator !== 'undefined') {
         return {
             roi: results.finalROI,
             finalValue: results.finalVermogen,
-            yearlyValues: results.vermogenProgression // Make sure this exists in calculate()
+            yearlyValues: results.totaalVermogen || results.vermogenProgression || [] // Try alternative properties or default to empty array
         };
     };
 }
