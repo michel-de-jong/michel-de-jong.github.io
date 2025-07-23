@@ -384,6 +384,59 @@ export class ChartManager {
                 }
             });
         }
+        
+        const distributionCanvas = document.getElementById('distributionChart');
+        if (distributionCanvas) {
+            const existingChart = Chart.getChart(distributionCanvas);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            
+            const ctx = distributionCanvas.getContext('2d');
+            this.charts.distribution = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Frequentie',
+                        data: [],
+                        backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.8),
+                        borderColor: Config.charts.colors.primary,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...this.defaultOptions,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'ROI Waarschijnlijkheidsverdeling'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Frequentie'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'ROI (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
     
     // Initialize waterfall chart
@@ -513,6 +566,13 @@ export class ChartManager {
             this.charts.monteCarlo.data.datasets = datasets;
             this.charts.monteCarlo.options.plugins.legend.display = true;
             this.charts.monteCarlo.update('none');
+        }
+
+        // Update distribution chart
+        if (this.charts.distribution) {
+            this.charts.distribution.data.labels = stats.histogramLabels;
+            this.charts.distribution.data.datasets[0].data = stats.histogram;
+            this.charts.distribution.update('none');
         }
     }
     
