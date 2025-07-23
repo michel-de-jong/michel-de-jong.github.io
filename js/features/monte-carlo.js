@@ -287,7 +287,7 @@ export class MonteCarloFeature {
                 isROI: false 
             },
             'mcLossProb': { value: stats.lossProb, isROI: false },
-            'mcVaR': { value: stats.vaR5, isROI: false, isCurrency: true }
+            'mcVaR': { value: stats.vaR5, isROI: false }
         };
         
         for (const [id, config] of Object.entries(elements)) {
