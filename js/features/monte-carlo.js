@@ -268,6 +268,13 @@ export class MonteCarloFeature {
             }
         });
 
+        // Debug log
+        console.log('Loss probability calculation:', {
+            totalResults: results.length,
+            negativeResults: results.filter(r => r.roi < 0).length,
+            lossProb: stats.lossProb
+        });
+        
         return stats;
     }
     
@@ -275,7 +282,6 @@ export class MonteCarloFeature {
         // Display numeric results
         const elements = {
             'mcMedianROI': { value: stats.median, isROI: true },
-            // Note: mcP5ROI and mcP95ROI don't exist in HTML, they're combined in mcConfidence
             'mcConfidence': { 
                 value: `${formatPercentage(stats.p5)} - ${formatPercentage(stats.p95)}`, 
                 isROI: false 
@@ -291,10 +297,10 @@ export class MonteCarloFeature {
                 let displayValue;
                 if (typeof config.value === 'string') {
                     displayValue = config.value; // Already formatted (for confidence interval)
+                } else if (config.isCurrency) {
+                    displayValue = `€${formatNumber(config.value)}`; // Remove the formatNumber's € sign
                 } else {
-                    displayValue = config.isCurrency ? 
-                        `€${formatNumber(config.value)}` : 
-                        formatPercentage(config.value);
+                    displayValue = formatPercentage(config.value);
                 }
                 
                 element.textContent = displayValue;
@@ -305,6 +311,14 @@ export class MonteCarloFeature {
                 }
             }
         }
+        
+        // Log values for debugging
+        console.log('Displaying values:', {
+            median: stats.median,
+            lossProb: stats.lossProb,
+            vaR5: stats.vaR5,
+            paths: stats.paths
+        });
     }
     
     getROIClass(roi) {

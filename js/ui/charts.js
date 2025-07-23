@@ -524,51 +524,45 @@ export class ChartManager {
     }
     
     // Update Monte Carlo charts
-    updateMonteCarloCharts(results) {
-        if (!results) return;
+    updateMonteCarloCharts(stats) {
+        if (!stats) return;
         
-        // Update distribution chart first (simpler)
-        if (this.charts.distribution && results.histogram && results.histogramLabels) {
-            this.charts.distribution.data.labels = results.histogramLabels;
-            this.charts.distribution.data.datasets[0].data = results.histogram;
-            this.charts.distribution.update('none');
-        }
-        
-        // Update Monte Carlo paths chart
-        if (this.charts.monteCarlo && results.percentiles && results.labels) {
-            const datasets = [];
-            
-            // Add percentile lines
-            datasets.push({
-                label: 'P95',
-                data: results.percentiles.p95,
-                borderColor: Config.charts.colors.success,
-                borderWidth: 3,
-                fill: false,
-                pointRadius: 0
-            });
-            
-            datasets.push({
-                label: 'P50 (Mediaan)',
-                data: results.percentiles.p50,
-                borderColor: Config.charts.colors.warning,
-                borderWidth: 3,
-                fill: false,
-                pointRadius: 0
-            });
-            
-            datasets.push({
-                label: 'P5',
-                data: results.percentiles.p5,
-                borderColor: Config.charts.colors.danger,
-                borderWidth: 3,
-                fill: false,
-                pointRadius: 0
-            });
-            
-            this.charts.monteCarlo.data.labels = results.labels;
+        // Update paths chart
+        if (this.charts.monteCarlo && stats.paths) {
+            const datasets = [
+                {
+                    label: 'P95',
+                    data: stats.paths.p95,
+                    borderColor: Config.charts.colors.success,
+                    borderWidth: 3,
+                    fill: false
+                },
+                {
+                    label: 'P50 (Mediaan)',
+                    data: stats.paths.p50,
+                    borderColor: Config.charts.colors.warning,
+                    borderWidth: 3,
+                    fill: false
+                },
+                {
+                    label: 'P5',
+                    data: stats.paths.p5,
+                    borderColor: Config.charts.colors.danger,
+                    borderWidth: 3,
+                    fill: false
+                }
+            ];
+
+            this.charts.monteCarlo.data.labels = stats.paths.labels;
             this.charts.monteCarlo.data.datasets = datasets;
             this.charts.monteCarlo.update('none');
+        }
+
+        // Update distribution chart
+        if (this.charts.distribution && stats.histogram) {
+            this.charts.distribution.data.labels = stats.histogramLabels;
+            this.charts.distribution.data.datasets[0].data = stats.histogram;
+            this.charts.distribution.update('none');
         }
     }
     
