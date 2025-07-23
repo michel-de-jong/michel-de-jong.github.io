@@ -527,20 +527,16 @@ export class ChartManager {
     updateMonteCarloCharts(results) {
         if (!results) return;
         
-        // Update paths chart
-        if (this.charts.monteCarlo) {
+        // Update distribution chart first (simpler)
+        if (this.charts.distribution && results.histogram && results.histogramLabels) {
+            this.charts.distribution.data.labels = results.histogramLabels;
+            this.charts.distribution.data.datasets[0].data = results.histogram;
+            this.charts.distribution.update('none');
+        }
+        
+        // Update Monte Carlo paths chart
+        if (this.charts.monteCarlo && results.percentiles && results.labels) {
             const datasets = [];
-            const numPathsToShow = Math.min(100, results.paths.length);
-            
-            for (let i = 0; i < numPathsToShow; i++) {
-                datasets.push({
-                    data: results.paths[i],
-                    borderColor: `rgba(30, 60, 114, ${0.1 + (i / numPathsToShow) * 0.2})`,
-                    borderWidth: 1,
-                    fill: false,
-                    pointRadius: 0
-                });
-            }
             
             // Add percentile lines
             datasets.push({
@@ -548,7 +544,8 @@ export class ChartManager {
                 data: results.percentiles.p95,
                 borderColor: Config.charts.colors.success,
                 borderWidth: 3,
-                fill: false
+                fill: false,
+                pointRadius: 0
             });
             
             datasets.push({
@@ -556,7 +553,8 @@ export class ChartManager {
                 data: results.percentiles.p50,
                 borderColor: Config.charts.colors.warning,
                 borderWidth: 3,
-                fill: false
+                fill: false,
+                pointRadius: 0
             });
             
             datasets.push({
@@ -564,20 +562,13 @@ export class ChartManager {
                 data: results.percentiles.p5,
                 borderColor: Config.charts.colors.danger,
                 borderWidth: 3,
-                fill: false
+                fill: false,
+                pointRadius: 0
             });
             
             this.charts.monteCarlo.data.labels = results.labels;
             this.charts.monteCarlo.data.datasets = datasets;
             this.charts.monteCarlo.update('none');
-        }
-        
-        // Update distribution chart
-        if (this.charts.distribution && results.finalValues) {
-            const histogramData = this.createHistogram(results.finalValues, 20);
-            this.charts.distribution.data.labels = histogramData.labels;
-            this.charts.distribution.data.datasets[0].data = histogramData.data;
-            this.charts.distribution.update('none');
         }
     }
     

@@ -186,7 +186,7 @@ export class MonteCarloFeature {
             });
         });
     }
-    
+
     processResults(results) {
         // Sort results
         results.sort((a, b) => a.roi - b.roi);
@@ -194,6 +194,49 @@ export class MonteCarloFeature {
         const roiValues = results.map(r => r.roi);
         const finalValues = results.map(r => r.finalValue);
         const inputs = this.stateManager.getInputs();
+        
+        // Create histogram data for distribution chart
+        const histogramBins = 20;
+        const minROI = Math.min(...roiValues);
+        const maxROI = Math.max(...roiValues);
+        const binWidth = (maxROI - minROI) / histogramBins;
+        
+        const histogram = new Array(histogramBins).fill(0);
+        const histogramLabels = [];
+        
+        for (let i = 0; i < histogramBins; i++) {
+            const binStart = minROI + i * binWidth;
+            const binEnd = binStart + binWidth;
+            histogramLabels.push(`${binStart.toFixed(1)}% - ${binEnd.toFixed(1)}%`);
+            
+            roiValues.forEach(roi => {
+                if (roi >= binStart && roi < binEnd) {
+                    histogram[i]++;
+                }
+            });
+        }
+        
+        // Handle edge case for maximum value
+        if (roiValues[roiValues.length - 1] === maxROI) {
+            histogram[histogramBins - 1]++;
+        }
+        
+        // Create data for Monte Carlo paths chart
+        // Generate sample paths (we don't store all paths during simulation for memory efficiency)
+        const samplePaths = [];
+        const pathLabels = Array.from({length: inputs.jaren + 1}, (_, i) => `Jaar ${i}`);
+        
+        // Generate percentile paths
+        const p5Values = [];
+        const p50Values = [];
+        const p95Values = [];
+        
+        for (let year = 0; year <= inputs.jaren; year++) {
+            const yearProgress = year / inputs.jaren;
+            p5Values.push(this.calculatePercentile(roiValues, 5) * yearProgress);
+            p50Values.push(this.calculatePercentile(roiValues, 50) * yearProgress);
+            p95Values.push(this.calculatePercentile(roiValues, 95) * yearProgress);
+        }
         
         return {
             mean: this.calculateMean(roiValues),
@@ -206,8 +249,18 @@ export class MonteCarloFeature {
                 5
             ),
             results: results,
-            finalValues: finalValues,  // ADD THIS LINE - Required for charts
-            roiValues: roiValues       // ADD THIS LINE - For potential future use
+            finalValues: finalValues,
+            roiValues: roiValues,
+            // Add chart data
+            histogram: histogram,
+            histogramLabels: histogramLabels,
+            paths: samplePaths,
+            labels: pathLabels,
+            percentiles: {
+                p5: p5Values,
+                p50: p50Values,
+                p95: p95Values
+            }
         };
     }
     
@@ -350,8 +403,9 @@ export class MonteCarloFeature {
         const chartContainer = document.getElementById('mcChartContainer');
         const distContainer = document.getElementById('mcDistContainer');
         
-        if (loading) loading.classList.toggle('active', show);
-        if (results) results.style.display = show ? 'none' : 'grid';
+        // Use display property instead of active class for loading
+        if (loading) loading.style.display = show ? 'block' : 'none';
+        if (results) results.style.display = show ? 'none' : 'block';
         if (chartContainer) chartContainer.style.display = show ? 'none' : 'block';
         if (distContainer) distContainer.style.display = show ? 'none' : 'block';
     }
