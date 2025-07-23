@@ -456,10 +456,6 @@ export class MonteCarloFeature {
     }
 }
 
-// Add single simulation method to Calculator
-// This extends the Calculator class to support Monte Carlo simulations
-import { Calculator } from '../core/calculator.js';
-
 if (typeof Calculator !== 'undefined') {
     Calculator.prototype.runMonteCarloSingle = function(volatility, renteVolatility, kostenVolatility) {
         const baseInputs = this.stateManager.getInputs();
