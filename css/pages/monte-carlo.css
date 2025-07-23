@@ -301,3 +301,51 @@
         font-size: 20px;
     }
 }
+
+/* Monte Carlo Chart Containers */
+.monte-carlo-charts {
+    margin-top: 40px;
+}
+
+.chart-container {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+}
+
+.chart-title {
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-title::before {
+    content: "📈";
+}
+
+/* Make sure the canvas takes full width of container */
+.chart-container canvas {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 300px;
+}
+
+/* Responsive adjustments for charts */
+@media (max-width: 768px) {
+    .chart-container {
+        padding: 15px;
+    }
+    
+    .chart-title {
+        font-size: 16px;
+    }
+    
+    .chart-container canvas {
+        min-height: 250px;
+    }
+}
