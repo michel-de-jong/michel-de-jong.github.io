@@ -275,19 +275,27 @@ export class MonteCarloFeature {
         // Display numeric results
         const elements = {
             'mcMedianROI': { value: stats.median, isROI: true },
-            'mcP5ROI': { value: stats.p5, isROI: true },
-            'mcP95ROI': { value: stats.p95, isROI: true },
+            // Note: mcP5ROI and mcP95ROI don't exist in HTML, they're combined in mcConfidence
+            'mcConfidence': { 
+                value: `${formatPercentage(stats.p5)} - ${formatPercentage(stats.p95)}`, 
+                isROI: false 
+            },
             'mcLossProb': { value: stats.lossProb, isROI: false },
-            'mcVaR5': { value: stats.vaR5, isROI: false, isCurrency: true }
+            'mcVaR': { value: stats.vaR5, isROI: false, isCurrency: true }
         };
         
         for (const [id, config] of Object.entries(elements)) {
             const element = document.getElementById(id);
             if (element) {
                 // Format the value appropriately
-                const displayValue = config.isCurrency ? 
-                    `€${formatNumber(config.value)}` : 
-                    formatPercentage(config.value);
+                let displayValue;
+                if (typeof config.value === 'string') {
+                    displayValue = config.value; // Already formatted (for confidence interval)
+                } else {
+                    displayValue = config.isCurrency ? 
+                        `€${formatNumber(config.value)}` : 
+                        formatPercentage(config.value);
+                }
                 
                 element.textContent = displayValue;
                 
