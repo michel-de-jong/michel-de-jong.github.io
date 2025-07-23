@@ -1,4 +1,4 @@
-// Monte Carlo Feature Module
+// Monte Carlo Feature Module - Updated with Professional Loading
 import { formatNumber, formatPercentage } from '../utils/format-utils.js';
 import { randomNormal } from '../utils/calculation-utils.js';
 
@@ -8,6 +8,8 @@ export class MonteCarloFeature {
         this.chartManager = chartManager;
         this.simulationResults = null;
         this.isRunning = false;
+        this.startTime = null;
+        this.progressTimer = null;
     }
     
     setupListeners(stateManager) {
@@ -67,10 +69,10 @@ export class MonteCarloFeature {
             this.updateVolatilityIndicator('mcVolatility', defaultVolatility);
         }
         
-        // Set default simulations - UPDATED DEFAULT FROM 10000 TO 1000
+        // Set default simulations
         const mcSimulations = document.getElementById('mcSimulations');
         if (mcSimulations && !mcSimulations.hasAttribute('data-user-modified')) {
-            mcSimulations.value = 1000;  // Changed from 10000 to 1000
+            mcSimulations.value = 1000;
             this.updateParameterScale('mcSimulations', 1000);
         }
     }
@@ -79,123 +81,104 @@ export class MonteCarloFeature {
         if (this.isRunning) return;
         
         this.isRunning = true;
+        this.startTime = Date.now();
         
-        // Show loading
-        this.showLoading(true);
+        // Show loading with total simulations
+        let numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 1000;
+        numSimulations = Math.max(10, Math.min(5000, numSimulations));
+        
+        this.showLoading(true, numSimulations);
         
         try {
             // Get parameters
-            let numSimulations = parseInt(document.getElementById('mcSimulations')?.value) || 1000;
-            // Ensure simulations are within new bounds
-            numSimulations = Math.max(10, Math.min(5000, numSimulations));
-            
             const volatility = parseFloat(document.getElementById('mcVolatility')?.value) / 100 || 0.03;
             const renteVolatility = parseFloat(document.getElementById('mcRenteVolatility')?.value) / 100 || 0.01;
             const kostenVolatility = parseFloat(document.getElementById('mcKostenVolatility')?.value) / 100 || 0.1;
-            // Update progress
-            this.updateProgress(0);
             
-            // Optimize batch size based on number of simulations
-            const batchSize = Math.min(2000, Math.max(500, Math.floor(numSimulations / 20)));
-            const batches = Math.ceil(numSimulations / batchSize);
-            let allResults = [];
+            // Initialize results
+            this.simulationResults = { results: [] };
             
-            for (let i = 0; i < batches; i++) {
+            // Run simulations in batches with progress updates
+            const batchSize = 50;
+            const totalBatches = Math.ceil(numSimulations / batchSize);
+            
+            for (let i = 0; i < totalBatches; i++) {
                 const batchStart = i * batchSize;
                 const batchEnd = Math.min((i + 1) * batchSize, numSimulations);
-                const batchSimulations = batchEnd - batchStart;
+                const batchCount = batchEnd - batchStart;
                 
+                // Run batch
                 const batchResults = await this.runBatch(
-                    batchSimulations,
-                    volatility,
-                    renteVolatility,
+                    batchCount, 
+                    volatility, 
+                    renteVolatility, 
                     kostenVolatility
                 );
                 
-                if (Array.isArray(batchResults)) {
-                    allResults = allResults.concat(batchResults);
-                }
+                this.simulationResults.results.push(...batchResults);
                 
                 // Update progress
-                const progress = ((i + 1) / batches) * 100;
-                this.updateProgress(progress);
+                const progress = (batchEnd / numSimulations) * 100;
+                this.updateProgress(progress, batchEnd, numSimulations);
                 
-                await new Promise(resolve => setTimeout(resolve, 5));
+                // Allow UI to update
+                await new Promise(resolve => setTimeout(resolve, 10));
             }
             
-            // Process results only if we have data
-            if (allResults && allResults.length > 0) {
-                const stats = this.processResults(allResults);
+            // Process results
+            const stats = this.processResults(this.simulationResults.results);
+            
+            if (stats) {
+                // Display results
+                this.displayResults(stats);
                 
-                // Validate stats object before updating UI
-                if (stats && 
-                    typeof stats === 'object' && 
-                    Array.isArray(stats.results) && 
-                    stats.results.length > 0) {
-                
-                    this.simulationResults = stats;
-                    this.displayResults(stats);
-                    
-                    // Only update charts if chartManager exists and has the required method
-                    if (this.chartManager && 
-                        typeof this.chartManager.updateMonteCarloCharts === 'function') {
-                        this.chartManager.updateMonteCarloCharts(stats);
-                    } else {
-                        console.warn('ChartManager not properly initialized');
-                    }
-                } else {
-                    console.warn('Invalid stats object generated');
+                // Update charts
+                if (this.chartManager && typeof this.chartManager.updateMonteCarloCharts === 'function') {
+                    this.chartManager.updateMonteCarloCharts(stats);
                 }
             }
         } catch (error) {
             console.error('Monte Carlo simulation error:', error);
         } finally {
-            // Always hide loading and reset state
+            // Hide loading and reset state
             this.showLoading(false);
             this.isRunning = false;
+            this.startTime = null;
         }
     }
     
     async runBatch(numSimulations, volatility, renteVolatility, kostenVolatility) {
         return new Promise(resolve => {
-            // Use requestAnimationFrame for better performance
             requestAnimationFrame(() => {
                 const results = [];
                 const baseInputs = this.stateManager.getInputs();
                 
-                // Process batch in chunks for better responsiveness
-                const chunkSize = 100;
-                for (let i = 0; i < numSimulations; i += chunkSize) {
-                    const end = Math.min(i + chunkSize, numSimulations);
-                    
-                    for (let j = i; j < end; j++) {
-                        const result = this.calculator.runMonteCarloSingle(
-                            volatility,
-                            renteVolatility,
-                            kostenVolatility
-                        );
-                        results.push({
-                            ...result,
-                            simulation: this.simulationResults ? 
-                                this.simulationResults.results.length + j + 1 : j + 1
-                        });
-                    }
+                for (let i = 0; i < numSimulations; i++) {
+                    const result = this.calculator.runMonteCarloSingle(
+                        volatility,
+                        renteVolatility,
+                        kostenVolatility
+                    );
+                    results.push({
+                        ...result,
+                        simulation: this.simulationResults.results.length + i + 1
+                    });
                 }
                 
                 resolve(results);
             });
         });
     }
-
+    
     processResults(results) {
-        // Sort results
+        // Sort results by ROI
         results.sort((a, b) => a.roi - b.roi);
         
         const roiValues = results.map(r => r.roi);
         const finalValues = results.map(r => r.finalValue);
         const inputs = this.stateManager.getInputs();
         
-        // Create histogram data for distribution chart
+        // Create histogram data
         const histogramBins = 20;
         const minROI = Math.min(...roiValues);
         const maxROI = Math.max(...roiValues);
@@ -221,12 +204,8 @@ export class MonteCarloFeature {
             histogram[histogramBins - 1]++;
         }
         
-        // Create data for Monte Carlo paths chart
-        // Generate sample paths (we don't store all paths during simulation for memory efficiency)
-        const samplePaths = [];
+        // Generate percentile paths for visualization
         const pathLabels = Array.from({length: inputs.jaren + 1}, (_, i) => `Jaar ${i}`);
-        
-        // Generate percentile paths
         const p5Values = [];
         const p50Values = [];
         const p95Values = [];
@@ -251,12 +230,10 @@ export class MonteCarloFeature {
             results: results,
             finalValues: finalValues,
             roiValues: roiValues,
-            // Add chart data
             histogram: histogram,
             histogramLabels: histogramLabels,
-            paths: samplePaths,
-            labels: pathLabels,
-            percentiles: {
+            paths: {
+                labels: pathLabels,
                 p5: p5Values,
                 p50: p50Values,
                 p95: p95Values
@@ -265,89 +242,49 @@ export class MonteCarloFeature {
     }
     
     displayResults(stats) {
-        // Update result values
+        // Display numeric results
         const elements = {
-            mcMedianROI: `${stats.median.toFixed(1)}%`,
-            mcConfidence: `${stats.p5.toFixed(1)}% - ${stats.p95.toFixed(1)}%`,
-            mcLossProb: `${stats.lossProb.toFixed(1)}%`,
-            mcVaR: formatNumber(stats.vaR5)
+            'mcMedianROI': formatPercentage(stats.median),
+            'mcP5ROI': formatPercentage(stats.p5),
+            'mcP95ROI': formatPercentage(stats.p95),
+            'mcLossProb': formatPercentage(stats.lossProb),
+            'mcVaR5': `€${formatNumber(stats.vaR5)}`
         };
         
-        Object.entries(elements).forEach(([id, value]) => {
+        for (const [id, value] of Object.entries(elements)) {
             const element = document.getElementById(id);
             if (element) {
                 element.textContent = value;
                 
-                // Add color coding
-                if (id === 'mcMedianROI') {
-                    element.className = 'result-value ' + this.getROIClass(stats.median);
-                } else if (id === 'mcLossProb') {
-                    element.className = 'result-value ' + this.getLossProbClass(stats.lossProb);
+                // Add color coding for ROI values
+                if (id.includes('ROI') && !id.includes('Loss')) {
+                    const numValue = parseFloat(stats[id.replace('mc', '').replace('ROI', '').toLowerCase()] || 0);
+                    element.className = 'result-value ' + this.getROIClass(numValue);
                 }
             }
-        });
-        
-        // Generate insights
-        this.displayInsights(stats);
+        }
     }
     
-    displayInsights(stats) {
-        const insights = [];
-        
-        // Loss probability insight
-        if (stats.lossProb < 5) {
-            insights.push({
-                type: 'success',
-                text: `Zeer lage kans op verlies (${stats.lossProb.toFixed(1)}%). Uw investering lijkt robuust.`
-            });
-        } else if (stats.lossProb > 20) {
-            insights.push({
-                type: 'warning',
-                text: `Significante kans op verlies (${stats.lossProb.toFixed(1)}%). Overweeg risicomitigatie.`
-            });
-        }
-        
-        // Confidence interval insight
-        const range = stats.p95 - stats.p5;
-        if (range > 50) {
-            insights.push({
-                type: 'info',
-                text: `Hoge spreiding in uitkomsten (${range.toFixed(1)}%). Resultaten zijn onzeker.`
-            });
-        }
-        
-        // Value at Risk insight
-        if (stats.vaR5 < -stats.mean * 0.5) {
-            insights.push({
-                type: 'danger',
-                text: `Value at Risk is significant. In 5% van de gevallen verliest u meer dan ${formatNumber(Math.abs(stats.vaR5))}.`
-            });
-        }
-        
-        // Display insights (if there's a container for them)
-        const insightsContainer = document.getElementById('mcInsights');
-        if (insightsContainer && insights.length > 0) {
-            insightsContainer.innerHTML = insights.map(insight => `
-                <div class="insight-card ${insight.type}">
-                    ${insight.text}
-                </div>
-            `).join('');
-        }
+    getROIClass(roi) {
+        if (roi >= 15) return 'excellent';
+        if (roi >= 10) return 'good';
+        if (roi >= 5) return 'moderate';
+        return 'poor';
     }
     
     updateVolatilityIndicator(inputId, value) {
-        const indicators = {
-            mcVolatility: { low: 2, medium: 5, high: 10 },
-            mcRenteVolatility: { low: 1, medium: 2, high: 3 },
-            mcKostenVolatility: { low: 10, medium: 20, high: 30 }
+        const numValue = parseFloat(value) || 0;
+        
+        // Define thresholds based on input type
+        const thresholds = {
+            mcVolatility: { low: 2, medium: 5 },
+            mcRenteVolatility: { low: 1, medium: 2 },
+            mcKostenVolatility: { low: 5, medium: 15 }
         };
         
-        const thresholds = indicators[inputId];
-        if (!thresholds) return;
-        
-        const numValue = parseFloat(value);
-        const level = numValue <= thresholds.low ? 'low' :
-                     numValue <= thresholds.medium ? 'medium' : 'high';
+        const inputThresholds = thresholds[inputId] || { low: 5, medium: 10 };
+        const level = numValue <= inputThresholds.low ? 'low' :
+                     numValue <= inputThresholds.medium ? 'medium' : 'high';
         
         // Update volatility bars
         const container = document.querySelector(`#${inputId}`).closest('.parameter-body');
@@ -384,115 +321,136 @@ export class MonteCarloFeature {
         }
     }
     
-    updateProgress(percentage) {
-        const progressElement = document.querySelector('.progress');
-        const progressFill = document.querySelector('.progress-fill');
-        
-        if (progressElement) {
-            progressElement.textContent = `${Math.round(percentage)}%`;
+    updateProgress(percentage, current, total) {
+        // Update percentage text
+        const percentElement = document.getElementById('mcProgressPercentage');
+        if (percentElement) {
+            percentElement.textContent = `${Math.round(percentage)}%`;
         }
         
-        if (progressFill) {
-            progressFill.style.width = `${percentage}%`;
+        // Update progress bar
+        const progressBar = document.getElementById('mcProgressBar');
+        if (progressBar) {
+            progressBar.style.width = `${percentage}%`;
+        }
+        
+        // Update simulation count
+        const countElement = document.getElementById('mcSimulationCount');
+        if (countElement) {
+            countElement.textContent = current;
+        }
+        
+        // Update elapsed time
+        if (this.startTime) {
+            const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+            const timeElement = document.getElementById('mcElapsedTime');
+            if (timeElement) {
+                timeElement.textContent = `${elapsed}s`;
+            }
         }
     }
     
-    showLoading(show) {
+    showLoading(show, totalSimulations = 1000) {
         const loading = document.getElementById('mcLoading');
         const results = document.getElementById('mcResults');
         const chartContainer = document.getElementById('mcChartContainer');
         const distContainer = document.getElementById('mcDistContainer');
         
-        // Use display property instead of active class for loading
-        if (loading) loading.style.display = show ? 'block' : 'none';
-        if (results) results.style.display = show ? 'none' : 'block';
-        if (chartContainer) chartContainer.style.display = show ? 'none' : 'block';
-        if (distContainer) distContainer.style.display = show ? 'none' : 'block';
+        if (show) {
+            // Show loading using CSS class
+            if (loading) loading.classList.add('active');
+            if (results) results.style.display = 'none';
+            if (chartContainer) chartContainer.style.display = 'none';
+            if (distContainer) distContainer.style.display = 'none';
+            
+            // Set total simulations
+            const totalElement = document.getElementById('mcTotalSimulations');
+            if (totalElement) totalElement.textContent = totalSimulations;
+            
+            // Reset progress
+            this.updateProgress(0, 0, totalSimulations);
+            
+            // Start progress timer
+            this.startProgressTimer();
+        } else {
+            // Hide loading using CSS class
+            if (loading) loading.classList.remove('active');
+            if (results) results.style.display = 'block';
+            if (chartContainer) chartContainer.style.display = 'block';
+            if (distContainer) distContainer.style.display = 'block';
+            
+            // Stop progress timer
+            this.stopProgressTimer();
+        }
     }
     
-    getROIClass(roi) {
-        if (roi > 20) return 'excellent';
-        if (roi > 10) return 'good';
-        if (roi > 0) return 'moderate';
-        return 'poor';
+    startProgressTimer() {
+        // Update elapsed time every 100ms
+        this.progressTimer = setInterval(() => {
+            if (this.startTime) {
+                const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+                const timeElement = document.getElementById('mcElapsedTime');
+                if (timeElement) {
+                    timeElement.textContent = `${elapsed}s`;
+                }
+            }
+        }, 100);
     }
     
-    getLossProbClass(prob) {
-        if (prob < 5) return 'excellent';
-        if (prob < 10) return 'good';
-        if (prob < 20) return 'moderate';
-        return 'poor';
+    stopProgressTimer() {
+        if (this.progressTimer) {
+            clearInterval(this.progressTimer);
+            this.progressTimer = null;
+        }
     }
     
-    // Statistics helpers
-    calculateMean(arr) {
-        return arr.reduce((a, b) => a + b, 0) / arr.length;
+    // Statistical calculation methods
+    calculateMean(values) {
+        return values.reduce((sum, val) => sum + val, 0) / values.length;
     }
     
-    calculateMedian(arr) {
-        const mid = Math.floor(arr.length / 2);
-        return arr.length % 2 !== 0
-            ? arr[mid]
-            : (arr[mid - 1] + arr[mid]) / 2;
+    calculateMedian(values) {
+        const mid = Math.floor(values.length / 2);
+        return values.length % 2 === 0 ? 
+            (values[mid - 1] + values[mid]) / 2 : 
+            values[mid];
     }
     
-    calculatePercentile(arr, p) {
-        const index = (p / 100) * (arr.length - 1);
+    calculatePercentile(values, percentile) {
+        const index = (percentile / 100) * (values.length - 1);
         const lower = Math.floor(index);
         const upper = Math.ceil(index);
         const weight = index % 1;
-        return arr[lower] * (1 - weight) + arr[upper] * weight;
+        
+        return lower === upper ? 
+            values[lower] : 
+            values[lower] * (1 - weight) + values[upper] * weight;
     }
     
-    // Export results
+    // Export results for reporting
     exportResults() {
-        if (!this.simulationResults) return null;
+        if (!this.simulationResults || !this.simulationResults.results.length) {
+            return null;
+        }
+        
+        const stats = this.processResults(this.simulationResults.results);
         
         return {
-            statistics: {
-                mean: this.simulationResults.mean,
-                median: this.simulationResults.median,
-                p5: this.simulationResults.p5,
-                p95: this.simulationResults.p95,
-                lossProb: this.simulationResults.lossProb,
-                vaR5: this.simulationResults.vaR5
-            },
             parameters: {
-                simulations: document.getElementById('mcSimulations')?.value,
-                volatility: document.getElementById('mcVolatility')?.value,
-                renteVolatility: document.getElementById('mcRenteVolatility')?.value,
-                kostenVolatility: document.getElementById('mcKostenVolatility')?.value
-            }
+                simulations: this.simulationResults.results.length,
+                volatility: document.getElementById('mcVolatility')?.value || 0,
+                renteVolatility: document.getElementById('mcRenteVolatility')?.value || 0,
+                kostenVolatility: document.getElementById('mcKostenVolatility')?.value || 0
+            },
+            results: {
+                median: stats.median,
+                mean: stats.mean,
+                p5: stats.p5,
+                p95: stats.p95,
+                lossProb: stats.lossProb,
+                vaR5: stats.vaR5
+            },
+            raw: this.simulationResults.results
         };
     }
-}
-
-// Add single simulation method to Calculator
-// This extends the Calculator class to support Monte Carlo simulations
-import { Calculator } from '../core/calculator.js';
-
-if (typeof Calculator !== 'undefined') {
-    Calculator.prototype.runMonteCarloSingle = function(volatility, renteVolatility, kostenVolatility) {
-        const baseInputs = this.stateManager.getInputs();
-        
-        // Generate random variations
-        const rendementVariation = randomNormal() * volatility;
-        const renteVariation = randomNormal() * renteVolatility;
-        const kostenVariation = randomNormal() * kostenVolatility;
-        
-        const scenarioInputs = {
-            ...baseInputs,
-            rendement: baseInputs.rendement + (rendementVariation * 100),
-            renteLening: Math.max(0, baseInputs.renteLening + (renteVariation * 100)),
-            vasteKosten: Math.max(0, baseInputs.vasteKosten * (1 + kostenVariation))
-        };
-        
-        // Quick calculation without full state update
-        const results = this.calculate(scenarioInputs);
-        
-        return {
-            roi: results.finalROI,
-            finalValue: results.finalVermogen
-        };
-    };
 }

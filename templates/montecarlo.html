@@ -84,16 +84,29 @@
     </div>
     
     <div class="loading" id="mcLoading">
-        <div class="loading-animation">
-            <div class="dice-animation">
-                <span class="dice">🎲</span>
-                <span class="dice">🎲</span>
-                <span class="dice">🎲</span>
-            </div>
+        <div class="loading-header">
+            <h3 class="loading-title">
+                <span class="loading-icon">⚙️</span>
+                Monte Carlo Simulatie
+            </h3>
+            <p class="loading-subtitle">Analyseren van duizenden scenario's...</p>
         </div>
-        <p>Simulatie wordt uitgevoerd... <span class="progress">0%</span></p>
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
+        
+        <div class="progress-percentage" id="mcProgressPercentage">0%</div>
+        
+        <div class="professional-progress-container">
+            <div class="professional-progress-bar" id="mcProgressBar"></div>
+        </div>
+        
+        <div class="progress-details">
+            <div class="progress-detail">
+                <span>🔄</span>
+                <span>Simulaties: <strong id="mcSimulationCount">0</strong> / <strong id="mcTotalSimulations">1000</strong></span>
+            </div>
+            <div class="progress-detail">
+                <span>⏱️</span>
+                <span>Tijd: <strong id="mcElapsedTime">0s</strong></span>
+            </div>
         </div>
     </div>
     
