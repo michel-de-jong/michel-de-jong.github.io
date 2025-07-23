@@ -2,6 +2,7 @@
     <h2>💧 Cashflow Waterfall Analyse</h2>
     <p class="tab-description">Gedetailleerd overzicht van alle geldstromen per periode met visuele breakdown</p>
     
+    <!-- Controls Section -->
     <div class="waterfall-controls">
         <div class="period-selector-group">
             <label for="waterfallPeriod">
@@ -9,7 +10,12 @@
                 Selecteer Periode:
             </label>
             <select id="waterfallPeriod" class="period-select">
-                <!-- Dynamically populated -->
+                <option value="totaal">Totale Periode</option>
+                <option value="jaar1">Jaar 1</option>
+                <option value="jaar2">Jaar 2</option>
+                <option value="jaar3">Jaar 3</option>
+                <option value="jaar4">Jaar 4</option>
+                <option value="jaar5">Jaar 5</option>
             </select>
             <button class="btn btn-sm btn-secondary" id="comparePeriodsBtn">
                 <span class="btn-icon">📊</span>
@@ -26,6 +32,7 @@
         </div>
     </div>
     
+    <!-- Summary Cards -->
     <div class="waterfall-summary">
         <div class="summary-card positive">
             <div class="summary-icon">📈</div>
@@ -64,10 +71,12 @@
         </div>
     </div>
     
+    <!-- Main Waterfall Chart -->
     <div class="chart-container tall mt-4">
         <canvas id="waterfallChart"></canvas>
     </div>
     
+    <!-- Analysis Section -->
     <div class="waterfall-analysis mt-4">
         <h3>📊 Cashflow Breakdown</h3>
         <div class="analysis-tabs">
@@ -77,6 +86,7 @@
         </div>
         
         <div class="analysis-content" id="analysisContent">
+            <!-- Components Table (default view) -->
             <div class="table-wrapper">
                 <table class="cashflow-table">
                     <thead>
@@ -96,6 +106,7 @@
         </div>
     </div>
     
+    <!-- Insights Section -->
     <div class="waterfall-insights mt-4">
         <h3>💡 Inzichten & Aanbevelingen</h3>
         <div id="waterfallInsights" class="insights-grid">
@@ -103,6 +114,7 @@
         </div>
     </div>
     
+    <!-- Mobile Hint -->
     <div class="mobile-table-hint mt-2">
         💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
     </div>

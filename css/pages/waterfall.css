@@ -1,4 +1,15 @@
-/* Waterfall Page Specific Styles */
+/* ===================================
+   WATERFALL TAB STYLES
+   Professional Cashflow Waterfall Analysis
+   =================================== */
+
+/* Tab Description */
+.tab-description {
+    color: #6c757d;
+    font-size: 16px;
+    margin-bottom: 30px;
+    text-align: center;
+}
 
 /* Waterfall Controls */
 .waterfall-controls {
@@ -31,6 +42,10 @@
     gap: 8px;
 }
 
+.label-icon {
+    font-size: 20px;
+}
+
 .period-select {
     padding: 10px 15px;
     border: 2px solid #dee2e6;
@@ -43,22 +58,130 @@
 }
 
 .period-select:hover {
-    border-color: var(--primary-color);
+    border-color: #1e3c72;
 }
 
 .period-select:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: #1e3c72;
     box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
 }
 
+#comparePeriodsBtn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#comparePeriodsBtn:hover {
+    background: #5a6268;
+}
+
+.btn-icon {
+    font-size: 16px;
+}
+
+/* View Toggle */
 .view-toggle {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-/* Summary Content */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #1e3c72;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Summary Cards */
+.waterfall-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.summary-card.positive {
+    border-left: 4px solid #28a745;
+}
+
+.summary-card.negative {
+    border-left: 4px solid #dc3545;
+}
+
+.summary-card.primary {
+    border-left: 4px solid #1e3c72;
+}
+
+.summary-card.info {
+    border-left: 4px solid #17a2b8;
+}
+
 .summary-icon {
     font-size: 32px;
     line-height: 1;
@@ -89,6 +212,31 @@
     line-height: 1.4;
 }
 
+/* Chart Container */
+.chart-container.tall {
+    height: 500px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+/* Analysis Section */
+.waterfall-analysis {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.waterfall-analysis h3 {
+    color: #1e3c72;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Analysis Tabs */
 .analysis-tabs {
     display: flex;
@@ -97,23 +245,131 @@
     border-bottom: 2px solid #e9ecef;
 }
 
-/* Waterfall Insights */
-.waterfall-insights {
-    margin-top: 30px;
+.analysis-tab {
+    background: transparent;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
 }
 
-.waterfall-insights h3 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.analysis-tab:hover {
+    color: #1e3c72;
 }
 
-/* Trends */
+.analysis-tab.active {
+    color: #1e3c72;
+    border-bottom-color: #1e3c72;
+}
+
+/* Table Wrapper */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+/* Cashflow Table */
+.cashflow-table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.cashflow-table thead {
+    background: #f8f9fa;
+}
+
+.cashflow-table th,
+.cashflow-table td {
+    padding: 12px 15px;
+    text-align: right;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.cashflow-table th {
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.cashflow-table th:first-child,
+.cashflow-table td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #212529;
+}
+
+.cashflow-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.cashflow-table td.positive {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.cashflow-table td.negative {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Impact Bar */
+.impact-bar {
+    width: 80px;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-left: auto;
+}
+
+.impact-bar-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.impact-bar-fill.positive {
+    background: #28a745;
+}
+
+.impact-bar-fill.negative {
+    background: #dc3545;
+}
+
+/* Trends Grid */
+.trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.trend-card {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+}
+
 .trend-card h4 {
-    color: var(--primary-color);
+    color: #1e3c72;
     margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.trend-card p {
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-size: 14px;
 }
 
 .trend-stats {
@@ -122,9 +378,11 @@
 
 .trend-stats div {
     padding: 8px 0;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid #dee2e6;
     font-size: 14px;
     color: #495057;
+    display: flex;
+    justify-content: space-between;
 }
 
 .trend-stats div:last-child {
@@ -134,13 +392,33 @@
 /* Ratios Analysis */
 .ratios-analysis {
     background: #f8f9fa;
-    padding: 20px;
+    padding: 25px;
     border-radius: 10px;
 }
 
 .ratios-analysis h4 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
+    color: #1e3c72;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.ratios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.ratio-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.ratio-card:hover {
+    transform: translateY(-2px);
 }
 
 .ratio-label {
@@ -154,7 +432,7 @@
 .ratio-value {
     font-size: 28px;
     font-weight: 700;
-    color: var(--primary-color);
+    color: #1e3c72;
     margin-bottom: 8px;
 }
 
@@ -164,7 +442,73 @@
     line-height: 1.4;
 }
 
-/* Responsive waterfall page */
+/* Insights Section */
+.waterfall-insights {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.waterfall-insights h3 {
+    color: #1e3c72;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.insight-card {
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.insight-card.success {
+    background: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.insight-card.warning {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.insight-card.danger {
+    background: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.insight-card.info {
+    background: #d1ecf1;
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* Mobile Table Hint */
+.mobile-table-hint {
+    display: none;
+    background: #e3f2fd;
+    color: #1565c0;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 15px;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
     .waterfall-controls {
         flex-direction: column;
@@ -181,7 +525,7 @@
     .period-select {
         width: 100%;
         padding: 12px 15px;
-        font-size: 16px; /* Prevent zoom on iOS */
+        font-size: 16px;
     }
     
     #comparePeriodsBtn {
@@ -196,6 +540,16 @@
         padding: 10px;
         background: #f8f9fa;
         border-radius: 8px;
+    }
+    
+    .waterfall-summary {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .summary-card {
+        padding: 15px;
+        gap: 12px;
     }
     
     .summary-icon {
@@ -217,9 +571,19 @@
         line-height: 1.3;
     }
     
-    .waterfall-insights h3 {
+    .chart-container.tall {
+        height: 400px;
+        padding: 15px;
+    }
+    
+    .waterfall-analysis {
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .waterfall-analysis h3 {
         font-size: 1.1em;
-        margin-bottom: 12px;
+        margin-bottom: 15px;
     }
     
     .analysis-tabs {
@@ -237,6 +601,54 @@
         min-width: fit-content;
     }
     
+    .cashflow-table {
+        min-width: 600px;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .cashflow-table th:first-child,
+    .cashflow-table td:first-child {
+        min-width: 120px;
+        font-size: 13px;
+    }
+    
+    .impact-bar {
+        width: 60px;
+        height: 16px;
+    }
+    
+    .trends-grid {
+        gap: 15px;
+    }
+    
+    .trend-card {
+        padding: 15px;
+    }
+    
+    .trend-card h4 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .trend-card p {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+    
+    .trend-stats div {
+        padding: 6px 0;
+        font-size: 13px;
+    }
+    
+    #trendChart {
+        height: 150px !important;
+    }
+    
     .ratios-analysis {
         padding: 15px;
     }
@@ -246,7 +658,140 @@
         margin-bottom: 15px;
     }
     
+    .ratios-grid {
+        gap: 10px;
+    }
+    
+    .ratio-card {
+        padding: 12px;
+    }
+    
+    .ratio-label {
+        font-size: 11px;
+        margin-bottom: 5px;
+        line-height: 1.2;
+    }
+    
     .ratio-value {
         font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .ratio-description {
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    
+    .waterfall-insights {
+        margin-top: 20px;
+    }
+    
+    .waterfall-insights h3 {
+        font-size: 1.1em;
+        margin-bottom: 12px;
+    }
+    
+    .insights-grid {
+        gap: 10px;
+    }
+    
+    .insight-card {
+        padding: 12px;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+    
+    .mobile-table-hint {
+        display: block;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+    .waterfall-controls {
+        padding: 12px;
+    }
+    
+    .period-select {
+        padding: 10px 12px;
+    }
+    
+    .summary-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .summary-icon {
+        font-size: 20px;
+    }
+    
+    .summary-value {
+        font-size: 16px;
+    }
+    
+    .summary-detail {
+        font-size: 10px;
+    }
+    
+    .analysis-tab {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .cashflow-table {
+        min-width: 500px;
+    }
+    
+    .cashflow-table th,
+    .cashflow-table td {
+        padding: 8px 6px;
+        font-size: 11px;
+    }
+    
+    .ratios-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ratio-card {
+        padding: 15px;
+    }
+    
+    .ratio-value {
+        font-size: 24px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .waterfall-controls {
+        display: none;
+    }
+    
+    .waterfall-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        page-break-inside: avoid;
+    }
+    
+    .summary-card {
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .chart-container.tall {
+        height: 400px;
+        page-break-inside: avoid;
+    }
+    
+    .waterfall-analysis {
+        page-break-inside: avoid;
+    }
+    
+    .cashflow-table {
+        font-size: 10pt;
+    }
+    
+    .mobile-table-hint {
+        display: none;
     }
 }

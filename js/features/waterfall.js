@@ -1,25 +1,21 @@
 // Waterfall Feature Module
-import { formatNumber } from '../utils/format-utils.js';
-
 export class WaterfallFeature {
     constructor(calculator, chartManager) {
         this.calculator = calculator;
         this.chartManager = chartManager;
         this.currentPeriod = 'totaal';
-        this.showPercentages = false;
+        this.showAsPercentage = false;
+        this.waterfallChart = null;
+        this.trendChart = null;
     }
     
-    setupListeners(stateManager) {
-        this.stateManager = stateManager;
-        
-        // Wait for DOM to be ready
-        setTimeout(() => {
-            this.attachEventListeners();
-        }, 100);
+    init() {
+        this.setupEventHandlers();
+        this.populatePeriodSelector();
+        this.update();
     }
     
-    attachEventListeners() {
-        // Period selector
+    setupEventHandlers() {
         const periodSelect = document.getElementById('waterfallPeriod');
         if (periodSelect) {
             periodSelect.addEventListener('change', (e) => {
@@ -28,79 +24,83 @@ export class WaterfallFeature {
             });
         }
         
-        // View toggle
         const viewToggle = document.getElementById('waterfallViewToggle');
         if (viewToggle) {
             viewToggle.addEventListener('change', (e) => {
-                this.showPercentages = e.target.checked;
+                this.showAsPercentage = e.target.checked;
                 this.update();
             });
         }
         
-        // Compare button
         const compareBtn = document.getElementById('comparePeriodsBtn');
         if (compareBtn) {
             compareBtn.addEventListener('click', () => this.comparePeriods());
         }
         
-        // Analysis tabs
+        // Analysis tab handlers
         document.querySelectorAll('.analysis-tab').forEach(tab => {
             tab.addEventListener('click', (e) => this.switchAnalysisTab(e.target));
         });
     }
     
-    activate() {
-        // Initialize chart if needed
-        if (!this.chartManager.charts.waterfall) {
-            const canvas = document.getElementById('waterfallChart');
-            if (canvas) {
-                this.chartManager.initWaterfallChart();
-            }
+    populatePeriodSelector() {
+        const select = document.getElementById('waterfallPeriod');
+        if (!select) return;
+        
+        // Get investment duration from calculator
+        const years = this.calculator?.inputs?.jaren || 5;
+        
+        select.innerHTML = '<option value="totaal">Totale Periode</option>';
+        
+        for (let i = 1; i <= years; i++) {
+            select.innerHTML += `<option value="jaar${i}">Jaar ${i}</option>`;
         }
-        
-        // Populate period selector
-        this.populatePeriods();
-        
-        // Initial update
+    }
+    
+    updateWithResults(results) {
         this.update();
     }
     
-    populatePeriods() {
-        const periodSelect = document.getElementById('waterfallPeriod');
-        if (!periodSelect || periodSelect.options.length > 0) return;
-        
-        const looptijd = this.stateManager.getInput('looptijd') || 10;
-        let html = '<option value="totaal">Totale Periode</option>';
-        
-        for (let i = 1; i <= looptijd; i++) {
-            html += `<option value="jaar${i}">Jaar ${i}</option>`;
-        }
-        
-        periodSelect.innerHTML = html;
-        periodSelect.value = this.currentPeriod;
-    }
-    
     update() {
-        const waterfallData = this.calculator.getWaterfallData(this.currentPeriod);
+        const waterfallData = this.getWaterfallData(this.currentPeriod);
         
-        if (waterfallData.totals) {
-            // Update summary cards
+        if (waterfallData && waterfallData.totals) {
             this.updateSummaryCards(waterfallData.totals);
-            
-            // Update chart - check if method exists before calling
-            if (this.chartManager && typeof this.chartManager.updateWaterfallChart === 'function') {
-                this.chartManager.updateWaterfallChart(waterfallData);
-            } else {
-                // Fallback: Update chart manually if method doesn't exist
-                this.updateWaterfallChartFallback(waterfallData);
-            }
-            
-            // Update table
+            this.updateWaterfallChart(waterfallData);
             this.updateTable(waterfallData);
-            
-            // Generate insights
             this.generateInsights(waterfallData);
         }
+    }
+    
+    getWaterfallData(period) {
+        // Mock data for demonstration - replace with actual calculator data
+        const mockData = {
+            data: [
+                { label: 'Start Kapitaal', value: 100000, type: 'start' },
+                { label: 'Lening', value: 50000, type: 'positive' },
+                { label: 'Bruto Rendement', value: 15000, type: 'positive' },
+                { label: 'Belasting', value: -3750, type: 'negative' },
+                { label: 'Rente Kosten', value: -2500, type: 'negative' },
+                { label: 'Aflossingen', value: -10000, type: 'negative' },
+                { label: 'Vaste Kosten', value: -1200, type: 'negative' },
+                { label: 'Eindwaarde', value: 147550, type: 'total' }
+            ],
+            totals: {
+                bruttoOpbrengst: 15000,
+                belasting: 3750,
+                rente: 2500,
+                aflossing: 10000,
+                kosten: 1200
+            },
+            period: period
+        };
+        
+        // Try to get real data from calculator if available
+        if (this.calculator && typeof this.calculator.getWaterfallData === 'function') {
+            return this.calculator.getWaterfallData(period);
+        }
+        
+        return mockData;
     }
     
     updateSummaryCards(totals) {
@@ -112,54 +112,144 @@ export class WaterfallFeature {
         const cashflowRatio = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
         const belastingTarief = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
         
-        // Update summary elements
-        const elements = {
-            wfTotaleInkomsten: formatNumber(bruttoInkomsten),
-            wfInkomstenDetail: `Bruto: ${formatNumber(bruttoInkomsten)} | Belasting: ${formatNumber(belasting)}`,
-            wfTotaleUitgaven: formatNumber(uitgaven),
-            wfUitgavenDetail: `Rente: ${formatNumber(totals.rente || 0)} | Aflossing: ${formatNumber(totals.aflossing || 0)} | Kosten: ${formatNumber(totals.kosten || 0)}`,
-            wfNettoCashflow: formatNumber(netto),
-            wfCashflowDetail: `${cashflowRatio.toFixed(1)}% van bruto inkomsten`,
-            wfBelastingTarief: `${belastingTarief.toFixed(1)}%`,
-            wfBelastingDetail: 'Op bruto rendement'
-        };
+        // Update DOM elements
+        this.updateElement('wfTotaleInkomsten', this.formatCurrency(nettoInkomsten));
+        this.updateElement('wfInkomstenDetail', `Bruto: ${this.formatCurrency(bruttoInkomsten)} | Belasting: ${this.formatCurrency(belasting)}`);
         
-        Object.entries(elements).forEach(([id, value]) => {
-            const element = document.getElementById(id);
-            if (element) element.textContent = value;
+        this.updateElement('wfTotaleUitgaven', this.formatCurrency(uitgaven));
+        this.updateElement('wfUitgavenDetail', `Rente: ${this.formatCurrency(totals.rente || 0)} | Aflossing: ${this.formatCurrency(totals.aflossing || 0)} | Kosten: ${this.formatCurrency(totals.kosten || 0)}`);
+        
+        this.updateElement('wfNettoCashflow', this.formatCurrency(netto));
+        this.updateElement('wfCashflowDetail', `${cashflowRatio.toFixed(1)}% van bruto inkomsten`);
+        
+        this.updateElement('wfBelastingTarief', `${belastingTarief.toFixed(1)}%`);
+        this.updateElement('wfBelastingDetail', 'Op bruto rendement');
+    }
+    
+    updateWaterfallChart(waterfallData) {
+        const ctx = document.getElementById('waterfallChart');
+        if (!ctx) return;
+        
+        // Prepare data for Chart.js waterfall visualization
+        const labels = [];
+        const data = [];
+        const backgroundColors = [];
+        const borderColors = [];
+        let cumulative = 0;
+        
+        waterfallData.data.forEach((item, index) => {
+            labels.push(item.label);
+            
+            if (item.type === 'start') {
+                data.push([0, item.value]);
+                cumulative = item.value;
+                backgroundColors.push('rgba(30, 60, 114, 0.8)');
+                borderColors.push('#1e3c72');
+            } else if (item.type === 'total') {
+                data.push([0, cumulative]);
+                backgroundColors.push('rgba(30, 60, 114, 1)');
+                borderColors.push('#1e3c72');
+            } else if (item.value >= 0) {
+                data.push([cumulative, cumulative + item.value]);
+                cumulative += item.value;
+                backgroundColors.push('rgba(40, 167, 69, 0.8)');
+                borderColors.push('#28a745');
+            } else {
+                data.push([cumulative + item.value, cumulative]);
+                cumulative += item.value;
+                backgroundColors.push('rgba(220, 53, 69, 0.8)');
+                borderColors.push('#dc3545');
+            }
         });
+        
+        // Create or update chart
+        if (this.waterfallChart) {
+            this.waterfallChart.data.labels = labels;
+            this.waterfallChart.data.datasets[0].data = data;
+            this.waterfallChart.data.datasets[0].backgroundColor = backgroundColors;
+            this.waterfallChart.data.datasets[0].borderColor = borderColors;
+            this.waterfallChart.update();
+        } else {
+            this.waterfallChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Cashflow Waterfall - ${this.getPeriodName(waterfallData.period)}`,
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.parsed.y;
+                                    const start = context.parsed.x || 0;
+                                    const diff = value - start;
+                                    return `${this.formatCurrency(Math.abs(diff))}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (value) => this.formatCurrency(value)
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
     
     updateTable(waterfallData) {
         const tbody = document.getElementById('waterfallTableBody');
-        if (!tbody || !waterfallData.data.length) return;
+        if (!tbody) return;
+        
+        const totals = waterfallData.totals;
+        const bruttoInkomsten = totals.bruttoOpbrengst || 1;
+        const finalValue = waterfallData.data[waterfallData.data.length - 1].value;
         
         let html = '';
-        let cumulative = 0;
-        const totalBruto = waterfallData.totals?.bruttoOpbrengst || 0;
-        const finalValue = waterfallData.finalValue || 0;
         
-        waterfallData.data.forEach((item) => {
-            if (item.type === 'start') {
-                cumulative = item.value;
-            } else if (item.type !== 'total') {
-                cumulative += item.value;
-            }
+        waterfallData.data.forEach(item => {
+            if (item.type === 'start' || item.type === 'total') return;
             
-            // Calculate percentages
-            const percentageOfBruto = totalBruto !== 0 ? Math.abs(item.value / totalBruto * 100) : 0;
-            const percentageOfFinal = finalValue !== 0 ? Math.abs(item.value / finalValue * 100) : 0;
+            const absValue = Math.abs(item.value);
+            const percentageOfBruto = (absValue / bruttoInkomsten) * 100;
+            const percentageOfFinal = (absValue / finalValue) * 100;
             
-            // Create impact bar
-            const impactBar = item.type !== 'start' && item.type !== 'total' ? 
-                `<div class="impact-bar">
-                    <div class="impact-fill ${item.value < 0 ? 'negative' : 'positive'}" 
-                         style="width: ${Math.min(percentageOfBruto, 100)}%"></div>
-                </div>` : '-';
+            const impactWidth = Math.min(percentageOfBruto, 100);
+            const impactBar = `
+                <div class="impact-bar">
+                    <div class="impact-bar-fill ${item.value >= 0 ? 'positive' : 'negative'}" 
+                         style="width: ${impactWidth}%"></div>
+                </div>
+            `;
             
-            const valueDisplay = this.showPercentages && item.type !== 'start' && item.type !== 'total'
-                ? `${percentageOfBruto.toFixed(1)}%`
-                : formatNumber(item.value);
+            const valueDisplay = this.showAsPercentage ? 
+                `${percentageOfBruto.toFixed(1)}%` : 
+                this.formatCurrency(item.value);
             
             html += `
                 <tr>
@@ -167,8 +257,8 @@ export class WaterfallFeature {
                     <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">
                         ${valueDisplay}
                     </td>
-                    <td>${item.type !== 'start' && item.type !== 'total' ? percentageOfBruto.toFixed(1) + '%' : '-'}</td>
-                    <td>${item.type !== 'start' && item.type !== 'total' ? percentageOfFinal.toFixed(1) + '%' : '-'}</td>
+                    <td>${percentageOfBruto.toFixed(1)}%</td>
+                    <td>${percentageOfFinal.toFixed(1)}%</td>
                     <td>${impactBar}</td>
                 </tr>
             `;
@@ -266,7 +356,7 @@ export class WaterfallFeature {
                     this.showRatiosAnalysis(container);
                     break;
                 default:
-                    // Components view is default - refresh table
+                    // Components view is default
                     this.update();
                     break;
             }
@@ -274,14 +364,13 @@ export class WaterfallFeature {
     }
     
     showTrendsAnalysis(container) {
-        const monthlyData = this.calculator.data.monthlyData;
-        if (!monthlyData || monthlyData.length === 0) {
-            container.innerHTML = '<p>Geen trend data beschikbaar.</p>';
-            return;
-        }
-        
-        // Calculate quarterly trends
-        const quarters = this.calculateQuarterlyData(monthlyData);
+        // Mock quarterly data - replace with actual calculator data
+        const quarters = [
+            { quarter: 1, bruto: 3750, netto: 2100 },
+            { quarter: 2, bruto: 3750, netto: 2200 },
+            { quarter: 3, bruto: 3750, netto: 2300 },
+            { quarter: 4, bruto: 3750, netto: 2400 }
+        ];
         
         container.innerHTML = `
             <div class="trends-grid">
@@ -294,7 +383,10 @@ export class WaterfallFeature {
                     <h4>📊 Cashflow Ontwikkeling</h4>
                     <div class="trend-stats">
                         ${quarters.map(q => `
-                            <div>Q${q.quarter}: ${formatNumber(q.netto)}</div>
+                            <div>
+                                <span>Q${q.quarter}</span>
+                                <span>${this.formatCurrency(q.netto)}</span>
+                            </div>
                         `).join('')}
                     </div>
                 </div>
@@ -306,7 +398,7 @@ export class WaterfallFeature {
     }
     
     showRatiosAnalysis(container) {
-        const waterfallData = this.calculator.getWaterfallData('totaal');
+        const waterfallData = this.getWaterfallData('totaal');
         const totals = waterfallData.totals;
         
         if (!totals) {
@@ -330,24 +422,6 @@ export class WaterfallFeature {
                 </div>
             </div>
         `;
-    }
-    
-    calculateQuarterlyData(monthlyData) {
-        const quarters = [];
-        
-        for (let i = 0; i < monthlyData.length; i += 3) {
-            const quarterData = monthlyData.slice(i, Math.min(i + 3, monthlyData.length));
-            const avgBruto = quarterData.reduce((sum, m) => sum + m.bruttoOpbrengst, 0) / quarterData.length;
-            const avgNetto = quarterData.reduce((sum, m) => sum + m.netto, 0) / quarterData.length;
-            
-            quarters.push({
-                quarter: Math.floor(i / 3) + 1,
-                bruto: avgBruto,
-                netto: avgNetto
-            });
-        }
-        
-        return quarters;
     }
     
     calculateRatios(totals) {
@@ -393,7 +467,11 @@ export class WaterfallFeature {
         const ctx = document.getElementById('trendChart');
         if (!ctx) return;
         
-        new Chart(ctx, {
+        if (this.trendChart) {
+            this.trendChart.destroy();
+        }
+        
+        this.trendChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: quarters.map(q => `Q${q.quarter}`),
@@ -401,14 +479,16 @@ export class WaterfallFeature {
                     label: 'Bruto Rendement',
                     data: quarters.map(q => q.bruto),
                     borderColor: '#1e3c72',
+                    backgroundColor: 'rgba(30, 60, 114, 0.1)',
                     tension: 0.4,
-                    fill: false
+                    fill: true
                 }, {
                     label: 'Netto Cashflow',
                     data: quarters.map(q => q.netto),
                     borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
                     tension: 0.4,
-                    fill: false
+                    fill: true
                 }]
             },
             options: {
@@ -421,10 +501,9 @@ export class WaterfallFeature {
                 },
                 scales: {
                     y: {
+                        beginAtZero: true,
                         ticks: {
-                            callback: function(value) {
-                                return formatNumber(value);
-                            }
+                            callback: (value) => this.formatCurrency(value)
                         }
                     }
                 }
@@ -434,78 +513,57 @@ export class WaterfallFeature {
     
     comparePeriods() {
         // Feature for comparing multiple periods
-        alert('Periode vergelijking komt binnenkort beschikbaar!');
-        
-        // Future implementation could include:
-        // - Multi-period selection
-        // - Side-by-side comparison
-        // - Period-over-period growth analysis
+        alert('Periode vergelijking komt binnenkort beschikbaar! Deze functie stelt u in staat om meerdere periodes naast elkaar te analyseren.');
+    }
+    
+    getPeriodName(period) {
+        if (period === 'totaal') return 'Totale Periode';
+        return period.replace('jaar', 'Jaar ');
+    }
+    
+    formatCurrency(value) {
+        return new Intl.NumberFormat('nl-NL', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+    
+    updateElement(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = value;
+        }
     }
     
     exportWaterfallData() {
-        const data = this.calculator.getWaterfallData(this.currentPeriod);
+        const data = this.getWaterfallData(this.currentPeriod);
         
         return {
             period: this.currentPeriod,
             totals: data.totals,
-            components: data.data
+            components: data.data,
+            insights: this.generateInsightsForExport(data)
         };
     }
     
-    // Add fallback implementation for updating waterfall chart
-    updateWaterfallChartFallback(waterfallData) {
-        const chart = this.chartManager?.charts?.waterfall;
-        if (!chart) return;
+    generateInsightsForExport(waterfallData) {
+        const totals = waterfallData.totals;
+        if (!totals) return [];
         
-        const labels = waterfallData.data.map(item => item.label);
-        const positiveData = [];
-        const negativeData = [];
+        const bruttoInkomsten = totals.bruttoOpbrengst || 0;
+        const belasting = totals.belasting || 0;
+        const rente = totals.rente || 0;
+        const aflossing = totals.aflossing || 0;
+        const kosten = totals.kosten || 0;
+        const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
         
-        // Process data for waterfall visualization
-        waterfallData.data.forEach((item, index) => {
-            if (item.type === 'start') {
-                positiveData[index] = item.value;
-                negativeData[index] = null;
-            } else if (item.type === 'total') {
-                positiveData[index] = null;
-                negativeData[index] = null;
-            } else if (item.value >= 0) {
-                positiveData[index] = item.value;
-                negativeData[index] = null;
-            } else {
-                positiveData[index] = null;
-                negativeData[index] = item.value;
-            }
-        });
-        
-        // Update chart
-        chart.data.labels = labels;
-        chart.data.datasets = [
-            {
-                label: 'Positief',
-                data: positiveData,
-                backgroundColor: 'rgba(40, 167, 69, 0.8)',
-                borderColor: '#28a745',
-                borderWidth: 1
-            },
-            {
-                label: 'Negatief',
-                data: negativeData,
-                backgroundColor: 'rgba(220, 53, 69, 0.8)',
-                borderColor: '#dc3545',
-                borderWidth: 1
-            }
-        ];
-        
-        // Update chart title
-        const periodName = waterfallData.period === 'totaal' ? 
-            'Totale Periode' : 
-            waterfallData.period.replace('jaar', 'Jaar ');
-        
-        if (chart.options?.plugins?.title) {
-            chart.options.plugins.title.text = `Cashflow Waterfall - ${periodName}`;
-        }
-        
-        chart.update('none');
+        return {
+            efficiency: bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0,
+            taxRate: bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0,
+            interestRatio: bruttoInkomsten > 0 ? (rente / bruttoInkomsten) * 100 : 0,
+            costsRatio: bruttoInkomsten > 0 ? (kosten / bruttoInkomsten) * 100 : 0
+        };
     }
 }
