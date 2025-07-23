@@ -132,32 +132,33 @@ export class ValidationService {
     validateInputs(inputs) {
         const errors = [];
         
-        // Perform validation checks
+        // Only check for critical validation errors
         if (inputs.startKapitaal <= 0) {
-            errors.push({ field: 'startKapitaal', message: 'Startkapitaal moet groter zijn dan 0' });
+            errors.push({ field: 'startKapitaal', message: 'Startkapitaal moet groter zijn dan 0', critical: true });
         }
         
+        // Make lening validation non-critical
         if (inputs.lening < 0) {
-            errors.push({ field: 'lening', message: 'Lening kan niet negatief zijn' });
+            errors.push({ field: 'lening', message: 'Lening kan niet negatief zijn', critical: false });
         }
         
-        if (inputs.lening > 0 && inputs.renteLening <= 0) {
-            errors.push({ field: 'renteLening', message: 'Rente moet groter zijn dan 0 wanneer er een lening is' });
-        }
-        
+        // Make looptijd validation non-critical if it's at least positive
         if (inputs.looptijd <= 0) {
-            errors.push({ field: 'looptijd', message: 'Looptijd moet groter zijn dan 0' });
+            errors.push({ field: 'looptijd', message: 'Looptijd moet groter zijn dan 0', critical: true });
+        }
+        
+        // Make these validations non-critical
+        if (inputs.lening > 0 && inputs.renteLening <= 0) {
+            errors.push({ field: 'renteLening', message: 'Rente moet groter zijn dan 0 wanneer er een lening is', critical: false });
         }
         
         if (inputs.herinvestering < 0 || inputs.herinvestering > 100) {
-            errors.push({ field: 'herinvestering', message: 'Herinvestering moet tussen 0 en 100% liggen' });
+            errors.push({ field: 'herinvestering', message: 'Herinvestering moet tussen 0 en 100% liggen', critical: false });
         }
         
         if (inputs.inflatie < 0) {
-            errors.push({ field: 'inflatie', message: 'Inflatie kan niet negatief zijn' });
+            errors.push({ field: 'inflatie', message: 'Inflatie kan niet negatief zijn', critical: false });
         }
-        
-        // Add more validation rules as needed
         
         return errors;
     }

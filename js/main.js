@@ -166,7 +166,6 @@ class ROICalculatorApp {
     }
     
     performCalculation() {
-        
         try {
             // Clear previous errors
             this.clearValidationErrors();
@@ -176,9 +175,16 @@ class ROICalculatorApp {
             
             // Validate inputs
             const errors = this.validationService.validateInputs(inputs);
+            
+            // Display all errors
             if (errors.length > 0) {
                 this.displayValidationErrors(errors);
-                return;
+                
+                // Only stop calculation if there are critical errors
+                const criticalErrors = errors.filter(error => error.critical);
+                if (criticalErrors.length > 0) {
+                    return;
+                }
             }
             
             // Perform calculation
@@ -313,11 +319,44 @@ class ROICalculatorApp {
     
     displayValidationErrors(errors) {
         console.warn('Validation errors:', errors);
-        // Could implement UI feedback here
+        
+        // Clear previous error messages
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+        
+        // Display errors in the UI
+        errors.forEach(error => {
+            const inputElement = document.getElementById(error.field);
+            if (inputElement) {
+                // Add red border to invalid field
+                inputElement.classList.add('invalid-input');
+                
+                // Add error message below the field
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'error-message';
+                errorMessage.textContent = error.message;
+                errorMessage.style.color = 'red';
+                errorMessage.style.fontSize = '12px';
+                errorMessage.style.marginTop = '5px';
+                
+                // Insert after the input wrapper
+                const inputWrapper = inputElement.closest('.input-wrapper');
+                if (inputWrapper) {
+                    inputWrapper.after(errorMessage);
+                }
+            }
+        });
     }
     
     clearValidationErrors() {
-        // Clear any displayed validation errors
+        // Remove error styling
+        document.querySelectorAll('.invalid-input').forEach(el => {
+            el.classList.remove('invalid-input');
+        });
+        
+        // Remove error messages
+        document.querySelectorAll('.error-message').forEach(el => {
+            el.remove();
+        });
     }
     
     showError(message) {
