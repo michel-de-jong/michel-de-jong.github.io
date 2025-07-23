@@ -339,17 +339,6 @@ export class ChartManager {
     
     // Initialize Monte Carlo charts
     initMonteCarloCharts() {
-        // Destroy existing charts if they exist
-        if (this.charts.monteCarlo) {
-            this.charts.monteCarlo.destroy();
-            this.charts.monteCarlo = null;
-        }
-        if (this.charts.distribution) {
-            this.charts.distribution.destroy();
-            this.charts.distribution = null;
-        }
-        
-        // Initialize paths chart
         const pathsCanvas = document.getElementById('monteCarloChart');
         if (pathsCanvas) {
             const existingChart = Chart.getChart(pathsCanvas);
@@ -366,57 +355,17 @@ export class ChartManager {
                 },
                 options: {
                     ...this.defaultOptions,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     animation: false,
                     plugins: {
-                        ...this.defaultOptions.plugins,
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
                         title: {
                             display: true,
                             text: 'Monte Carlo Simulatie Paden'
-                        },
-                        legend: {
-                            display: false
-                        }
-                    },
-                    elements: {
-                        line: {
-                            tension: 0
-                        },
-                        point: {
-                            radius: 0
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Initialize distribution chart
-        const distCanvas = document.getElementById('distributionChart');
-        if (distCanvas) {
-            const existingChart = Chart.getChart(distCanvas);
-            if (existingChart) {
-                existingChart.destroy();
-            }
-            
-            const ctx = distCanvas.getContext('2d');
-            this.charts.distribution = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Frequentie',
-                        data: [],
-                        backgroundColor: this.createAlpha(Config.charts.colors.primary, 0.8),
-                        borderColor: Config.charts.colors.primary,
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    ...this.defaultOptions,
-                    plugins: {
-                        ...this.defaultOptions.plugins,
-                        title: {
-                            display: true,
-                            text: 'Verdeling Eindwaarden'
                         }
                     },
                     scales: {
@@ -424,13 +373,13 @@ export class ChartManager {
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Frequentie'
+                                text: 'Waarde'
                             }
                         },
                         x: {
                             title: {
                                 display: true,
-                                text: 'Eindwaarde (€)'
+                                text: 'Jaren'
                             }
                         }
                     }
@@ -524,44 +473,62 @@ export class ChartManager {
     
     // Update Monte Carlo charts
     updateMonteCarloCharts(stats) {
-        if (!stats) return;
-        
+        if (!stats || !stats.paths) {
+            console.warn('No valid stats data for Monte Carlo charts');
+            return;
+        }
+
+        // Debug log to verify data
+        console.log('Updating Monte Carlo charts with:', {
+            pathsLabels: stats.paths.labels,
+            p5Values: stats.paths.p5,
+            p50Values: stats.paths.p50,
+            p95Values: stats.paths.p95
+        });
+
         // Update paths chart
-        if (this.charts.monteCarlo && stats.paths) {
+        if (this.charts.monteCarlo) {
+            // Clear existing datasets
+            this.charts.monteCarlo.data.datasets = [];
+            
+            // Add new datasets
             const datasets = [
                 {
                     label: 'P95',
                     data: stats.paths.p95,
                     borderColor: Config.charts.colors.success,
                     borderWidth: 3,
-                    fill: false
+                    fill: false,
+                    tension: 0.1
                 },
                 {
                     label: 'P50 (Mediaan)',
                     data: stats.paths.p50,
                     borderColor: Config.charts.colors.warning,
                     borderWidth: 3,
-                    fill: false
+                    fill: false,
+                    tension: 0.1
                 },
                 {
                     label: 'P5',
                     data: stats.paths.p5,
                     borderColor: Config.charts.colors.danger,
                     borderWidth: 3,
-                    fill: false
+                    fill: false,
+                    tension: 0.1
                 }
             ];
 
             this.charts.monteCarlo.data.labels = stats.paths.labels;
             this.charts.monteCarlo.data.datasets = datasets;
+            this.charts.monteCarlo.options.plugins.legend.display = true;
             this.charts.monteCarlo.update('none');
-        }
 
-        // Update distribution chart
-        if (this.charts.distribution && stats.histogram) {
-            this.charts.distribution.data.labels = stats.histogramLabels;
-            this.charts.distribution.data.datasets[0].data = stats.histogram;
-            this.charts.distribution.update('none');
+            // Debug log after update
+            console.log('Chart data after update:', {
+                labels: this.charts.monteCarlo.data.labels,
+                datasets: this.charts.monteCarlo.data.datasets
+            });
         }
     }
     
