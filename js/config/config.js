@@ -26,9 +26,9 @@ export const Config = {
         rendementType: 'vast',
         rendement: 8,
         aflossingsType: 'lineair',
-        herinvestering: 0,
-        herinvesteringDrempel: 0,
-        vasteKosten: 5000,
+        herinvestering: 70,
+        herinvesteringDrempel: 1000,
+        vasteKosten: 2500,
         
         // Tax parameters
         belastingType: 'vpb',
