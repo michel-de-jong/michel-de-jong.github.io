@@ -87,8 +87,13 @@ export class WaterfallFeature {
             // Update summary cards
             this.updateSummaryCards(waterfallData.totals);
             
-            // Update chart
-            this.chartManager.updateWaterfallChart(waterfallData);
+            // Update chart - check if method exists before calling
+            if (this.chartManager && typeof this.chartManager.updateWaterfallChart === 'function') {
+                this.chartManager.updateWaterfallChart(waterfallData);
+            } else {
+                // Fallback: Update chart manually if method doesn't exist
+                this.updateWaterfallChartFallback(waterfallData);
+            }
             
             // Update table
             this.updateTable(waterfallData);
@@ -445,5 +450,62 @@ export class WaterfallFeature {
             totals: data.totals,
             components: data.data
         };
+    }
+    
+    // Add fallback implementation for updating waterfall chart
+    updateWaterfallChartFallback(waterfallData) {
+        const chart = this.chartManager?.charts?.waterfall;
+        if (!chart) return;
+        
+        const labels = waterfallData.data.map(item => item.label);
+        const positiveData = [];
+        const negativeData = [];
+        
+        // Process data for waterfall visualization
+        waterfallData.data.forEach((item, index) => {
+            if (item.type === 'start') {
+                positiveData[index] = item.value;
+                negativeData[index] = null;
+            } else if (item.type === 'total') {
+                positiveData[index] = null;
+                negativeData[index] = null;
+            } else if (item.value >= 0) {
+                positiveData[index] = item.value;
+                negativeData[index] = null;
+            } else {
+                positiveData[index] = null;
+                negativeData[index] = item.value;
+            }
+        });
+        
+        // Update chart
+        chart.data.labels = labels;
+        chart.data.datasets = [
+            {
+                label: 'Positief',
+                data: positiveData,
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: '#28a745',
+                borderWidth: 1
+            },
+            {
+                label: 'Negatief',
+                data: negativeData,
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                borderColor: '#dc3545',
+                borderWidth: 1
+            }
+        ];
+        
+        // Update chart title
+        const periodName = waterfallData.period === 'totaal' ? 
+            'Totale Periode' : 
+            waterfallData.period.replace('jaar', 'Jaar ');
+        
+        if (chart.options?.plugins?.title) {
+            chart.options.plugins.title.text = `Cashflow Waterfall - ${periodName}`;
+        }
+        
+        chart.update('none');
     }
 }
