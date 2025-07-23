@@ -297,7 +297,6 @@ class ROICalculatorApp {
         try {
             // Get initial inputs from state
             const initialInputs = this.state.getInputs();
-            console.log('Initial inputs:', initialInputs);
             
             // Perform calculation
             const results = this.calculator.calculate();

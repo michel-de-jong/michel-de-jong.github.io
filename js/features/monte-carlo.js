@@ -253,27 +253,6 @@ export class MonteCarloFeature {
                 p95: p95Values
             }
         };
-
-        // Debug log
-        console.log('Monte Carlo Stats:', {
-            median: stats.median,
-            p5: stats.p5,
-            p95: stats.p95,
-            lossProb: stats.lossProb,
-            vaR5: stats.vaR5,
-            pathsLength: {
-                p5: p5Values.length,
-                p50: p50Values.length,
-                p95: p95Values.length
-            }
-        });
-
-        // Debug log
-        console.log('Loss probability calculation:', {
-            totalResults: results.length,
-            negativeResults: results.filter(r => r.roi < 0).length,
-            lossProb: stats.lossProb
-        });
         
         return stats;
     }
@@ -310,15 +289,7 @@ export class MonteCarloFeature {
                     element.className = 'result-value ' + this.getROIClass(config.value);
                 }
             }
-        }
-        
-        // Log values for debugging
-        console.log('Displaying values:', {
-            median: stats.median,
-            lossProb: stats.lossProb,
-            vaR5: stats.vaR5,
-            paths: stats.paths
-        });
+        };
     }
     
     getROIClass(roi) {

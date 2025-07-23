@@ -73,7 +73,6 @@ export class ChartManager {
         
         // Destroy existing chart if it exists
         if (this.charts.main) {
-            console.log('Destroying existing main chart');
             this.charts.main.destroy();
             this.charts.main = null;
         }
@@ -81,7 +80,6 @@ export class ChartManager {
         // Also check if there's a chart instance attached to the canvas
         const existingChart = Chart.getChart(canvas);
         if (existingChart) {
-            console.log('Found existing chart instance on canvas, destroying it');
             existingChart.destroy();
         }
         
@@ -478,14 +476,6 @@ export class ChartManager {
             return;
         }
 
-        // Debug log to verify data
-        console.log('Updating Monte Carlo charts with:', {
-            pathsLabels: stats.paths.labels,
-            p5Values: stats.paths.p5,
-            p50Values: stats.paths.p50,
-            p95Values: stats.paths.p95
-        });
-
         // Update paths chart
         if (this.charts.monteCarlo) {
             // Clear existing datasets
@@ -523,12 +513,6 @@ export class ChartManager {
             this.charts.monteCarlo.data.datasets = datasets;
             this.charts.monteCarlo.options.plugins.legend.display = true;
             this.charts.monteCarlo.update('none');
-
-            // Debug log after update
-            console.log('Chart data after update:', {
-                labels: this.charts.monteCarlo.data.labels,
-                datasets: this.charts.monteCarlo.data.datasets
-            });
         }
     }
     
