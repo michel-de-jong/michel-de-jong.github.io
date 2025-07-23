@@ -128,4 +128,37 @@ export class ValidationService {
     removeRule(fieldName) {
         delete this.rules[fieldName];
     }
+    
+    validateInputs(inputs) {
+        const errors = [];
+        
+        // Perform validation checks
+        if (inputs.startKapitaal <= 0) {
+            errors.push({ field: 'startKapitaal', message: 'Startkapitaal moet groter zijn dan 0' });
+        }
+        
+        if (inputs.lening < 0) {
+            errors.push({ field: 'lening', message: 'Lening kan niet negatief zijn' });
+        }
+        
+        if (inputs.lening > 0 && inputs.renteLening <= 0) {
+            errors.push({ field: 'renteLening', message: 'Rente moet groter zijn dan 0 wanneer er een lening is' });
+        }
+        
+        if (inputs.looptijd <= 0) {
+            errors.push({ field: 'looptijd', message: 'Looptijd moet groter zijn dan 0' });
+        }
+        
+        if (inputs.herinvestering < 0 || inputs.herinvestering > 100) {
+            errors.push({ field: 'herinvestering', message: 'Herinvestering moet tussen 0 en 100% liggen' });
+        }
+        
+        if (inputs.inflatie < 0) {
+            errors.push({ field: 'inflatie', message: 'Inflatie kan niet negatief zijn' });
+        }
+        
+        // Add more validation rules as needed
+        
+        return errors;
+    }
 }
