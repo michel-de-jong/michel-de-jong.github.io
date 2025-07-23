@@ -33,14 +33,12 @@ class ROICalculatorApp {
     
     async init() {
         if (this.initialized) {
-            console.log('App already initialized');
             return;
         }
         
         this.initializationAttempts++;
         
         try {
-            console.log('Starting ROI Calculator initialization...');
             
             // Initialize services
             this.initializeServices();
@@ -61,7 +59,6 @@ class ROICalculatorApp {
             this.performInitialCalculation();
             
             this.initialized = true;
-            console.log('ROI Calculator initialized successfully');
             
         } catch (error) {
             console.error('Initialization error:', error);
@@ -76,7 +73,6 @@ class ROICalculatorApp {
     }
     
     initializeServices() {
-        console.log('Initializing services...');
         
         this.dataService = new DataService();
         this.validationService = new ValidationService();
@@ -88,7 +84,6 @@ class ROICalculatorApp {
     }
     
     initializeCore() {
-        console.log('Initializing core components...');
         
         // Initialize state and calculator
         this.state = new StateManager();
@@ -99,7 +94,6 @@ class ROICalculatorApp {
     }
     
     initializeUI() {
-        console.log('Initializing UI components...');
         
         // UI Managers
         this.tabManager = new TabManager();
@@ -115,7 +109,6 @@ class ROICalculatorApp {
     }
     
     async initializeFeatures() {
-        console.log('Initializing features...');
         
         // Initialize feature modules - Create portfolio feature first
         const portfolioFeature = new PortfolioFeature(this.dataService);
@@ -134,7 +127,6 @@ class ROICalculatorApp {
         // Initialize each feature
         for (const [name, feature] of Object.entries(this.features)) {
             try {
-                console.log(`Initializing feature: ${name}`);
                 if (feature.initialize) {
                     await feature.initialize();
                 }
@@ -145,7 +137,6 @@ class ROICalculatorApp {
     }
     
     setupEventHandlers() {
-        console.log('Setting up event handlers...');
         
         // State change handler
         this.state.onChange((state) => {
@@ -177,7 +168,6 @@ class ROICalculatorApp {
     }
     
     performCalculation() {
-        console.log('Performing calculation...');
         
         try {
             // Clear previous errors
@@ -195,7 +185,6 @@ class ROICalculatorApp {
             
             // Perform calculation
             const results = this.calculator.calculate();
-            console.log('Calculation results:', results);
             
             // Store results in state
             this.state.setResults(results);
@@ -245,7 +234,6 @@ class ROICalculatorApp {
     }
     
     handleTabChange(tabName) {
-        console.log(`Tab changed to: ${tabName}`);
         
         // Load tab-specific content if needed
         if (this.latestResults) {
@@ -305,7 +293,6 @@ class ROICalculatorApp {
     }
     
     performInitialCalculation() {
-        console.log('Performing initial calculation...');
         
         try {
             // Get initial inputs from state
@@ -314,7 +301,6 @@ class ROICalculatorApp {
             
             // Perform calculation
             const results = this.calculator.calculate();
-            console.log('Initial calculation results:', results);
             
             // Update displays
             this.updateDisplays(results);
