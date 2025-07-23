@@ -576,6 +576,74 @@ export class ChartManager {
         }
     }
     
+    // Update waterfall chart
+    updateWaterfallChart(waterfallData) {
+        if (!this.charts.waterfall) {
+            this.initWaterfallChart();
+            if (!this.charts.waterfall) return;
+        }
+        
+        if (!waterfallData || !waterfallData.data || waterfallData.data.length === 0) {
+            console.warn('No valid data for waterfall chart');
+            return;
+        }
+        
+        // Prepare data for the waterfall chart
+        const labels = waterfallData.data.map(item => item.label);
+        
+        // Split data into datasets: positive, negative, and totals
+        const positiveData = [];
+        const negativeData = [];
+        
+        // Process data for waterfall visualization
+        let runningTotal = 0;
+        
+        waterfallData.data.forEach((item, index) => {
+            if (item.type === 'start') {
+                positiveData[index] = item.value;
+                negativeData[index] = null;
+                runningTotal = item.value;
+            } else if (item.type === 'total') {
+                positiveData[index] = null;
+                negativeData[index] = null;
+                // This is the final total, represented by a separate dataset
+            } else if (item.value >= 0) {
+                positiveData[index] = item.value;
+                negativeData[index] = null;
+                runningTotal += item.value;
+            } else {
+                positiveData[index] = null;
+                negativeData[index] = item.value;
+                runningTotal += item.value;
+            }
+        });
+        
+        // Update chart
+        this.charts.waterfall.data.labels = labels;
+        this.charts.waterfall.data.datasets = [
+            {
+                label: 'Positief',
+                data: positiveData,
+                backgroundColor: this.createAlpha(Config.charts.colors.success, 0.8),
+                borderColor: Config.charts.colors.success,
+                borderWidth: 1
+            },
+            {
+                label: 'Negatief',
+                data: negativeData,
+                backgroundColor: this.createAlpha(Config.charts.colors.danger, 0.8),
+                borderColor: Config.charts.colors.danger,
+                borderWidth: 1
+            }
+        ];
+        
+        // Update title with the period
+        const periodName = waterfallData.period === 'totaal' ? 'Totale Periode' : waterfallData.period.replace('jaar', 'Jaar ');
+        this.charts.waterfall.options.plugins.title.text = `Cashflow Waterfall - ${periodName}`;
+        
+        this.charts.waterfall.update('none');
+    }
+    
     // Helper: Create histogram data
     createHistogram(data, bins) {
         const min = Math.min(...data);
