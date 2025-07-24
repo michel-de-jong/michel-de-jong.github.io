@@ -79,13 +79,17 @@ export class PortfolioFeature {
         const assetList = document.getElementById('assetList');
         if (assetList) {
             assetList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-asset')) {
+                if (e.target.classList.contains('btn-remove') || e.target.dataset.action === 'remove') {
                     this.removeAsset(e.target.closest('.asset-row'));
                 }
             });
             
             assetList.addEventListener('change', (e) => {
-                if (e.target.classList.contains('asset-input')) {
+                if (e.target.classList.contains('asset-name') || 
+                    e.target.classList.contains('asset-currency') ||
+                    e.target.classList.contains('asset-amount') ||
+                    e.target.classList.contains('asset-return') ||
+                    e.target.classList.contains('asset-risk')) {
                     this.validateAssetInput(e.target);
                 }
             });
@@ -109,47 +113,51 @@ export class PortfolioFeature {
         assetRow.dataset.assetId = assetId;
         
         assetRow.innerHTML = `
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <input type="text" class="form-control asset-input asset-name" 
-                           placeholder="Asset naam" value="">
-                </div>
-                <div class="col-md-2">
-                    <select class="form-control asset-input asset-currency">
-                        <option value="EUR">EUR</option>
-                        <option value="USD">USD</option>
-                        <option value="GBP">GBP</option>
-                        <option value="JPY">JPY</option>
-                        <option value="CHF">CHF</option>
-                        <option value="CAD">CAD</option>
-                        <option value="AUD">AUD</option>
-                        <option value="CNY">CNY</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control asset-input asset-amount" 
-                           placeholder="Bedrag" step="1000" min="0">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control asset-input asset-return" 
-                           placeholder="Verwacht rendement %" step="0.1">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" class="form-control asset-input asset-risk" 
-                           placeholder="Risico (σ) %" step="0.1" min="0">
-                </div>
-                <div class="col-md-1">
-                    <button class="btn btn-danger remove-asset" type="button">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+            <div class="asset-field">
+                <label>Asset Name</label>
+                <input type="text" placeholder="e.g. US Stocks" class="asset-name">
             </div>
+            <div class="asset-field">
+                <label>Currency</label>
+                <select class="asset-currency currency-selector">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="GBP">GBP</option>
+                    <option value="JPY">JPY</option>
+                    <option value="CHF">CHF</option>
+                    <option value="CAD">CAD</option>
+                    <option value="AUD">AUD</option>
+                    <option value="CNY">CNY</option>
+                </select>
+            </div>
+            <div class="asset-field">
+                <label>Amount</label>
+                <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
+                <div class="converted-value" style="display: none;"></div>
+            </div>
+            <div class="asset-field">
+                <label>Return %</label>
+                <input type="number" placeholder="7.5" class="asset-return" step="0.1">
+            </div>
+            <div class="asset-field">
+                <label>Risk %</label>
+                <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
+            </div>
+            <button class="btn-remove" data-action="remove">×</button>
         `;
         
         assetList.appendChild(assetRow);
     }
     
-    removeAsset(assetRow) {
+    removeAsset(assetRowOrId) {
+        let assetRow;
+        
+        if (typeof assetRowOrId === 'string') {
+            assetRow = document.querySelector(`[data-asset-id="${assetRowOrId}"]`);
+        } else {
+            assetRow = assetRowOrId;
+        }
+        
         if (!assetRow) return;
         
         const assetList = document.getElementById('assetList');
@@ -193,6 +201,7 @@ export class PortfolioFeature {
             }
         });
         
+        this.assets = assets;
         return assets;
     }
     
@@ -230,23 +239,30 @@ export class PortfolioFeature {
         this.displayResults();
         this.updateCharts();
         
-        // Enable optimization button
+        // Enable portfolio management buttons
         const optimizeBtn = document.getElementById('optimizePortfolioBtn');
-        if (optimizeBtn) {
-            optimizeBtn.disabled = false;
-        }
+        const saveBtn = document.getElementById('savePortfolioBtn');
+        const exportBtn = document.getElementById('exportPortfolioBtn');
+        
+        if (optimizeBtn) optimizeBtn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
+        if (exportBtn) exportBtn.disabled = false;
+        
+        this.showSuccess('Portfolio berekening voltooid');
     }
     
     calculatePortfolioRisk() {
+        if (!this.assets || this.assets.length === 0) return 0;
+        
         // Simplified risk calculation (assumes no correlation)
         // In reality, you'd need a correlation matrix
         let variance = 0;
         
         this.assets.forEach(asset => {
-            variance += Math.pow(asset.weight * asset.risk, 2);
+            variance += Math.pow(asset.weight * asset.risk / 100, 2);
         });
         
-        return Math.sqrt(variance);
+        return Math.sqrt(variance) * 100;
     }
     
     calculateSharpeRatio(return_, risk, riskFreeRate = 2) {
@@ -260,64 +276,104 @@ export class PortfolioFeature {
         
         const { totalValue, expectedReturn, risk, sharpeRatio } = this.portfolioData;
         
-        resultsDiv.innerHTML = `
-            <div class="portfolio-metrics">
-                <div class="metric">
-                    <h5>Totale Waarde</h5>
-                    <p class="metric-value">${formatNumber(totalValue)}</p>
+        // Update Portfolio Performance KPI cards
+        const portfolioValueCard = document.getElementById('portfolioWaarde');
+        const weightedReturnCard = document.getElementById('portfolioRendement');
+        const portfolioRiskCard = document.getElementById('portfolioRisico');
+        
+        if (portfolioValueCard) {
+            portfolioValueCard.textContent = `€ ${totalValue.toLocaleString('nl-NL', { minimumFractionDigits: 0 })}`;
+        }
+        if (weightedReturnCard) {
+            weightedReturnCard.textContent = `${expectedReturn.toFixed(1)}%`;
+        }
+        if (portfolioRiskCard) {
+            portfolioRiskCard.textContent = `${risk.toFixed(1)}%`;
+        }
+        
+        // Update detailed results section
+        const portfolioMetrics = document.getElementById('portfolioMetrics');
+        const assetAllocation = document.getElementById('assetAllocation');
+        const riskAnalysis = document.getElementById('riskAnalysis');
+        
+        if (portfolioMetrics) {
+            portfolioMetrics.innerHTML = `
+                <div class="metric-item">
+                    <span class="metric-label">Total Value:</span>
+                    <span class="metric-value">€${totalValue.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div class="metric">
-                    <h5>Verwacht Rendement</h5>
-                    <p class="metric-value">${formatPercentage(expectedReturn)}</p>
+                <div class="metric-item">
+                    <span class="metric-label">Expected Return:</span>
+                    <span class="metric-value">${expectedReturn.toFixed(2)}%</span>
                 </div>
-                <div class="metric">
-                    <h5>Portfolio Risico</h5>
-                    <p class="metric-value">${formatPercentage(risk)}</p>
+                <div class="metric-item">
+                    <span class="metric-label">Sharpe Ratio:</span>
+                    <span class="metric-value">${sharpeRatio.toFixed(3)}</span>
                 </div>
-                <div class="metric">
-                    <h5>Sharpe Ratio</h5>
-                    <p class="metric-value">${sharpeRatio.toFixed(2)}</p>
+            `;
+        }
+        
+        if (assetAllocation && this.assets) {
+            assetAllocation.innerHTML = this.assets.map(asset => `
+                <div class="allocation-item">
+                    <span class="asset-name">${asset.name}</span>
+                    <span class="asset-weight">${(asset.weight * 100).toFixed(1)}%</span>
+                    <span class="asset-value">€${asset.amount.toLocaleString('nl-NL')}</span>
                 </div>
-            </div>
-            
-            <div class="asset-breakdown mt-4">
-                <h5>Asset Verdeling</h5>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Asset</th>
-                            <th>Valuta</th>
-                            <th>Bedrag</th>
-                            <th>Gewicht</th>
-                            <th>Bijdrage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${this.assets.map(asset => `
-                            <tr>
-                                <td>${asset.name}</td>
-                                <td>${asset.currency}</td>
-                                <td>${formatNumber(asset.amount)}</td>
-                                <td>${formatPercentage(asset.weight * 100)}</td>
-                                <td>${formatPercentage(asset.contribution)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
+            `).join('');
+        }
+        
+        if (riskAnalysis) {
+            riskAnalysis.innerHTML = `
+                <div class="risk-item">
+                    <span class="risk-label">Portfolio Risk:</span>
+                    <span class="risk-value">${risk.toFixed(2)}%</span>
+                </div>
+                <div class="risk-item">
+                    <span class="risk-label">Risk Level:</span>
+                    <span class="risk-value">${risk < 10 ? 'Low' : risk < 20 ? 'Moderate' : 'High'}</span>
+                </div>
+            `;
+        }
         
         resultsDiv.style.display = 'block';
     }
     
     updateCharts() {
-        if (!this.portfolioData) return;
+        if (this.chartManager && this.portfolioData && this.assets) {
+            // Update portfolio chart with current data
+            if (typeof this.chartManager.updatePortfolioChart === 'function') {
+                this.chartManager.updatePortfolioChart(this.assets);
+            } else {
+                console.warn('updatePortfolioChart method not available on chartManager');
+                this.createPortfolioChart();
+            }
+        }
+    }
+    
+    createPortfolioChart() {
+        if (!this.portfolioData || !this.assets) return;
         
-        // Allocation chart
-        this.chartManager.updatePortfolioChart(this.portfolioData);
+        const chartContainer = document.getElementById('portfolioChart');
+        if (!chartContainer) return;
         
-        // Risk-return scatter
-        this.chartManager.updateRiskReturnChart(this.portfolioData);
+        // Simple pie chart implementation for asset distribution
+        const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+        
+        let chartHTML = '<div class="simple-pie-chart" style="display: flex; flex-direction: column; gap: 10px;">';
+        this.assets.forEach((asset, index) => {
+            const color = colors[index % colors.length];
+            const percentage = (asset.weight * 100).toFixed(1);
+            chartHTML += `
+                <div class="chart-segment" style="display: flex; align-items: center; gap: 10px; padding: 8px; background: ${color}20; border-left: 4px solid ${color}; border-radius: 4px;">
+                    <div style="width: 16px; height: 16px; background-color: ${color}; border-radius: 50%;"></div>
+                    <span class="segment-label" style="font-weight: 500;">${asset.name}: ${percentage}%</span>
+                </div>
+            `;
+        });
+        chartHTML += '</div>';
+        
+        chartContainer.innerHTML = chartHTML;
     }
     
     optimizePortfolio() {
@@ -642,16 +698,72 @@ export class PortfolioFeature {
     }
     
     showError(message) {
-        // Could be replaced with toast notification
-        alert('Fout: ' + message);
+        this.showToast('error', 'Fout: ' + message);
     }
     
     showSuccess(message) {
-        // Could be replaced with toast notification
-        alert('Succes: ' + message);
+        this.showToast('success', 'Succes: ' + message);
     }
     
     showInfo(message) {
-        // Could be replaced with toast notification
+        this.showToast('info', message);
+    }
+    
+    showToast(type, message) {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                max-width: 300px;
+            `;
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.cssText = `
+            background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
+            color: white;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+        `;
+        toast.textContent = message;
+        
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
     }
 }
