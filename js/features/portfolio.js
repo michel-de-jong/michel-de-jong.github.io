@@ -1,104 +1,62 @@
-// Portfolio Feature Module - Enhanced with DataService Integration
+// Portfolio Feature - Multi-asset portfolio analysis with optimization
+// Translated to Dutch and functionality fixes
+
 import { formatNumber, formatPercentage } from '../utils/format-utils.js';
 
 export class PortfolioFeature {
-    constructor(chartManager) {
+    constructor(chartManager, stateManager, dataService = null) {
         this.chartManager = chartManager;
+        this.stateManager = stateManager;
+        this.dataService = dataService;
+        
+        // Portfolio state
         this.assets = [];
         this.portfolioData = null;
-        this.dataService = null; // Will be set by main app
-        this.listeners = [];
-        
-        // Performance: Track if we're using DataService or local storage
-        this.useDataService = true;
-        
-        // Cache for saved portfolios
         this.savedPortfoliosCache = null;
-        this.cacheTimestamp = null;
-        this.cacheTimeout = 5 * 60 * 1000; // 5 minutes
+        this.useDataService = dataService !== null;
     }
     
-    // Set DataService for integration
-    setDataService(dataService) {
-        this.dataService = dataService;
-    }
-    
-    setupListeners(stateManager) {
-        this.stateManager = stateManager;
+    initialize() {
+        this.setupEventListeners();
+        this.addInitialAsset();
         
-        // Wait for DOM
-        setTimeout(() => {
-            this.attachEventListeners();
-            this.initializeAssets();
-            
-            // Load saved portfolios if DataService is available
-            if (this.dataService) {
-                this.loadSavedPortfoliosFromDataService();
+        // Load saved portfolios if DataService is available
+        if (this.dataService && this.useDataService) {
+            this.loadSavedPortfoliosFromDataService();
+        }
+    }
+    
+    setupEventListeners() {
+        // Portfolio builder events
+        document.getElementById('addAssetBtn')?.addEventListener('click', () => this.addAsset());
+        document.getElementById('calculatePortfolioBtn')?.addEventListener('click', () => this.calculatePortfolio());
+        document.getElementById('optimizePortfolioBtn')?.addEventListener('click', () => this.optimizePortfolio());
+        document.getElementById('savePortfolioBtn')?.addEventListener('click', () => this.savePortfolio());
+        document.getElementById('loadPortfolioBtn')?.addEventListener('click', () => this.loadPortfolio());
+        document.getElementById('exportPortfolioBtn')?.addEventListener('click', () => this.exportPortfolio());
+        
+        // Event delegation for dynamic elements
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.btn-remove')) {
+                const assetRow = e.target.closest('.asset-row');
+                if (assetRow) {
+                    this.removeAsset(assetRow);
+                }
             }
-        }, 100);
+        });
+        
+        // Input validation
+        document.addEventListener('input', (e) => {
+            if (e.target.matches('.asset-amount, .asset-return, .asset-risk')) {
+                this.validateAssetInput(e.target);
+            }
+        });
     }
     
-    attachEventListeners() {
-        // Add asset button
-        const addAssetBtn = document.getElementById('addAssetBtn');
-        if (addAssetBtn) {
-            addAssetBtn.addEventListener('click', () => this.addAsset());
-        }
-        
-        // Calculate portfolio button
-        const calculateBtn = document.getElementById('calculatePortfolioBtn');
-        if (calculateBtn) {
-            calculateBtn.addEventListener('click', () => this.calculatePortfolio());
-        }
-        
-        // Optimize portfolio button
-        const optimizeBtn = document.getElementById('optimizePortfolioBtn');
-        if (optimizeBtn) {
-            optimizeBtn.addEventListener('click', () => this.optimizePortfolio());
-        }
-        
-        // Save portfolio button
-        const saveBtn = document.getElementById('savePortfolioBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.savePortfolio());
-        }
-        
-        // Load portfolio button
-        const loadBtn = document.getElementById('loadPortfolioBtn');
-        if (loadBtn) {
-            loadBtn.addEventListener('click', () => this.showLoadDialog());
-        }
-        
-        // Export portfolio button
-        const exportBtn = document.getElementById('exportPortfolioBtn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => this.exportPortfolio());
-        }
-        
-        // Asset list delegation
+    addInitialAsset() {
+        // Initialize with one asset row
         const assetList = document.getElementById('assetList');
-        if (assetList) {
-            assetList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('btn-remove') || e.target.dataset.action === 'remove') {
-                    this.removeAsset(e.target.closest('.asset-row'));
-                }
-            });
-            
-            assetList.addEventListener('change', (e) => {
-                if (e.target.classList.contains('asset-name') || 
-                    e.target.classList.contains('asset-currency') ||
-                    e.target.classList.contains('asset-amount') ||
-                    e.target.classList.contains('asset-return') ||
-                    e.target.classList.contains('asset-risk')) {
-                    this.validateAssetInput(e.target);
-                }
-            });
-        }
-    }
-    
-    initializeAssets() {
-        // Start with 3 default assets
-        for (let i = 0; i < 3; i++) {
+        if (assetList && assetList.children.length === 0) {
             this.addAsset();
         }
     }
@@ -107,18 +65,17 @@ export class PortfolioFeature {
         const assetList = document.getElementById('assetList');
         if (!assetList) return;
         
-        const assetId = this.generateAssetId();
         const assetRow = document.createElement('div');
         assetRow.className = 'asset-row';
-        assetRow.dataset.assetId = assetId;
+        assetRow.dataset.assetId = this.generateAssetId();
         
         assetRow.innerHTML = `
             <div class="asset-field">
-                <label>Asset Name</label>
-                <input type="text" placeholder="e.g. US Stocks" class="asset-name">
+                <label>Asset Naam</label>
+                <input type="text" placeholder="bijv. Amerikaanse Aandelen" class="asset-name">
             </div>
             <div class="asset-field">
-                <label>Currency</label>
+                <label>Valuta</label>
                 <select class="asset-currency currency-selector">
                     <option value="EUR">EUR</option>
                     <option value="USD">USD</option>
@@ -131,16 +88,16 @@ export class PortfolioFeature {
                 </select>
             </div>
             <div class="asset-field">
-                <label>Amount</label>
+                <label>Bedrag</label>
                 <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
                 <div class="converted-value" style="display: none;"></div>
             </div>
             <div class="asset-field">
-                <label>Return %</label>
+                <label>Rendement %</label>
                 <input type="number" placeholder="7.5" class="asset-return" step="0.1">
             </div>
             <div class="asset-field">
-                <label>Risk %</label>
+                <label>Risico %</label>
                 <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
             </div>
             <button class="btn-remove" data-action="remove">×</button>
@@ -285,55 +242,47 @@ export class PortfolioFeature {
             portfolioValueCard.textContent = `€ ${totalValue.toLocaleString('nl-NL', { minimumFractionDigits: 0 })}`;
         }
         if (weightedReturnCard) {
-            weightedReturnCard.textContent = `${expectedReturn.toFixed(1)}%`;
+            weightedReturnCard.textContent = `${expectedReturn.toFixed(2)}%`;
         }
         if (portfolioRiskCard) {
-            portfolioRiskCard.textContent = `${risk.toFixed(1)}%`;
+            portfolioRiskCard.textContent = `${risk.toFixed(2)}%`;
         }
         
-        // Update detailed results section
-        const portfolioMetrics = document.getElementById('portfolioMetrics');
-        const assetAllocation = document.getElementById('assetAllocation');
-        const riskAnalysis = document.getElementById('riskAnalysis');
-        
-        if (portfolioMetrics) {
-            portfolioMetrics.innerHTML = `
-                <div class="metric-item">
-                    <span class="metric-label">Total Value:</span>
-                    <span class="metric-value">€${totalValue.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</span>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Expected Return:</span>
-                    <span class="metric-value">${expectedReturn.toFixed(2)}%</span>
-                </div>
+        // Update detailed metrics
+        const metricsDiv = document.getElementById('portfolioMetrics');
+        if (metricsDiv) {
+            metricsDiv.innerHTML = `
                 <div class="metric-item">
                     <span class="metric-label">Sharpe Ratio:</span>
                     <span class="metric-value">${sharpeRatio.toFixed(3)}</span>
                 </div>
+                <div class="metric-item">
+                    <span class="metric-label">Verwacht Jaarrendement:</span>
+                    <span class="metric-value">€ ${(totalValue * expectedReturn / 100).toLocaleString('nl-NL', { minimumFractionDigits: 0 })}</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Risicoclassificatie:</span>
+                    <span class="metric-value ${risk < 10 ? 'text-success' : risk < 20 ? 'text-warning' : 'text-danger'}">${risk < 10 ? 'Laag' : risk < 20 ? 'Gemiddeld' : 'Hoog'}</span>
+                </div>
             `;
         }
         
-        if (assetAllocation && this.assets) {
-            assetAllocation.innerHTML = this.assets.map(asset => `
+        // Update allocation breakdown
+        const allocationDiv = document.getElementById('allocationBreakdown');
+        if (allocationDiv) {
+            allocationDiv.innerHTML = this.assets.map(asset => `
                 <div class="allocation-item">
-                    <span class="asset-name">${asset.name}</span>
-                    <span class="asset-weight">${(asset.weight * 100).toFixed(1)}%</span>
-                    <span class="asset-value">€${asset.amount.toLocaleString('nl-NL')}</span>
+                    <div class="allocation-header">
+                        <span class="asset-name">${asset.name}</span>
+                        <span class="asset-weight">${(asset.weight * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="allocation-details">
+                        <span>€ ${asset.amount.toLocaleString('nl-NL')} (${asset.currency})</span>
+                        <span>Rendement: ${asset.expectedReturn}%</span>
+                        <span>Risico: ${asset.risk}%</span>
+                    </div>
                 </div>
             `).join('');
-        }
-        
-        if (riskAnalysis) {
-            riskAnalysis.innerHTML = `
-                <div class="risk-item">
-                    <span class="risk-label">Portfolio Risk:</span>
-                    <span class="risk-value">${risk.toFixed(2)}%</span>
-                </div>
-                <div class="risk-item">
-                    <span class="risk-label">Risk Level:</span>
-                    <span class="risk-value">${risk < 10 ? 'Low' : risk < 20 ? 'Moderate' : 'High'}</span>
-                </div>
-            `;
         }
         
         resultsDiv.style.display = 'block';
@@ -485,55 +434,28 @@ export class PortfolioFeature {
             const saved = localStorage.getItem('roi_calculator_portfolios');
             return saved ? JSON.parse(saved) : [];
         } catch (error) {
-            console.error('Error loading local portfolios:', error);
+            console.error('Error reading saved portfolios:', error);
             return [];
         }
     }
     
-    // Load portfolios from DataService
     loadSavedPortfoliosFromDataService() {
         if (!this.dataService) return;
         
-        // Check cache first
-        if (this.savedPortfoliosCache && this.cacheTimestamp) {
-            const cacheAge = Date.now() - this.cacheTimestamp;
-            if (cacheAge < this.cacheTimeout) {
-                return this.savedPortfoliosCache;
-            }
-        }
-        
         try {
-            const portfolios = this.dataService.loadPortfolios();
-            this.savedPortfoliosCache = portfolios;
-            this.cacheTimestamp = Date.now();
-            return portfolios;
+            const portfolios = this.dataService.getSavedPortfolios();
+            this.savedPortfoliosCache = portfolios || [];
         } catch (error) {
             console.error('Error loading portfolios from DataService:', error);
-            return [];
+            this.savedPortfoliosCache = [];
         }
     }
     
     invalidateSavedPortfoliosCache() {
         this.savedPortfoliosCache = null;
-        this.cacheTimestamp = null;
     }
     
-    // Method for main app to set portfolios
-    setPortfolios(portfolios) {
-        this.savedPortfoliosCache = portfolios;
-        this.cacheTimestamp = Date.now();
-    }
-    
-    // Method for main app to load saved portfolios
-    loadSavedPortfolios(portfolios) {
-        if (portfolios && portfolios.length > 0) {
-            this.savedPortfoliosCache = portfolios;
-            this.cacheTimestamp = Date.now();
-        }
-    }
-    
-    showLoadDialog() {
-        // Get saved portfolios from DataService or local storage
+    loadPortfolio() {
         const savedPortfolios = this.dataService && this.useDataService
             ? this.loadSavedPortfoliosFromDataService()
             : this.getLocalSavedPortfolios();
@@ -582,75 +504,61 @@ export class PortfolioFeature {
                 const portfolioId = portfolioItem.dataset.portfolioId;
                 const portfolio = savedPortfolios.find(p => p.id === portfolioId);
                 if (portfolio) {
-                    this.loadPortfolio(portfolio);
+                    this.loadPortfolioData(portfolio);
                     dialog.remove();
                 }
             }
         });
     }
     
-    loadPortfolio(portfolioData) {
+    loadPortfolioData(portfolioData) {
         try {
-            // Clear existing assets
-            const assetList = document.getElementById('assetList');
-            if (assetList) {
-                assetList.innerHTML = '';
-                
-                // Get first row to update
-                let firstRow = assetList.querySelector('.asset-row');
-                
-                // If no rows exist, add first one
-                if (!firstRow) {
-                    this.addAsset();
-                    firstRow = assetList.querySelector('.asset-row');
-                }
-                
-                // Ensure first row is cleared
-                if (firstRow) {
-                    firstRow.querySelector('.asset-name').value = '';
-                    firstRow.querySelector('.asset-currency').value = 'EUR';
-                    firstRow.querySelector('.asset-amount').value = '';
-                    firstRow.querySelector('.asset-return').value = '';
-                    firstRow.querySelector('.asset-risk').value = '';
-                }
-                
-                // Handle both old and new data structures
-                const assets = portfolioData.assets || portfolioData.items || [];
-                
-                // Add saved assets
-                assets.forEach((asset, index) => {
-                    if (index === 0 && firstRow) {
-                        // Update first row
-                        firstRow.dataset.assetId = asset.id;
-                        firstRow.querySelector('.asset-name').value = asset.name;
-                        firstRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
-                        firstRow.querySelector('.asset-amount').value = asset.amount;
-                        firstRow.querySelector('.asset-return').value = asset.expectedReturn;
-                        firstRow.querySelector('.asset-risk').value = asset.risk;
-                    } else {
-                        // Add new rows
-                        this.addAsset();
-                        const newRow = assetList.lastElementChild;
-                        newRow.dataset.assetId = asset.id;
-                        newRow.querySelector('.asset-name').value = asset.name;
-                        newRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
-                        newRow.querySelector('.asset-amount').value = asset.amount;
-                        newRow.querySelector('.asset-return').value = asset.expectedReturn;
-                        newRow.querySelector('.asset-risk').value = asset.risk;
-                    }
-                });
-                
-                // Trigger portfolio loaded event
-                const event = new CustomEvent('portfolioLoaded', { 
-                    detail: { assets: assets } 
-                });
-                document.dispatchEvent(event);
-                
-                // Recalculate portfolio
-                this.calculatePortfolio();
-                
-                this.showSuccess(`Portfolio "${portfolioData.name}" geladen`);
+            const assets = portfolioData.assets;
+            if (!assets || assets.length === 0) {
+                this.showError('Portfolio bevat geen assets');
+                return;
             }
+            
+            // Clear existing assets except first
+            const assetList = document.getElementById('assetList');
+            while (assetList.children.length > 1) {
+                assetList.lastElementChild.remove();
+            }
+            
+            // Load assets
+            assets.forEach((asset, index) => {
+                if (index === 0) {
+                    // Update first row
+                    const firstRow = assetList.firstElementChild;
+                    firstRow.dataset.assetId = asset.id;
+                    firstRow.querySelector('.asset-name').value = asset.name;
+                    firstRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
+                    firstRow.querySelector('.asset-amount').value = asset.amount;
+                    firstRow.querySelector('.asset-return').value = asset.expectedReturn;
+                    firstRow.querySelector('.asset-risk').value = asset.risk;
+                } else {
+                    // Add new rows
+                    this.addAsset();
+                    const newRow = assetList.lastElementChild;
+                    newRow.dataset.assetId = asset.id;
+                    newRow.querySelector('.asset-name').value = asset.name;
+                    newRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
+                    newRow.querySelector('.asset-amount').value = asset.amount;
+                    newRow.querySelector('.asset-return').value = asset.expectedReturn;
+                    newRow.querySelector('.asset-risk').value = asset.risk;
+                }
+            });
+            
+            // Trigger portfolio loaded event
+            const event = new CustomEvent('portfolioLoaded', { 
+                detail: { assets: assets } 
+            });
+            document.dispatchEvent(event);
+            
+            // Recalculate portfolio
+            this.calculatePortfolio();
+            
+            this.showSuccess(`Portfolio "${portfolioData.name}" geladen`);
         } catch (error) {
             console.error('Error loading portfolio:', error);
             this.showError('Fout bij het laden van portfolio');
@@ -731,39 +639,20 @@ export class PortfolioFeature {
         toast.style.cssText = `
             background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
             color: white;
-            padding: 12px 16px;
+            padding: 12px 20px;
             margin-bottom: 10px;
             border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
         `;
         toast.textContent = message;
         
-        if (!document.getElementById('toast-styles')) {
-            const style = document.createElement('style');
-            style.id = 'toast-styles';
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
         toastContainer.appendChild(toast);
         
+        // Auto remove after 3 seconds
         setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 300);
+            toast.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
 }
