@@ -9,18 +9,42 @@ export class WaterfallFeature {
         this.trendChart = null;
     }
     
+    async initialize() {
+        console.log('Initializing waterfall feature...');
+        try {
+            this.setupStateListener();
+            console.log('Waterfall feature initialized successfully');
+        } catch (error) {
+            console.error('Error initializing waterfall feature:', error);
+        }
+    }
+
+    activate() {
+        console.log('Activating waterfall feature for tab access...');
+        try {
+            this.setupEventHandlers();
+            this.populatePeriodSelector();
+            this.update();
+            console.log('Waterfall feature activated successfully');
+        } catch (error) {
+            console.error('Error activating waterfall feature:', error);
+        }
+    }
+
     init() {
-        this.setupEventHandlers();
-        this.populatePeriodSelector();
-        this.setupStateListener();
-        this.update();
+        return this.initialize();
     }
 
     setupStateListener() {
+        console.log('Setting up state listener...');
         if (this.calculator && this.calculator.stateManager) {
             this.calculator.stateManager.onChange(() => {
+                console.log('State changed, updating period selector...');
                 this.populatePeriodSelector();
             });
+            console.log('State listener setup successfully');
+        } else {
+            console.error('Cannot setup state listener - calculator or stateManager not available');
         }
     }
 
@@ -28,6 +52,7 @@ export class WaterfallFeature {
         const periodSelect = document.getElementById('waterfallPeriod');
         if (periodSelect) {
             periodSelect.addEventListener('change', (e) => {
+                console.log('Period changed from', this.currentPeriod, 'to', e.target.value);
                 this.currentPeriod = e.target.value;
                 this.update();
             });
@@ -36,6 +61,7 @@ export class WaterfallFeature {
         const viewToggle = document.getElementById('waterfallViewToggle');
         if (viewToggle) {
             viewToggle.addEventListener('change', (e) => {
+                console.log('Percentage toggle changed to:', e.target.checked);
                 this.showAsPercentage = e.target.checked;
                 this.update();
             });
@@ -43,7 +69,14 @@ export class WaterfallFeature {
         
         const compareBtn = document.getElementById('comparePeriodsBtn');
         if (compareBtn) {
-            compareBtn.addEventListener('click', () => this.comparePeriods());
+            compareBtn.addEventListener('click', () => {
+                console.log('Compare periods button clicked');
+                try {
+                    this.comparePeriods();
+                } catch (error) {
+                    console.error('Error in comparePeriods:', error);
+                }
+            });
         }
         
         // Analysis tab handlers
@@ -53,17 +86,23 @@ export class WaterfallFeature {
     }
     
     populatePeriodSelector() {
+        console.log('Populating period selector...');
         const select = document.getElementById('waterfallPeriod');
-        if (!select) return;
+        if (!select) {
+            console.error('Period selector element not found');
+            return;
+        }
         
         // Get investment duration from calculator
         const years = this.calculator.stateManager.getInputs().jaren || 5;
+        console.log('Populating selector with', years, 'years');
         
         select.innerHTML = '<option value="totaal">Totale Periode</option>';
         
         for (let i = 1; i <= years; i++) {
             select.innerHTML += `<option value="jaar${i}">Jaar ${i}</option>`;
         }
+        console.log('Period selector populated successfully');
     }
     
     updateWithResults(results) {
@@ -551,27 +590,35 @@ export class WaterfallFeature {
     }
     
     comparePeriods() {
-        // Get data for all available periods
-        const periods = ['totaal'];
-        const years = this.calculator.stateManager.getInputs().jaren || 5;
-        
-        for (let i = 1; i <= years; i++) {
-            periods.push(`jaar${i}`);
+        console.log('Starting period comparison...');
+        try {
+            // Get data for all available periods
+            const periods = ['totaal'];
+            const years = this.calculator.stateManager.getInputs().jaren || 5;
+            console.log('Comparing', years + 1, 'periods');
+            
+            for (let i = 1; i <= years; i++) {
+                periods.push(`jaar${i}`);
+            }
+            
+            // Create comparison data
+            const comparisonData = periods.map(period => {
+                const data = this.getWaterfallData(period);
+                return {
+                    period: this.getPeriodName(period),
+                    totals: data.totals || {},
+                    efficiency: data.totals ? 
+                        ((data.totals.bruttoOpbrengst - data.totals.belasting - data.totals.rente - data.totals.aflossing - data.totals.kosten) / data.totals.bruttoOpbrengst * 100) : 0
+                };
+            });
+            
+            console.log('Comparison data prepared:', comparisonData);
+            // Create modal or overlay to show comparison
+            this.showPeriodComparison(comparisonData);
+            console.log('Period comparison modal displayed');
+        } catch (error) {
+            console.error('Error in comparePeriods:', error);
         }
-        
-        // Create comparison data
-        const comparisonData = periods.map(period => {
-            const data = this.getWaterfallData(period);
-            return {
-                period: this.getPeriodName(period),
-                totals: data.totals || {},
-                efficiency: data.totals ? 
-                    ((data.totals.bruttoOpbrengst - data.totals.belasting - data.totals.rente - data.totals.aflossing - data.totals.kosten) / data.totals.bruttoOpbrengst * 100) : 0
-            };
-        });
-        
-        // Create modal or overlay to show comparison
-        this.showPeriodComparison(comparisonData);
     }
     
     showPeriodComparison(comparisonData) {
