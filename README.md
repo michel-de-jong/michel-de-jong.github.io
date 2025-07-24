@@ -1,259 +1,257 @@
-# ROI Calculator Suite - Setup Instructions
+# ROI Calculator Suite
 
-Een professionele ROI rekentool voor Nederlandse holdings met geavanceerde investeringsanalyse functies.
+A sophisticated client-side financial analysis application designed for Dutch investors and financial professionals to perform comprehensive Return on Investment calculations with advanced risk analysis, tax optimization, and portfolio management capabilities.
 
-## Kenmerken
+## 🚀 Key Features
 
-- **Basis Calculator**: Uitgebreide ROI berekeningen met leverage, herinvestering, inflatie en belastingen
-- **Scenario Analyse**: Vergelijk best/base/worst case scenario's met stress testing
-- **Monte Carlo Simulatie**: Probabilistische risicoanalyse met 10.000+ simulaties
-- **Cashflow Waterfall**: Gedetailleerde cashflow analyse per periode
-- **Multi-Asset Portfolio**: Portfolio builder met risico/rendement analyse
-- **Export Functies**: Excel, PDF en grafiek exports
-- **Responsive Design**: Werkt perfect op desktop, tablet en mobiel
-- **Nederlandse Belastingen**: Ondersteuning voor VPB (zakelijk) en Box 3 (privé)
+### Core Financial Analysis
+- **Advanced ROI Calculator** - Comprehensive calculations with leverage, reinvestment strategies, inflation adjustments, and Dutch tax integration
+- **Monte Carlo Simulation** - Probabilistic risk analysis with 10,000+ iterations, Value at Risk (VaR) calculations, and statistical modeling
+- **Scenario Analysis** - Compare best/base/worst case scenarios with stress testing and impact analysis
+- **Cashflow Waterfall** - Detailed period-by-period financial flow breakdown and insights
 
-## Nieuwe Functies (2024)
+### Portfolio & Risk Management
+- **Multi-Asset Portfolio Builder** - Portfolio optimization with Sharpe ratios, asset allocation, and risk/return analysis
+- **Multi-Currency Support** - FX risk analysis, currency exposure management, and hedging strategies
+- **Historical Backtesting** - Compare projections against historical data with performance metrics
+- **Risk Assessment** - Comprehensive risk profiling with volatility analysis and correlation matrices
 
-### 1. Belastingberekeningen
-- **Zakelijke investeringen (VPB)**: 25,8% vennootschapsbelasting over niet-herinvesteerde winst
-- **Privé investeringen (Box 3)**: 36% belasting over fictief rendement
-- Automatische berekening van verschuldigde belasting
-- Belasting wordt alleen geheven over uitgekeerde winst
+### Dutch Tax Optimization
+- **Corporate Tax (VPB)** - Vennootschapsbelasting calculations for Dutch corporations (19%/25.8% rates)
+- **Income Tax (Box 1)** - Progressive Dutch income tax with deductions and brackets
+- **Wealth Tax (Box 3)** - Fictitious return-based wealth tax calculations with current rates
+- **Tax Scenario Comparison** - Optimize tax strategies across different regimes
 
-### 2. Verbeterde Features
-- **Aparte Lening Looptijd**: De aflostermijn van de lening kan nu verschillen van de investeringsperiode
-- **Automatische Input Synchronisatie**: Waardes worden automatisch overgenomen tussen tabs
-- **Verbeterde Monte Carlo**: Realistische kans op verlies berekeningen
-- **Mobile Optimalisatie**: Perfect werkend op alle smartphone formaten
+### Professional Reporting
+- **Excel Export** - Generate comprehensive workbooks with charts and analysis
+- **PDF Reports** - Professional client-ready reports with visualizations
+- **Data Persistence** - Save and load scenarios with compression and quota management
+- **Chart Visualizations** - Interactive Chart.js-powered graphs and analytics
 
-### 3. Geavanceerde Analyses
-- **Stress Testing**: Test impact van negatieve scenario's
-- **Value at Risk (VaR)**: 95% confidence intervals
-- **Inflatie Correctie**: Bekijk nominale én reële waardes
-- **Cashflow Conversie**: Analyseer efficiëntie van kapitaalgebruik
+## 🏗️ Architecture
 
-## Bestandsstructuur
+### Modern Web Stack
+- **ES6 Modules** - Modular architecture with feature-based organization
+- **Vite Build System** - Fast development and optimized production builds
+- **Reactive State Management** - Real-time UI updates with observer pattern
+- **Client-Side Only** - No server dependencies, ensuring complete data privacy
 
+### Project Structure
 ```
-roi-calculator/
-│
-├── index.html              # Hoofdbestand met belasting sectie
-├── README.md              # Dit bestand
-│
-├── css/
-│   ├── main.css           # Hoofdstijlen met mobile fixes
-│   └── responsive.css     # Volledig responsive design
-│
-└── js/
-    ├── config.js          # Configuratie instellingen
-    ├── utils.js           # Hulpfuncties en statistiek
-    ├── calculator.js      # Rekenlogica met belasting
-    ├── charts.js          # Grafiek beheer
-    ├── tabs.js            # Tab templates
-    └── app.js             # Hoofdapplicatie met tax handling
+├── index.html                  # Main application entry point
+├── package.json               # Dependencies and build scripts
+├── vite.config.js             # Vite build configuration
+├── .github/workflows/         # CI/CD pipeline
+│   └── deploy.yml
+├── js/
+│   ├── main.js                # Central application orchestrator
+│   ├── core/                  # Core calculation engine and state management
+│   │   ├── calculator.js      # Financial calculation engine
+│   │   └── state-manager.js   # Reactive state management
+│   ├── features/              # Modular feature implementations
+│   │   ├── monte-carlo.js     # Monte Carlo simulation engine
+│   │   ├── scenarios.js       # Scenario analysis
+│   │   ├── portfolio.js       # Multi-asset portfolio management
+│   │   ├── waterfall.js       # Cashflow analysis
+│   │   ├── historical.js      # Backtesting and performance tracking
+│   │   ├── currency-portfolio.js # FX risk and hedging
+│   │   ├── saved.js           # Scenario persistence
+│   │   └── export.js          # Report generation
+│   ├── tax/                   # Dutch tax calculation modules
+│   │   ├── tax-factory.js     # Tax calculation dispatcher
+│   │   ├── vpb-calculator.js  # Corporate tax calculations
+│   │   ├── box1-calculator.js # Income tax calculations
+│   │   └── box3-calculator.js # Wealth tax calculations
+│   ├── ui/                    # User interface components
+│   │   ├── charts.js          # Chart.js visualization management
+│   │   ├── tabs.js            # Dynamic tab loading
+│   │   ├── forms.js           # Form management and validation
+│   │   └── kpi-display.js     # Key performance indicators
+│   ├── services/              # Data and external service integrations
+│   │   ├── data-service.js    # LocalStorage persistence layer
+│   │   ├── validation-service.js # Input validation rules
+│   │   ├── currency-service.js # Exchange rate management
+│   │   └── fx-risk-analysis.js # Foreign exchange risk calculations
+│   ├── config/
+│   │   └── config.js          # Application configuration and defaults
+│   └── utils/                 # Utility functions and helpers
+├── css/                       # Modular CSS architecture
+│   ├── main.css              # CSS entry point and imports
+│   ├── base/                 # Foundation styles
+│   ├── components/           # Reusable UI components
+│   ├── pages/                # Feature-specific styles
+│   └── responsive.css        # Mobile-first responsive design
+└── templates/                # HTML templates for dynamic features
 ```
 
-## Installatie
+## 🛠️ Development Setup
 
-### Optie 1: Lokale Webserver (Ontwikkeling)
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn package manager
+- Modern web browser with ES6 module support
 
-1. Download alle bestanden naar een lokale map
-2. Start een lokale webserver:
-
+### Quick Start
 ```bash
-# Met Python 3
-python -m http.server 8000
+# Clone the repository
+git clone https://github.com/michel-de-jong/michel-de-jong.github.io.git
+cd michel-de-jong.github.io
 
-# Met Node.js (http-server package)
-npx http-server -p 8000
+# Install dependencies
+npm ci
 
-# Met PHP
-php -S localhost:8000
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-3. Open browser: `http://localhost:8000`
-
-### Optie 2: Apache/Nginx Webserver (Productie)
-
-1. Upload alle bestanden naar de webserver root directory
-2. Zorg voor de juiste bestandsrechten:
-
+### Development Commands
 ```bash
-chmod 755 /pad/naar/roi-calculator
-chmod 644 /pad/naar/roi-calculator/*
-chmod 755 /pad/naar/roi-calculator/css
-chmod 644 /pad/naar/roi-calculator/css/*
-chmod 755 /pad/naar/roi-calculator/js
-chmod 644 /pad/naar/roi-calculator/js/*
+npm run dev      # Start Vite dev server with hot reload
+npm run build    # Build optimized production bundle
+npm run preview  # Preview production build locally
+npm run serve    # Simple Python HTTP server (alternative)
 ```
 
-3. Voor Apache, maak een `.htaccess` bestand:
+## 📊 Usage Guide
 
-```apache
-# Enable compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
-</IfModule>
+### Basic ROI Analysis
+1. **Capital Setup** - Enter initial capital and optional leverage/loan parameters
+2. **Investment Parameters** - Set expected returns (monthly/yearly), investment period, and reinvestment strategy
+3. **Tax Configuration** - Choose appropriate Dutch tax regime (Corporate VPB, Income Box 1, or Wealth Box 3)
+4. **Cost Management** - Input fixed costs, interest rates, and inflation assumptions
+5. **Real-time Results** - View live ROI calculations, leverage factors, and inflation-adjusted values
 
-# Set cache headers
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
-</IfModule>
+### Advanced Features
 
-# Security headers
-Header set X-Content-Type-Options "nosniff"
-Header set X-Frame-Options "SAMEORIGIN"
-Header set X-XSS-Protection "1; mode=block"
+#### Monte Carlo Simulation
+- Configure volatility parameters for returns, interest rates, and costs
+- Run 10,000+ probabilistic scenarios
+- Analyze Value at Risk (VaR) and probability distributions
+- Export statistical results and confidence intervals
+
+#### Scenario Analysis
+- Compare optimistic, base case, and pessimistic scenarios
+- Run stress tests on key variables
+- Analyze impact of parameter changes on ROI
+- Generate scenario comparison reports
+
+#### Portfolio Management
+- Build multi-asset portfolios with custom allocations
+- Optimize portfolio weights for maximum Sharpe ratio
+- Analyze correlation matrices and diversification benefits
+- Save and load portfolio configurations
+
+#### Tax Optimization
+- **Corporate (VPB)**: 19% rate up to €395,000, then 25.8%
+- **Income (Box 1)**: Progressive rates from 36.97% to 49.5%
+- **Wealth (Box 3)**: 36% tax on fictitious returns (0.36%-1.52% depending on wealth level)
+
+## 🚀 Deployment
+
+### GitHub Pages (Automatic)
+The application automatically deploys to GitHub Pages via GitHub Actions when changes are pushed to the main branch.
+
+### Manual Deployment
+```bash
+# Build the application
+npm run build
+
+# Deploy the dist/ folder to your hosting provider
+# The application is fully static and can be hosted anywhere
 ```
 
-### Optie 3: CDN/Static Hosting
+### Hosting Options
+- **GitHub Pages** (current setup)
+- **Netlify** - Drag and drop the `dist` folder
+- **Vercel** - Connect GitHub repository
+- **AWS S3 + CloudFront** - Upload `dist` contents
+- **Any static hosting provider**
 
-De applicatie kan ook gehost worden op:
-- GitHub Pages
-- Netlify
-- Vercel
-- AWS S3 + CloudFront
-- Cloudflare Pages
+## 🌐 Browser Support
 
-## Configuratie
+- **Chrome/Edge** - Latest 2 versions
+- **Firefox** - Latest 2 versions  
+- **Safari** - Latest 2 versions
+- **Mobile Safari** - iOS 12+
+- **Chrome Android** - Version 80+
 
-Pas `js/config.js` aan voor:
-- Standaard waardes
-- Belastingtarieven (VPB/Box 3)
-- Taalinstelling
-- Export opties
-- Monte Carlo parameters
+## ⚙️ Configuration
 
-### Voorbeeld configuratie aanpassingen:
+The application can be customized via `js/config/config.js`:
+
 ```javascript
-// In config.js
-defaults: {
-    startKapitaal: 100000,  // Standaard startkapitaal
-    vpbTarief: 25.8,        // VPB tarief 2024
-    box3Tarief: 36,         // Box 3 tarief 2024
-}
+export const Config = {
+    defaults: {
+        startKapitaal: 100000,    // Default starting capital
+        rendement: 8,             // Default expected return %
+        vpbRate: 25.8,            // Corporate tax rate
+        box3Tarief: 36,           // Box 3 tax rate
+        monteCarloRuns: 1000,     // Monte Carlo iterations
+        // ... more configuration options
+    },
+    // Tax rates, validation rules, UI settings, etc.
+};
 ```
 
-## Gebruik
+## 🔒 Privacy & Security
 
-### Basis Calculator
-1. Voer uw startkapitaal en eventuele lening in
-2. Stel het verwachte rendement in (maandelijks of jaarlijks)
-3. Kies het belastingregime (zakelijk of privé)
-4. Bekijk real-time ROI berekeningen
+- **Client-Side Only** - All calculations performed in browser
+- **No Data Transmission** - No data sent to external servers
+- **Local Storage** - Data persisted locally on user's device
+- **No Tracking** - No cookies, analytics, or user tracking
+- **HTTPS Recommended** - For production deployments
 
-### Scenario Analyse
-- Vergelijk automatisch best/base/worst case scenario's
-- Voer stress tests uit op uw investeringsstrategie
-- Analyseer impact van verschillende parameters
+## 🐛 Troubleshooting
 
-### Monte Carlo Simulatie
-- Stel volatiliteit parameters in
-- Run 10.000+ simulaties voor probabilistische analyse
-- Bekijk kans op verlies en Value at Risk
+### Common Issues
 
-### Belastingopties
-- **Zakelijk (VPB)**: Voor holdings en BV's
-  - 25,8% over niet-herinvesteerde winst
-  - Rente is aftrekbaar
-- **Privé (Box 3)**: Voor particuliere beleggers
-  - 36% over fictief rendement (6,04% in 2024)
-  - Vermogensbelasting
+**Charts not displaying**
+- Ensure JavaScript is enabled
+- Check browser console for Chart.js loading errors
+- Try hard refresh (Ctrl+F5)
 
-## Browser Ondersteuning
+**Export functionality not working**
+- Check if popup blocker is preventing downloads
+- Verify browser permissions for file downloads
 
-- Chrome/Edge (laatste 2 versies)
-- Firefox (laatste 2 versies)
-- Safari (laatste 2 versies)
-- iOS Safari 12+
-- Chrome Android 80+
+**Monte Carlo showing 0% loss probability**
+- Increase volatility parameters
+- Verify realistic return assumptions
 
-## Prestatie Optimalisatie
-
-1. **Minificatie** (optioneel):
-```bash
-# Install terser for JavaScript
-npm install -g terser
-terser js/app.js -o js/app.min.js
-
-# Install cssnano for CSS
-npm install -g cssnano-cli
-cssnano css/main.css css/main.min.css
-```
-
-2. **Gzip Compressie**: Zorg dat de webserver gzip enabled heeft
-
-3. **CDN voor Libraries**: De externe libraries worden al vanaf CDN geladen
-
-## Beveiliging
-
-- Alle berekeningen gebeuren client-side
-- Geen data wordt naar servers gestuurd
-- LocalStorage wordt gebruikt voor opslag (blijft op gebruiker's apparaat)
-- HTTPS wordt aanbevolen voor productie
-- Geen cookies of tracking
-
-## Troubleshooting
-
-### Libraries laden niet
-- Controleer internetverbinding (CDN libraries)
-- Controleer browser console voor errors
-- Probeer hard refresh (Ctrl+F5)
-
-### Grafieken verschijnen niet
-- Zorg dat JavaScript enabled is
-- Controleer of Chart.js correct laadt
-- Browser console voor errors
-
-### Export werkt niet
-- Pop-up blocker kan downloads blokkeren
-- Controleer browser permissies
-
-### Monte Carlo geeft altijd 0% verlies
-- Verhoog de volatiliteit parameters
-- Controleer of het basis rendement realistisch is
-
-### Mobile weergave problemen
+**Mobile display issues**
 - Clear browser cache
-- Zorg voor viewport meta tag in HTML
-- Update naar laatste versie
+- Ensure viewport meta tag is present
+- Update to latest browser version
 
-## Updates
+## 🤝 Contributing
 
-Voor updates:
-1. Download nieuwe versie van GitHub
-2. Backup huidige installatie
-3. Overschrijf bestanden
-4. Clear browser cache
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Wijzigingen Log
+## 📄 License
 
-### Versie 2.0 (Huidige)
-- Belastingberekeningen toegevoegd (VPB/Box 3)
-- Mobile responsive design verbeterd
-- Monte Carlo simulatie bugfixes
-- Input overflow op mobile opgelost
-- Scenario isolatie voor correcte ROI berekeningen
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-### Versie 1.0
-- Initiële release
-- Basis ROI calculator
-- Scenario analyse
-- Export functies
+## 👨‍💻 Author
 
-## Licentie
+**Michel de Jong** - [@michel-de-jong](https://github.com/michel-de-jong)
 
-Deze software wordt geleverd zoals het is, zonder enige garantie. Gebruik voor eigen risico.
+## 🙏 Acknowledgments
 
-## Contact
+- Built for Dutch investors and financial professionals
+- Utilizes modern web technologies and Dutch tax regulations (2025)
+- Chart.js for data visualization
+- Vite for build tooling and development experience
 
-Voor vragen of ondersteuning, open een issue op GitHub of neem contact op met de ontwikkelaar.
+---
 
-## Credits
-
-Ontwikkeld voor Nederlandse holdings en investeerders. Gebruikt moderne web technologieën en Nederlandse belastingregels (2024).
+*For questions, support, or feature requests, please open an issue on GitHub.*
