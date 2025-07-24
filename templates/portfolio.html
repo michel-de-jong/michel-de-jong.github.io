@@ -1,26 +1,26 @@
 <section id="portfolio" class="tab-pane" role="tabpanel">
-    <h2>🏦 Multi-Asset Portfolio Builder with Currency Support</h2>
-    <p class="tab-description">Build a diversified multi-currency portfolio and analyze FX risk exposure</p>
+    <h2>🏦 Multi-Asset Portfolio Builder met Valuta Ondersteuning</h2>
+    <p class="tab-description">Bouw een gediversifieerde multi-valuta portfolio en analyseer FX-risicoblootstelling</p>
     
     <!-- Base Currency Selection -->
     <div class="currency-settings">
         <h3 class="section-header">
             <span class="header-icon">💱</span>
-            Currency Settings
+            Valuta Instellingen
         </h3>
         <div class="currency-controls">
             <div class="form-group">
-                <label for="baseCurrencySelector">Base Currency</label>
+                <label for="baseCurrencySelector">Basisvaluta</label>
                 <select id="baseCurrencySelector" class="currency-selector">
                     <!-- Options populated by JavaScript -->
                 </select>
             </div>
             <div class="form-group">
-                <label for="riskToleranceSelector">Risk Tolerance</label>
+                <label for="riskToleranceSelector">Risicotolerantie</label>
                 <select id="riskToleranceSelector">
-                    <option value="conservative">Conservative</option>
-                    <option value="moderate" selected>Moderate</option>
-                    <option value="aggressive">Aggressive</option>
+                    <option value="conservative">Conservatief</option>
+                    <option value="moderate" selected>Gematigd</option>
+                    <option value="aggressive">Agressief</option>
                 </select>
             </div>
         </div>
@@ -30,32 +30,32 @@
     <div class="portfolio-builder">
         <h3 class="section-header">
             <span class="header-icon">📊</span>
-            Portfolio Composition
+            Portfolio Samenstelling
         </h3>
         
         <div id="assetList" class="asset-list">
             <div class="asset-row" data-asset-id="default-1">
                 <div class="asset-field">
-                    <label>Asset Name</label>
-                    <input type="text" placeholder="e.g. US Stocks" class="asset-name">
+                    <label>Asset Naam</label>
+                    <input type="text" placeholder="bijv. Amerikaanse Aandelen" class="asset-name">
                 </div>
                 <div class="asset-field">
-                    <label>Currency</label>
+                    <label>Valuta</label>
                     <select class="asset-currency currency-selector">
                         <!-- Options populated by JavaScript -->
                     </select>
                 </div>
                 <div class="asset-field">
-                    <label>Amount</label>
+                    <label>Bedrag</label>
                     <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
                     <div class="converted-value" style="display: none;"></div>
                 </div>
                 <div class="asset-field">
-                    <label>Return %</label>
+                    <label>Rendement %</label>
                     <input type="number" placeholder="7.5" class="asset-return" step="0.1">
                 </div>
                 <div class="asset-field">
-                    <label>Risk %</label>
+                    <label>Risico %</label>
                     <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
                 </div>
                 <button class="btn-remove" data-action="remove">×</button>
@@ -65,27 +65,27 @@
         <div class="portfolio-controls mt-3">
             <button class="btn btn-secondary" id="addAssetBtn">
                 <span class="btn-icon">➕</span>
-                Add Asset
+                Asset Toevoegen
             </button>
             <button class="btn btn-success" id="calculatePortfolioBtn">
                 <span class="btn-icon">📊</span>
-                Calculate Portfolio
+                Portfolio Berekenen
             </button>
             <button id="optimizePortfolioBtn" class="btn btn-primary" disabled>
                 <span class="btn-icon">📈</span>
-                Optimize Portfolio
+                Portfolio Optimaliseren
             </button>
             <button id="savePortfolioBtn" class="btn btn-info" disabled>
                 <span class="btn-icon">💾</span>
-                Save Portfolio
+                Portfolio Opslaan
             </button>
             <button id="loadPortfolioBtn" class="btn btn-warning">
                 <span class="btn-icon">📂</span>
-                Load Portfolio
+                Portfolio Laden
             </button>
             <button id="exportPortfolioBtn" class="btn btn-secondary" disabled>
                 <span class="btn-icon">📥</span>
-                Export Portfolio
+                Portfolio Exporteren
             </button>
         </div>
     </div>
@@ -94,23 +94,23 @@
     <div class="portfolio-metrics">
         <h3 class="section-header">
             <span class="header-icon">📈</span>
-            Portfolio Performance
+            Portfolio Prestaties
         </h3>
         
         <div class="kpi-grid mt-4">
             <div class="kpi-card">
                 <div class="kpi-icon">💰</div>
-                <div class="kpi-label">Portfolio Value</div>
+                <div class="kpi-label">Portfolio Waarde</div>
                 <div class="kpi-value" id="portfolioWaarde">€ 0</div>
             </div>
             <div class="kpi-card green">
                 <div class="kpi-icon">📈</div>
-                <div class="kpi-label">Weighted Return</div>
+                <div class="kpi-label">Gewogen Rendement</div>
                 <div class="kpi-value" id="portfolioRendement">0%</div>
             </div>
             <div class="kpi-card orange">
                 <div class="kpi-icon">⚠️</div>
-                <div class="kpi-label">Portfolio Risk</div>
+                <div class="kpi-label">Portfolio Risico</div>
                 <div class="kpi-value" id="portfolioRisico">0%</div>
             </div>
         </div>
@@ -120,70 +120,39 @@
     <div id="portfolioResults" class="portfolio-results-section" style="display: none;">
         <h3 class="section-header">
             <span class="header-icon">📊</span>
-            Portfolio Analysis
+            Portfolio Analyse
         </h3>
         <div class="results-grid">
             <div class="result-card">
-                <h4>Portfolio Metrics</h4>
-                <div id="portfolioMetrics"></div>
+                <h4>Portfolio Metrieken</h4>
+                <div class="metric-list" id="portfolioMetrics"></div>
             </div>
             <div class="result-card">
-                <h4>Asset Allocation</h4>
-                <div id="assetAllocation"></div>
-            </div>
-            <div class="result-card">
-                <h4>Risk Analysis</h4>
-                <div id="riskAnalysis"></div>
+                <h4>Asset Allocatie</h4>
+                <div class="allocation-breakdown" id="allocationBreakdown"></div>
             </div>
         </div>
     </div>
-    
-    <!-- Currency Exposure -->
-    <div class="currency-exposure-section">
-        <h3 class="section-header">
-            <span class="header-icon">🌍</span>
-            Currency Exposure
-        </h3>
-        <div id="currencyExposureContainer" class="currency-exposure-container">
-            <!-- Currency exposure bars populated by JavaScript -->
-        </div>
-    </div>
-    
-    <!-- This is the Currency Portfolio section from portfolio.html -->
-    <!-- FX Risk Analysis section - keeping the original button ID -->
-    <div class="fx-risk-analysis">
+
+    <!-- Currency Analysis -->
+    <div class="currency-analysis-section">
         <h3 class="section-header">
             <span class="header-icon">💱</span>
-            FX Risk Analysis
+            Valuta Risico Analyse
         </h3>
         
-        <div class="risk-metrics">
-            <div class="metric-card">
-                <div class="metric-label">Total Currency Exposure</div>
-                <div class="metric-value" id="totalCurrencyExposure">€ 0</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Hedging Coverage</div>
-                <div class="metric-value" id="hedgingCoverage">0%</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Net Risk Position</div>
-                <div class="metric-value" id="netRiskPosition">€ 0</div>
-            </div>
-        </div>
-        
-        <div class="risk-actions">
+        <div class="analysis-controls mt-3">
             <button class="btn btn-primary" id="analyzeFXRiskBtn">
                 <span class="btn-icon">📊</span>
-                Analyze FX Risk
+                FX Risico Analyseren
             </button>
             <button class="btn btn-secondary" id="runStressTestBtn">
                 <span class="btn-icon">🧪</span>
-                Run Stress Test
+                Stresstest Uitvoeren
             </button>
             <button class="btn btn-success" id="calculateHedgeBtn">
                 <span class="btn-icon">🛡️</span>
-                Calculate Optimal Hedge
+                Optimale Hedge Berekenen
             </button>
         </div>
         
@@ -200,10 +169,10 @@
     <div class="active-hedges-section">
         <h3 class="section-header">
             <span class="header-icon">🛡️</span>
-            Active Hedging Strategies
+            Actieve Hedgingstrategieën
         </h3>
         <div id="activeHedgesContainer" class="active-hedges-container">
-            <p class="no-hedges">No active hedging strategies</p>
+            <p class="no-hedges">Geen actieve hedgingstrategieën</p>
         </div>
     </div>
 
@@ -211,7 +180,7 @@
     <div class="portfolio-visualization">
         <h3 class="section-header">
             <span class="header-icon">🎯</span>
-            Asset Distribution
+            Asset Verdeling
         </h3>
         
         <div class="chart-container mt-4">
@@ -222,6 +191,6 @@
     <!-- Loading Indicator -->
     <div id="loadingIndicator" class="loading-indicator" style="display: none;">
         <div class="spinner"></div>
-        <div class="loading-message">Loading...</div>
+        <div class="loading-message">Bezig met laden...</div>
     </div>
 </section>
