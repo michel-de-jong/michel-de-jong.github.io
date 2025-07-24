@@ -6,7 +6,7 @@
 /* Tab Description */
 .tab-description {
     color: #6c757d;
-    font-size: 16px;
+    font-size: var(--font-base);
     margin-bottom: 30px;
     text-align: center;
 }
@@ -28,18 +28,18 @@
 .period-selector-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
 }
 
 .period-selector-group label {
     font-weight: 600;
     color: #495057;
-    font-size: 16px;
+    font-size: var(--font-base);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
 .label-icon {
@@ -47,7 +47,7 @@
 }
 
 .period-select {
-    padding: 10px 15px;
+    padding: var(--spacing-md) 15px;
     border: 2px solid #dee2e6;
     border-radius: 8px;
     font-size: 15px;
@@ -71,15 +71,15 @@
     background: #6c757d;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: var(--spacing-md) 20px;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-sm);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
 #comparePeriodsBtn:hover {
@@ -87,14 +87,14 @@
 }
 
 .btn-icon {
-    font-size: 16px;
+    font-size: var(--font-base);
 }
 
 /* View Toggle */
 .view-toggle {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .toggle-switch {
@@ -156,7 +156,7 @@ input:checked + .toggle-slider:before {
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     display: flex;
-    gap: 15px;
+    gap: var(--spacing-lg);
     align-items: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -193,7 +193,7 @@ input:checked + .toggle-slider:before {
 }
 
 .summary-label {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #6c757d;
     margin-bottom: 5px;
     font-weight: 500;
@@ -207,7 +207,7 @@ input:checked + .toggle-slider:before {
 }
 
 .summary-detail {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     line-height: 1.4;
 }
@@ -234,13 +234,13 @@ input:checked + .toggle-slider:before {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 /* Analysis Tabs */
 .analysis-tabs {
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-md);
     margin-bottom: 20px;
     border-bottom: 2px solid #e9ecef;
 }
@@ -248,8 +248,8 @@ input:checked + .toggle-slider:before {
 .analysis-tab {
     background: transparent;
     border: none;
-    padding: 10px 20px;
-    font-size: 14px;
+    padding: var(--spacing-md) 20px;
+    font-size: var(--font-sm);
     font-weight: 500;
     color: #6c757d;
     cursor: pointer;
@@ -281,7 +281,7 @@ input:checked + .toggle-slider:before {
     width: 100%;
     min-width: 700px;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .cashflow-table thead {
@@ -290,7 +290,7 @@ input:checked + .toggle-slider:before {
 
 .cashflow-table th,
 .cashflow-table td {
-    padding: 12px 15px;
+    padding: var(--spacing-base) 15px;
     text-align: right;
     border-bottom: 1px solid #dee2e6;
 }
@@ -369,7 +369,7 @@ input:checked + .toggle-slider:before {
 .trend-card p {
     color: #6c757d;
     margin-bottom: 15px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .trend-stats {
@@ -377,9 +377,9 @@ input:checked + .toggle-slider:before {
 }
 
 .trend-stats div {
-    padding: 8px 0;
+    padding: var(--spacing-sm) 0;
     border-bottom: 1px solid #dee2e6;
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #495057;
     display: flex;
     justify-content: space-between;
@@ -422,7 +422,7 @@ input:checked + .toggle-slider:before {
 }
 
 .ratio-label {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     margin-bottom: 8px;
     text-transform: uppercase;
@@ -455,20 +455,20 @@ input:checked + .toggle-slider:before {
     margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .insights-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
+    gap: var(--spacing-lg);
 }
 
 .insight-card {
-    padding: 15px;
+    padding: var(--spacing-lg);
     border-radius: 8px;
     border-left: 4px solid;
-    font-size: 14px;
+    font-size: var(--font-sm);
     line-height: 1.6;
 }
 
@@ -501,7 +501,7 @@ input:checked + .toggle-slider:before {
     display: none;
     background: #e3f2fd;
     color: #1565c0;
-    padding: 10px 15px;
+    padding: var(--spacing-md) 15px;
     border-radius: 8px;
     font-size: 13px;
     text-align: center;
@@ -512,43 +512,43 @@ input:checked + .toggle-slider:before {
 @media (max-width: 768px) {
     .waterfall-controls {
         flex-direction: column;
-        gap: 15px;
+        gap: var(--spacing-lg);
         padding: 20px;
     }
     
     .period-selector-group {
         width: 100%;
         flex-direction: column;
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .period-select {
         width: 100%;
-        padding: 12px 15px;
-        font-size: 16px;
+        padding: var(--spacing-base) 15px;
+        font-size: var(--font-base);
     }
     
     #comparePeriodsBtn {
         width: 100%;
         margin-top: 10px;
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .view-toggle {
         width: 100%;
         justify-content: center;
-        padding: 10px;
+        padding: var(--spacing-md);
         background: #f8f9fa;
         border-radius: 8px;
     }
     
     .waterfall-summary {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .summary-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
         gap: 12px;
     }
     
@@ -558,7 +558,7 @@ input:checked + .toggle-slider:before {
     }
     
     .summary-label {
-        font-size: 12px;
+        font-size: var(--font-xs);
     }
     
     .summary-value {
@@ -573,11 +573,11 @@ input:checked + .toggle-slider:before {
     
     .chart-container.tall {
         height: 400px;
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .waterfall-analysis {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-top: 20px;
     }
     
@@ -595,7 +595,7 @@ input:checked + .toggle-slider:before {
     }
     
     .analysis-tab {
-        padding: 8px 12px;
+        padding: var(--spacing-sm) 12px;
         font-size: 13px;
         white-space: nowrap;
         min-width: fit-content;
@@ -607,8 +607,8 @@ input:checked + .toggle-slider:before {
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: var(--spacing-md) 8px;
+        font-size: var(--font-xs);
     }
     
     .cashflow-table th:first-child,
@@ -623,15 +623,15 @@ input:checked + .toggle-slider:before {
     }
     
     .trends-grid {
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .trend-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .trend-card h4 {
-        font-size: 16px;
+        font-size: var(--font-base);
         margin-bottom: 8px;
     }
     
@@ -650,20 +650,20 @@ input:checked + .toggle-slider:before {
     }
     
     .ratios-analysis {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .ratios-analysis h4 {
-        font-size: 16px;
+        font-size: var(--font-base);
         margin-bottom: 15px;
     }
     
     .ratios-grid {
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .ratio-card {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .ratio-label {
@@ -692,11 +692,11 @@ input:checked + .toggle-slider:before {
     }
     
     .insights-grid {
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .insight-card {
-        padding: 12px;
+        padding: var(--spacing-base);
         font-size: 13px;
         line-height: 1.4;
     }
@@ -709,16 +709,16 @@ input:checked + .toggle-slider:before {
 /* Extra Small Mobile */
 @media (max-width: 480px) {
     .waterfall-controls {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .period-select {
-        padding: 10px 12px;
+        padding: var(--spacing-md) 12px;
     }
     
     .summary-card {
-        padding: 12px;
-        gap: 10px;
+        padding: var(--spacing-base);
+        gap: var(--spacing-md);
     }
     
     .summary-icon {
@@ -726,7 +726,7 @@ input:checked + .toggle-slider:before {
     }
     
     .summary-value {
-        font-size: 16px;
+        font-size: var(--font-base);
     }
     
     .summary-detail {
@@ -735,7 +735,7 @@ input:checked + .toggle-slider:before {
     
     .analysis-tab {
         padding: 6px 10px;
-        font-size: 12px;
+        font-size: var(--font-xs);
     }
     
     .cashflow-table {
@@ -744,7 +744,7 @@ input:checked + .toggle-slider:before {
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 8px 6px;
+        padding: var(--spacing-sm) 6px;
         font-size: 11px;
     }
     
@@ -753,7 +753,7 @@ input:checked + .toggle-slider:before {
     }
     
     .ratio-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .ratio-value {
@@ -769,7 +769,7 @@ input:checked + .toggle-slider:before {
     
     .waterfall-summary {
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: var(--spacing-md);
         page-break-inside: avoid;
     }
     

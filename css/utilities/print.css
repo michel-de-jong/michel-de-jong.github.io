@@ -93,13 +93,13 @@
     /* KPI Grid */
     .kpi-grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
+        gap: var(--spacing-md);
         page-break-inside: avoid;
     }
     
     .kpi-card {
         border: 1px solid #ddd;
-        padding: 15px;
+        padding: var(--spacing-lg);
         background: #f9f9f9 !important;
     }
     
@@ -108,7 +108,7 @@
         height: 400px !important;
         page-break-inside: avoid;
         border: 1px solid #ddd;
-        padding: 10px;
+        padding: var(--spacing-md);
         margin: 20px 0;
     }
     
@@ -211,8 +211,8 @@
     /* Specific adjustments */
     .stress-test-result {
         border: 1px solid #ddd;
-        margin-bottom: 10px;
-        padding: 10px;
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-md);
     }
     
     .impact-bar {
@@ -228,7 +228,7 @@
     .export-info,
     .info-card {
         border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 15px;
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
     }
 }

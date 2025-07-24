@@ -13,7 +13,7 @@
     margin-bottom: 25px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     color: var(--primary-color);
 }
 
@@ -21,7 +21,7 @@
 .parameter-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     margin-bottom: 15px;
 }
 
@@ -32,18 +32,18 @@
 /* Parameter Body */
 .parameter-body input {
     width: 100%;
-    padding: 10px;
+    padding: var(--spacing-md);
     border: 2px solid #e9ecef;
     border-radius: 6px;
-    font-size: 16px;
-    margin-bottom: 10px;
+    font-size: var(--font-base);
+    margin-bottom: var(--spacing-md);
 }
 
 .parameter-scale {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 12px;
+    gap: var(--spacing-md);
+    font-size: var(--font-xs);
     color: #6c757d;
     margin-bottom: 10px;
 }
@@ -94,7 +94,7 @@
 }
 
 .parameter-help {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
 }
 
@@ -130,11 +130,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .loading-subtitle {
-    font-size: 16px;
+    font-size: var(--font-base);
     color: #6c757d;
 }
 
@@ -208,7 +208,7 @@
     justify-content: space-between;
     max-width: 600px;
     margin: 0 auto;
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #6c757d;
 }
 
@@ -243,7 +243,7 @@
     
     .progress-details {
         flex-direction: column;
-        gap: 10px;
+        gap: var(--spacing-md);
         align-items: center;
     }
 }
@@ -256,7 +256,7 @@
 .results-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     margin-bottom: 25px;
     color: var(--primary-color);
 }
@@ -285,8 +285,8 @@
 /* Responsive Monte Carlo page */
 @media (max-width: 768px) {
     .monte-carlo-controls {
-        padding: 15px;
-        gap: 15px;
+        padding: var(--spacing-lg);
+        gap: var(--spacing-lg);
     }
     
     .dice {
@@ -294,7 +294,7 @@
     }
     
     .result-card h4 {
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     .result-value {
@@ -321,7 +321,7 @@
     color: var(--primary-color);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .chart-title::before {
@@ -338,11 +338,11 @@
 /* Responsive adjustments for charts */
 @media (max-width: 768px) {
     .chart-container {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .chart-title {
-        font-size: 16px;
+        font-size: var(--font-base);
     }
     
     .chart-container canvas {

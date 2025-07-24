@@ -20,7 +20,7 @@
 
 .cashflow-table th,
 .cashflow-table td {
-    padding: 12px 15px;
+    padding: var(--spacing-base) var(--spacing-lg);
     text-align: right;
     border-bottom: 1px solid #dee2e6;
     white-space: nowrap;
@@ -144,11 +144,11 @@
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 10px 8px;
+        padding: var(--spacing-md) var(--spacing-sm);
         text-align: right;
         border-bottom: 1px solid #dee2e6;
         white-space: nowrap;
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     .cashflow-table th:first-child,
@@ -168,10 +168,10 @@
     
     .stress-test-result {
         background: #f8f9fa;
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-bottom: 8px;
         border-radius: 5px;
-        font-size: 14px;
+        font-size: var(--font-sm);
         line-height: 1.4;
     }
 }
@@ -183,8 +183,8 @@
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 8px 6px;
-        font-size: 12px;
+        padding: var(--spacing-sm) 6px;
+        font-size: var(--font-xs);
     }
     
     .cashflow-table th:first-child,

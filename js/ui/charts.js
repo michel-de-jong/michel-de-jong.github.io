@@ -23,7 +23,7 @@ export class ChartManager {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: Config.ui.animations ? Config.ui.animationDuration : 0
+                duration: Config.ui.animations ? 200 : 0
             },
             plugins: {
                 legend: {
@@ -525,7 +525,6 @@ export class ChartManager {
     // Update Monte Carlo charts
     updateMonteCarloCharts(stats) {
         if (!stats || !stats.paths) {
-            console.warn('No valid stats data for Monte Carlo charts');
             return;
         }
 
@@ -584,7 +583,6 @@ export class ChartManager {
         }
         
         if (!waterfallData || !waterfallData.data || waterfallData.data.length === 0) {
-            console.warn('No valid data for waterfall chart');
             return;
         }
         

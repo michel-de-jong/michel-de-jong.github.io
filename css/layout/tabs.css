@@ -26,7 +26,7 @@
 .tab {
     flex: 0 0 auto;
     min-width: 120px;
-    padding: 15px var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-md);
     background: var(--light-color);
     border: none;
     cursor: pointer;
@@ -72,8 +72,8 @@
     
     .tab {
         min-width: 100px;
-        padding: 12px 16px;
-        font-size: 14px;
+        padding: var(--spacing-base) 16px;
+        font-size: var(--font-sm);
     }
 }
 

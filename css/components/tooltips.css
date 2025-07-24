@@ -14,7 +14,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: var(--font-xs);
     cursor: help;
     transition: background-color var(--transition-fast);
 }
@@ -32,7 +32,7 @@
     color: var(--white-color);
     padding: var(--spacing-sm);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--font-sm);
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--transition-normal);
@@ -69,8 +69,8 @@
 @media (max-width: 768px) {
     .tooltip {
         max-width: 200px;
-        font-size: 12px;
-        padding: 8px;
+        font-size: var(--font-xs);
+        padding: var(--spacing-sm);
         right: -10px;
     }
     

@@ -4,7 +4,7 @@
 .export-features {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--spacing-md);
     justify-content: center;
     margin-bottom: 25px;
 }
@@ -29,7 +29,7 @@
 .info-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     color: #1976d2;
     margin-bottom: 25px;
 }
@@ -44,13 +44,13 @@
 .info-card p {
     color: #6c757d;
     margin-bottom: 15px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .info-card ul {
     margin-left: 20px;
     color: #495057;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .info-card li {
@@ -77,11 +77,11 @@
 /* Responsive export page */
 @media (max-width: 768px) {
     .export-features {
-        gap: 8px;
+        gap: var(--spacing-sm);
     }
     
     .feature {
-        font-size: 12px;
+        font-size: var(--font-xs);
         padding: 4px 10px;
     }
     

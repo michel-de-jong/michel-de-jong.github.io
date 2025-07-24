@@ -22,7 +22,7 @@
 
 .currency-controls label {
     display: block;
-    font-size: 14px;
+    font-size: var(--font-sm);
     font-weight: 500;
     color: #495057;
     margin-bottom: 8px;
@@ -30,10 +30,10 @@
 
 .currency-controls select {
     width: 100%;
-    padding: 10px 12px;
+    padding: var(--spacing-md) var(--spacing-base);
     border: 2px solid #e0e7ff;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: var(--font-sm);
     background: white;
     transition: all 0.3s ease;
 }
@@ -48,7 +48,7 @@
 .asset-row {
     display: grid;
     grid-template-columns: 2fr 1fr 2fr 1fr 1fr auto;
-    gap: 15px;
+    gap: var(--spacing-lg);
     align-items: end;
     margin-bottom: 15px;
     padding: 20px;
@@ -60,15 +60,15 @@
 }
 
 .asset-currency {
-    padding: 10px;
+    padding: var(--spacing-md);
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-sm);
     background: white;
 }
 
 .converted-value {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     margin-top: 5px;
     padding: 5px;
@@ -103,7 +103,7 @@
 
 .currency-exposure-item {
     margin-bottom: 20px;
-    padding: 15px;
+    padding: var(--spacing-lg);
     background: #f8f9fa;
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -128,7 +128,7 @@
 
 .currency-code {
     font-weight: 600;
-    font-size: 16px;
+    font-size: var(--font-base);
     color: #1e3c72;
 }
 
@@ -158,7 +158,7 @@
 }
 
 .exposure-value {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #6c757d;
 }
 
@@ -173,7 +173,7 @@
 
 .fx-risk-controls {
     display: flex;
-    gap: 15px;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
     margin-top: 20px;
 }
@@ -199,7 +199,7 @@
 .risk-analysis-section h5 {
     color: #495057;
     margin-bottom: 15px;
-    font-size: 16px;
+    font-size: var(--font-base);
 }
 
 /* Analysis Metrics */
@@ -263,7 +263,7 @@
 
 .risk-table th {
     background: #f8f9fa;
-    padding: 12px;
+    padding: var(--spacing-base);
     text-align: left;
     font-weight: 600;
     font-size: 13px;
@@ -272,9 +272,9 @@
 }
 
 .risk-table td {
-    padding: 12px;
+    padding: var(--spacing-base);
     border-bottom: 1px solid #e9ecef;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .risk-table tr:hover {
@@ -371,7 +371,7 @@
 .hedge-priority {
     padding: 5px 12px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     font-weight: 600;
 }
 
@@ -392,7 +392,7 @@
 
 .hedging-details p {
     margin: 8px 0;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .hedge-instruments {
@@ -404,7 +404,7 @@
     padding: 4px 10px;
     margin: 5px 5px 5px 0;
     border-radius: 15px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     font-weight: 500;
 }
 
@@ -437,7 +437,7 @@
 
 .current-value {
     font-size: 18px;
-    padding: 15px;
+    padding: var(--spacing-lg);
     background: #f8f9fa;
     border-radius: 8px;
     margin-bottom: 25px;
@@ -469,7 +469,7 @@
 }
 
 .scenario-direction {
-    padding: 15px;
+    padding: var(--spacing-lg);
     border-radius: 8px;
     text-align: center;
 }
@@ -505,7 +505,7 @@
 }
 
 .absolute-value {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #495057;
 }
 
@@ -555,7 +555,7 @@
 
 .stress-test-recommendations li {
     margin: 10px 0;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 /* Active Hedges Section */
@@ -614,13 +614,13 @@
     padding: 5px 12px;
     background: #e9ecef;
     border-radius: 15px;
-    font-size: 12px;
+    font-size: var(--font-xs);
     font-weight: 500;
 }
 
 .hedge-details p {
     margin: 5px 0;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .remove-hedge-btn {
@@ -691,7 +691,7 @@
 
 .modal-actions {
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-md);
     justify-content: flex-end;
     margin-top: 20px;
 }
@@ -728,7 +728,7 @@
 }
 
 .loading-message {
-    font-size: 16px;
+    font-size: var(--font-base);
     color: #495057;
 }
 
@@ -740,7 +740,7 @@
     
     .asset-row {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .asset-field {

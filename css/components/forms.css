@@ -31,7 +31,7 @@ select {
     padding: var(--spacing-sm) 40px var(--spacing-sm) 15px;
     border: 1px solid #ced4da;
     border-radius: var(--radius-md);
-    font-size: 16px;
+    font-size: var(--font-base);
     transition: border-color var(--transition-normal);
     font-family: inherit;
     background-color: var(--white-color);
@@ -103,7 +103,7 @@ input:checked + .toggle-slider:before {
 
 .error-message {
     color: var(--danger-color);
-    font-size: 12px;
+    font-size: var(--font-xs);
     margin-top: 5px;
     display: block;
 }
@@ -174,8 +174,8 @@ input:checked + .toggle-slider:before {
     input[type="number"],
     input[type="text"],
     select {
-        padding: 12px 40px 12px 15px;
-        font-size: 16px; /* Prevents zoom on iOS */
+        padding: var(--spacing-base) 40px var(--spacing-base) 15px;
+        font-size: var(--font-base); /* Prevents zoom on iOS */
     }
     
     .form-group {
@@ -195,11 +195,11 @@ input:checked + .toggle-slider:before {
     .inflatie-toggle {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: var(--spacing-sm);
         margin-bottom: 20px;
     }
     
     .inflatie-toggle span {
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
 }
