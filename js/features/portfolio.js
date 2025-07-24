@@ -104,6 +104,10 @@ export class PortfolioFeature {
         `;
         
         assetList.appendChild(assetRow);
+        
+        if (window.app?.features?.currencyPortfolio?.updateCurrencySelectors) {
+            window.app.features.currencyPortfolio.updateCurrencySelectors();
+        }
     }
     
     removeAsset(assetRowOrId) {
@@ -216,6 +220,10 @@ export class PortfolioFeature {
         let variance = 0;
         
         this.assets.forEach(asset => {
+            if (typeof asset.weight === 'undefined') {
+                const totalValue = this.assets.reduce((sum, a) => sum + a.amount, 0);
+                asset.weight = asset.amount / totalValue;
+            }
             variance += Math.pow(asset.weight * asset.risk / 100, 2);
         });
         
