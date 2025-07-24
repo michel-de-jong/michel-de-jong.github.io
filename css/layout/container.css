@@ -37,22 +37,22 @@
 @media (max-width: 1024px) {
     .container {
         max-width: 100%;
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
 }
 
 @media (max-width: 768px) {
     .container {
-        padding: 10px;
+        padding: var(--spacing-md);
     }
     
     .tab-content {
-        padding: 15px;
+        padding: var(--spacing-lg);
         min-height: auto;
     }
     
     .input-section {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-bottom: 15px;
     }
 }

@@ -5,12 +5,12 @@
     padding: var(--spacing-sm) var(--spacing-md);
     border: none;
     border-radius: var(--radius-md);
-    font-size: 16px;
+    font-size: var(--font-base);
     cursor: pointer;
     transition: all var(--transition-normal);
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
     font-family: inherit;
     font-weight: 500;
 }
@@ -61,12 +61,12 @@
 /* Button Sizes */
 .btn-sm {
     padding: 5px 10px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .btn-lg {
     padding: 14px 28px;
-    font-size: 16px;
+    font-size: var(--font-base);
 }
 
 .btn-xl {
@@ -85,10 +85,10 @@
     background: #dc3545;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: var(--spacing-sm) var(--spacing-base);
     border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: var(--font-base);
     line-height: 1;
     transition: all 0.2s;
     min-width: 40px;
@@ -102,7 +102,7 @@
 
 /* Analysis Tabs (button-like) */
 .analysis-tab {
-    padding: 10px 20px;
+    padding: var(--spacing-md) 20px;
     background: none;
     border: none;
     font-size: 15px;
@@ -134,24 +134,24 @@
 /* Responsive buttons */
 @media (max-width: 768px) {
     .btn {
-        padding: 12px 20px;
-        font-size: 16px;
+        padding: var(--spacing-base) 20px;
+        font-size: var(--font-base);
         touch-action: manipulation; /* Improves touch response */
     }
     
     .btn-sm {
-        padding: 8px 12px;
-        font-size: 14px;
+        padding: var(--spacing-sm) var(--spacing-base);
+        font-size: var(--font-sm);
     }
     
     .btn-lg {
-        padding: 12px 20px;
+        padding: var(--spacing-base) 20px;
         font-size: 15px;
     }
     
     .btn-xl {
         padding: 14px 24px;
-        font-size: 16px;
+        font-size: var(--font-base);
     }
     
     .portfolio-controls .btn {
@@ -164,14 +164,14 @@
     }
     
     .analysis-tab {
-        padding: 8px 15px;
-        font-size: 14px;
+        padding: var(--spacing-sm) var(--spacing-lg);
+        font-size: var(--font-sm);
     }
 }
 
 @media (max-width: 480px) {
     .btn {
-        padding: 10px 16px;
+        padding: var(--spacing-md) 16px;
         font-size: 15px;
     }
 }
@@ -185,6 +185,6 @@
     }
     
     .analysis-tab {
-        padding: 10px 15px;
+        padding: var(--spacing-md) 15px;
     }
 }

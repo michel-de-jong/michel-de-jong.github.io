@@ -65,7 +65,7 @@
 .insights-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
+    gap: var(--spacing-lg);
     margin-top: 15px;
 }
 
@@ -73,7 +73,7 @@
 .ratios-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
+    gap: var(--spacing-lg);
     margin-top: 20px;
 }
 
@@ -88,12 +88,12 @@
 @media (max-width: 1024px) {
     .kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .form-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
 }
 
@@ -103,27 +103,27 @@
     .export-grid,
     .info-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .results-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .parameter-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .waterfall-summary {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .ratios-grid {
@@ -134,7 +134,7 @@
 @media (max-width: 480px) {
     .kpi-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        gap: var(--spacing-sm);
     }
     
     .results-grid {

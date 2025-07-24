@@ -4,22 +4,22 @@
 @media (max-width: 1024px) {
     .container {
         max-width: 100%;
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .form-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .chart-container {
         height: 350px;
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .chart-container.tall {
@@ -36,7 +36,7 @@
     }
     
     .subtitle {
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     header {
@@ -46,7 +46,7 @@
     
     /* Container and Spacing */
     .container {
-        padding: 10px;
+        padding: var(--spacing-md);
     }
     
     /* Tab Navigation - Mobile Friendly */
@@ -72,25 +72,25 @@
     
     .tab {
         min-width: 100px;
-        padding: 12px 16px;
-        font-size: 14px;
+        padding: var(--spacing-base) 16px;
+        font-size: var(--font-sm);
         white-space: nowrap;
     }
     
     /* Tab Content */
     .tab-content {
-        padding: 15px;
+        padding: var(--spacing-lg);
         min-height: auto;
     }
     
     /* Form Styling */
     .form-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .input-section {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-bottom: 15px;
     }
     
@@ -103,31 +103,31 @@
     input[type="number"],
     input[type="text"],
     select {
-        padding: 12px 40px 12px 15px;
-        font-size: 16px; /* Prevents zoom on iOS */
+        padding: var(--spacing-base) 40px var(--spacing-base) 15px;
+        font-size: var(--font-base); /* Prevents zoom on iOS */
     }
     
     /* Tooltip Adjustments */
     .tooltip {
         max-width: 200px;
-        font-size: 12px;
-        padding: 8px;
+        font-size: var(--font-xs);
+        padding: var(--spacing-sm);
         right: -10px;
     }
     
     /* KPI Cards - Mobile Layout */
     .kpi-grid {
         grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .kpi-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
         min-height: 80px;
     }
     
     .kpi-label {
-        font-size: 12px;
+        font-size: var(--font-xs);
         margin-bottom: 5px;
     }
     
@@ -144,7 +144,7 @@
     /* Chart Container */
     .chart-container {
         height: 300px;
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-top: 20px;
     }
     
@@ -155,11 +155,11 @@
     /* Scenario Grid */
     .scenario-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .scenario-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .scenario-card h3 {
@@ -169,21 +169,21 @@
     
     /* Monte Carlo Controls */
     .monte-carlo-controls {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-bottom: 20px;
     }
     
     .simulation-results {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .result-card {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .result-card h4 {
-        font-size: 14px;
+        font-size: var(--font-sm);
         margin-bottom: 8px;
     }
     
@@ -199,7 +199,7 @@
     .cashflow-period-selector label {
         display: block;
         margin-bottom: 5px;
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     .cashflow-period-selector select {
@@ -223,11 +223,11 @@
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 10px 8px;
+        padding: var(--spacing-md) 8px;
         text-align: right;
         border-bottom: 1px solid #dee2e6;
         white-space: nowrap;
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     .cashflow-table th:first-child,
@@ -254,26 +254,26 @@
     /* Portfolio Builder - Mobile */
     .asset-row {
         grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 15px;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-lg);
         margin-bottom: 15px;
     }
     
     .asset-row input {
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-bottom: 5px;
     }
     
     .btn-remove {
         width: 100%;
-        padding: 8px;
+        padding: var(--spacing-sm);
         margin-top: 5px;
     }
     
     /* Export Grid */
     .export-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .export-card {
@@ -288,8 +288,8 @@
     /* Saved Scenarios */
     .saved-scenario {
         flex-direction: column;
-        gap: 10px;
-        padding: 12px;
+        gap: var(--spacing-md);
+        padding: var(--spacing-base);
         margin-bottom: 8px;
     }
     
@@ -309,26 +309,26 @@
     
     /* Buttons - Mobile Friendly */
     .btn {
-        padding: 12px 20px;
-        font-size: 16px;
+        padding: var(--spacing-base) 20px;
+        font-size: var(--font-base);
         touch-action: manipulation; /* Improves touch response */
     }
     
     .btn-sm {
-        padding: 8px 12px;
-        font-size: 14px;
+        padding: var(--spacing-sm) 12px;
+        font-size: var(--font-sm);
     }
     
     /* Toggle Switch */
     .inflatie-toggle {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: var(--spacing-sm);
         margin-bottom: 20px;
     }
     
     .inflatie-toggle span {
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     /* Loading Spinner */
@@ -345,10 +345,10 @@
     /* Stress Test Results */
     .stress-test-result {
         background: #f8f9fa;
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-bottom: 8px;
         border-radius: 5px;
-        font-size: 14px;
+        font-size: var(--font-sm);
         line-height: 1.4;
     }
     
@@ -373,7 +373,7 @@
     }
     
     label {
-        font-size: 14px;
+        font-size: var(--font-sm);
         margin-bottom: 6px;
     }
 }
@@ -385,24 +385,24 @@
     }
     
     .container {
-        padding: 8px;
+        padding: var(--spacing-sm);
     }
     
     .tab-content {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .input-section {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .kpi-grid {
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        gap: var(--spacing-sm);
     }
     
     .kpi-card {
-        padding: 12px;
+        padding: var(--spacing-base);
         min-height: 70px;
     }
     
@@ -412,7 +412,7 @@
     
     .chart-container {
         height: 250px;
-        padding: 8px;
+        padding: var(--spacing-sm);
     }
     
     .chart-container.tall {
@@ -420,17 +420,17 @@
     }
     
     .scenario-card {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 8px 6px;
+        padding: var(--spacing-sm) 6px;
         font-size: 13px;
     }
     
     .btn {
-        padding: 10px 16px;
+        padding: var(--spacing-md) 16px;
         font-size: 15px;
     }
     
@@ -439,11 +439,11 @@
     }
     
     .result-card {
-        padding: 10px;
+        padding: var(--spacing-md);
     }
     
     .result-value {
-        font-size: 16px;
+        font-size: var(--font-base);
     }
 }
 
@@ -545,8 +545,8 @@
 @media (max-width: 768px) {
     /* Waterfall Controls Mobile Layout */
     .waterfall-controls {
-        padding: 15px;
-        gap: 15px;
+        padding: var(--spacing-lg);
+        gap: var(--spacing-lg);
     }
     
     .period-selector-group {
@@ -554,27 +554,27 @@
     }
     
     .period-selector-group label {
-        font-size: 14px;
+        font-size: var(--font-sm);
         display: block;
         margin-bottom: 8px;
     }
     
     .period-select {
-        font-size: 16px; /* Prevent zoom on iOS */
-        padding: 12px 15px;
+        font-size: var(--font-base); /* Prevent zoom on iOS */
+        padding: var(--spacing-base) 15px;
         min-width: 100%;
     }
     
     #comparePeriodsBtn {
         width: 100%;
         margin-top: 10px;
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .view-toggle {
         width: 100%;
         justify-content: center;
-        padding: 10px;
+        padding: var(--spacing-md);
         background: #f8f9fa;
         border-radius: 8px;
     }
@@ -585,7 +585,7 @@
     }
     
     .summary-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
         gap: 12px;
     }
     
@@ -595,7 +595,7 @@
     }
     
     .summary-label {
-        font-size: 12px;
+        font-size: var(--font-xs);
     }
     
     .summary-value {
@@ -610,7 +610,7 @@
     
     /* Analysis Content Mobile */
     .waterfall-analysis {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-top: 20px;
     }
     
@@ -628,7 +628,7 @@
     }
     
     .analysis-tab {
-        padding: 8px 12px;
+        padding: var(--spacing-sm) 12px;
         font-size: 13px;
         white-space: nowrap;
         min-width: fit-content;
@@ -641,8 +641,8 @@
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: var(--spacing-md) 8px;
+        font-size: var(--font-xs);
     }
     
     .cashflow-table th:first-child,
@@ -658,15 +658,15 @@
     
     /* Trends Mobile */
     .trends-grid {
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .trend-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .trend-card h4 {
-        font-size: 16px;
+        font-size: var(--font-base);
         margin-bottom: 8px;
     }
     
@@ -686,20 +686,20 @@
     
     /* Ratios Mobile */
     .ratios-analysis {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .ratios-analysis h4 {
-        font-size: 16px;
+        font-size: var(--font-base);
         margin-bottom: 15px;
     }
     
     .ratios-grid {
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .ratio-card {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .ratio-label {
@@ -729,11 +729,11 @@
     }
     
     .insights-grid {
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .insight-card {
-        padding: 12px;
+        padding: var(--spacing-base);
         font-size: 13px;
         line-height: 1.4;
     }
@@ -742,16 +742,16 @@
 /* Extra Small Mobile */
 @media (max-width: 480px) {
     .waterfall-controls {
-        padding: 12px;
+        padding: var(--spacing-base);
     }
     
     .period-select {
-        padding: 10px 12px;
+        padding: var(--spacing-md) 12px;
     }
     
     .summary-card {
-        padding: 12px;
-        gap: 10px;
+        padding: var(--spacing-base);
+        gap: var(--spacing-md);
     }
     
     .summary-icon {
@@ -759,7 +759,7 @@
     }
     
     .summary-value {
-        font-size: 16px;
+        font-size: var(--font-base);
     }
     
     .summary-detail {
@@ -768,7 +768,7 @@
     
     .analysis-tab {
         padding: 6px 10px;
-        font-size: 12px;
+        font-size: var(--font-xs);
     }
     
     .cashflow-table {
@@ -777,7 +777,7 @@
     
     .cashflow-table th,
     .cashflow-table td {
-        padding: 8px 6px;
+        padding: var(--spacing-sm) 6px;
         font-size: 11px;
     }
     
@@ -786,7 +786,7 @@
     }
     
     .ratio-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .ratio-value {
@@ -819,7 +819,7 @@
     }
     
     .analysis-tab {
-        padding: 10px 15px;
+        padding: var(--spacing-md) 15px;
     }
     
     .period-select {

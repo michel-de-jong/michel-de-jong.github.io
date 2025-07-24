@@ -136,7 +136,7 @@
     left: 0;
     background: var(--primary-color);
     color: var(--white-color);
-    padding: 8px;
+    padding: var(--spacing-sm);
     text-decoration: none;
     z-index: 100;
 }

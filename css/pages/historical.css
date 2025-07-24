@@ -4,7 +4,7 @@
 .section-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     color: var(--primary-color);
     margin-bottom: 20px;
     font-size: 1.3em;
@@ -16,7 +16,7 @@
 
 .tab-description {
     color: #6c757d;
-    font-size: 16px;
+    font-size: var(--font-base);
     margin-bottom: 30px;
     line-height: 1.6;
 }
@@ -58,7 +58,7 @@
 .import-header {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: var(--spacing-lg);
     margin-bottom: 15px;
 }
 
@@ -74,11 +74,11 @@
 .import-body p {
     color: #6c757d;
     margin-bottom: 20px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .symbol-help {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     margin-top: 5px;
 }
@@ -86,7 +86,7 @@
 .period-selector {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .period-selector input {
@@ -122,9 +122,9 @@
 .radio-option {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .radio-option input[type="radio"] {
@@ -141,11 +141,11 @@
 }
 
 .time-btn {
-    padding: 8px 16px;
+    padding: var(--spacing-sm) 16px;
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 14px;
+    font-size: var(--font-sm);
     font-weight: 500;
     color: #6c757d;
     border-radius: 6px;
@@ -190,7 +190,7 @@
 }
 
 .metric-label {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #6c757d;
     margin-bottom: 8px;
     font-weight: 500;
@@ -204,7 +204,7 @@
 }
 
 .metric-detail {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
 }
 
@@ -215,7 +215,7 @@
 
 .backtest-controls {
     display: flex;
-    gap: 15px;
+    gap: var(--spacing-lg);
     margin-bottom: 30px;
 }
 
@@ -248,7 +248,7 @@
 .summary-item {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: var(--spacing-md) 0;
     border-bottom: 1px solid #e9ecef;
 }
 
@@ -298,12 +298,12 @@
 
 .insight-card h4 {
     margin-bottom: 10px;
-    font-size: 16px;
+    font-size: var(--font-base);
 }
 
 .insight-card p {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--font-sm);
     line-height: 1.6;
 }
 
@@ -399,16 +399,16 @@
     border-top: 1px solid #e9ecef;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 /* Form Controls */
 .form-control {
     width: 100%;
-    padding: 10px 15px;
+    padding: var(--spacing-md) var(--spacing-lg);
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-sm);
     transition: all 0.2s ease;
 }
 
@@ -435,7 +435,7 @@ textarea.form-control {
     
     .view-options {
         flex-direction: column;
-        gap: 10px;
+        gap: var(--spacing-md);
     }
     
     .time-range-selector {
@@ -444,11 +444,11 @@ textarea.form-control {
     
     .performance-metrics {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .metric-card {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .metric-value {
@@ -499,6 +499,6 @@ textarea.form-control {
     }
     
     .modal-body {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
 }

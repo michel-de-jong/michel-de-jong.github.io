@@ -19,7 +19,7 @@
 .chart-title {
     color: #495057;
     margin-bottom: 15px;
-    font-size: 16px;
+    font-size: var(--font-base);
     text-align: center;
 }
 
@@ -66,14 +66,14 @@
 .chart-container.loading::before {
     content: 'Loading chart...';
     color: var(--gray-color);
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 /* Responsive charts */
 @media (max-width: 768px) {
     .chart-container {
         height: 300px;
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-top: 20px;
     }
     
@@ -86,7 +86,7 @@
     }
     
     .waterfall-analysis {
-        padding: 15px;
+        padding: var(--spacing-lg);
         margin-top: 20px;
     }
 }
@@ -94,7 +94,7 @@
 @media (max-width: 480px) {
     .chart-container {
         height: 250px;
-        padding: 8px;
+        padding: var(--spacing-sm);
     }
     
     .chart-container.tall {

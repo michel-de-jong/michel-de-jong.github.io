@@ -35,6 +35,7 @@
 @import 'pages/historical.css';
 
 /* Utilities */
+@import 'utilities/breakpoints.css';
 @import 'utilities/helpers.css';
 @import 'utilities/animations.css';
 

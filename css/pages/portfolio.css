@@ -16,7 +16,7 @@
 .asset-row {
     display: grid;
     grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
-    gap: 15px;
+    gap: var(--spacing-lg);
     align-items: end;
     margin-bottom: 15px;
     padding: 20px;
@@ -38,16 +38,16 @@
 }
 
 .asset-field label {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     font-weight: 500;
 }
 
 .asset-row input {
-    padding: 10px;
+    padding: var(--spacing-md);
     border: 1px solid #ced4da;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .asset-row input:focus {
@@ -59,7 +59,7 @@
 /* Portfolio Controls */
 .portfolio-controls {
     display: flex;
-    gap: 15px;
+    gap: var(--spacing-lg);
     flex-wrap: wrap;
     margin-top: 20px;
 }
@@ -116,20 +116,20 @@
 
 .scenario-info strong {
     color: var(--primary-color);
-    font-size: 16px;
+    font-size: var(--font-base);
     display: block;
     margin-bottom: 5px;
 }
 
 .scenario-info span {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #6c757d;
     margin-right: 15px;
 }
 
 .scenario-actions {
     display: flex;
-    gap: 10px;
+    gap: var(--spacing-md);
 }
 
 .saved-scenarios-help {
@@ -139,24 +139,24 @@
 /* Responsive portfolio page */
 @media (max-width: 768px) {
     .portfolio-builder {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .asset-row {
         grid-template-columns: 1fr;
-        gap: 8px;
-        padding: 15px;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-lg);
         margin-bottom: 15px;
     }
     
     .asset-row input {
-        padding: 10px;
+        padding: var(--spacing-md);
         margin-bottom: 5px;
     }
     
     .btn-remove {
         width: 100%;
-        padding: 8px;
+        padding: var(--spacing-sm);
         margin-top: 5px;
     }
     
@@ -167,7 +167,7 @@
     .saved-scenario {
         flex-direction: column;
         align-items: flex-start;
-        gap: 15px;
+        gap: var(--spacing-lg);
     }
     
     .scenario-actions {
@@ -179,8 +179,8 @@
 @media (max-width: 480px) {
     .saved-scenario {
         flex-direction: column;
-        gap: 10px;
-        padding: 12px;
+        gap: var(--spacing-md);
+        padding: var(--spacing-base);
         margin-bottom: 8px;
     }
     

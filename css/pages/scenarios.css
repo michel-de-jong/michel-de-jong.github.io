@@ -3,7 +3,7 @@
 /* Tab Description */
 .tab-description {
     color: #6c757d;
-    font-size: 16px;
+    font-size: var(--font-base);
     margin-bottom: 30px;
     line-height: 1.6;
 }
@@ -16,10 +16,10 @@
 /* Scenario Input */
 .scenario-input {
     width: 100%;
-    padding: 12px;
+    padding: var(--spacing-base);
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: var(--font-base);
     transition: all 0.3s ease;
 }
 
@@ -30,7 +30,7 @@
 }
 
 .input-help {
-    font-size: 12px;
+    font-size: var(--font-xs);
     color: #6c757d;
     margin-top: 5px;
 }
@@ -41,7 +41,7 @@
 
 /* Result Label */
 .result-label {
-    font-size: 14px;
+    font-size: var(--font-sm);
     color: #495057;
     margin-bottom: 10px;
     text-transform: uppercase;
@@ -81,7 +81,7 @@
 .section-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     color: var(--primary-color);
     margin-bottom: 20px;
     font-size: 1.3em;
@@ -94,7 +94,7 @@
 .section-description {
     color: #6c757d;
     margin-bottom: 20px;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 /* Stress Test Results */
@@ -104,7 +104,7 @@
 
 .stress-test-summary {
     background: #e3f2fd;
-    padding: 15px;
+    padding: var(--spacing-lg);
     border-radius: 8px;
     margin-bottom: 20px;
 }
@@ -112,7 +112,7 @@
 .stress-test-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--spacing-md);
     margin-bottom: 15px;
 }
 
@@ -129,27 +129,27 @@
 .metric {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--spacing-sm);
 }
 
 .metric .label {
     color: #6c757d;
-    font-size: 14px;
+    font-size: var(--font-sm);
 }
 
 .metric .value {
     font-weight: 600;
-    font-size: 16px;
+    font-size: var(--font-base);
 }
 
 /* Responsive scenarios page */
 @media (max-width: 768px) {
     .tab-description {
-        font-size: 14px;
+        font-size: var(--font-sm);
     }
     
     .stress-test-section {
-        padding: 15px;
+        padding: var(--spacing-lg);
     }
     
     .section-header {
@@ -158,6 +158,6 @@
     
     .stress-test-metrics {
         flex-direction: column;
-        gap: 10px;
+        gap: var(--spacing-md);
     }
 }
