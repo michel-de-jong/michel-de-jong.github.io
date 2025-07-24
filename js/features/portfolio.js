@@ -448,14 +448,16 @@ export class PortfolioFeature {
     }
     
     loadSavedPortfoliosFromDataService() {
-        if (!this.dataService) return;
+        if (!this.dataService) return [];
         
         try {
-            const portfolios = this.dataService.getSavedPortfolios();
+            const portfolios = this.dataService.loadPortfolios();
             this.savedPortfoliosCache = portfolios || [];
+            return this.savedPortfoliosCache;
         } catch (error) {
             console.error('Error loading portfolios from DataService:', error);
             this.savedPortfoliosCache = [];
+            return this.savedPortfoliosCache;
         }
     }
     
