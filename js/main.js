@@ -110,7 +110,7 @@ class ROICalculatorApp {
     async initializeFeatures() {
         
         // Initialize feature modules - Create portfolio feature first
-        const portfolioFeature = new PortfolioFeature(this.dataService);
+        const portfolioFeature = new PortfolioFeature(this.chartManager, this.state, this.dataService);
         
         this.features = {
             scenarios: new ScenariosFeature(this.calculator, this.chartManager),
