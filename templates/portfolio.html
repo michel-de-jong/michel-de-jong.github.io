@@ -71,6 +71,22 @@
                 <span class="btn-icon">📊</span>
                 Calculate Portfolio
             </button>
+            <button id="optimizePortfolioBtn" class="btn btn-primary" disabled>
+                <span class="btn-icon">📈</span>
+                Optimize Portfolio
+            </button>
+            <button id="savePortfolioBtn" class="btn btn-info" disabled>
+                <span class="btn-icon">💾</span>
+                Save Portfolio
+            </button>
+            <button id="loadPortfolioBtn" class="btn btn-warning">
+                <span class="btn-icon">📂</span>
+                Load Portfolio
+            </button>
+            <button id="exportPortfolioBtn" class="btn btn-secondary" disabled>
+                <span class="btn-icon">📥</span>
+                Export Portfolio
+            </button>
         </div>
     </div>
     
@@ -96,6 +112,28 @@
                 <div class="kpi-icon">⚠️</div>
                 <div class="kpi-label">Portfolio Risk</div>
                 <div class="kpi-value" id="portfolioRisico">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Results -->
+    <div id="portfolioResults" class="portfolio-results-section" style="display: none;">
+        <h3 class="section-header">
+            <span class="header-icon">📊</span>
+            Portfolio Analysis
+        </h3>
+        <div class="results-grid">
+            <div class="result-card">
+                <h4>Portfolio Metrics</h4>
+                <div id="portfolioMetrics"></div>
+            </div>
+            <div class="result-card">
+                <h4>Asset Allocation</h4>
+                <div id="assetAllocation"></div>
+            </div>
+            <div class="result-card">
+                <h4>Risk Analysis</h4>
+                <div id="riskAnalysis"></div>
             </div>
         </div>
     </div>
@@ -177,7 +215,7 @@
         </h3>
         
         <div class="chart-container mt-4">
-            <canvas id="portfolioChart"></canvas>
+            <div id="portfolioChart"></div>
         </div>
     </div>
 

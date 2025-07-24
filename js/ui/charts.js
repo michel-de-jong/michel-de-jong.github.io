@@ -513,6 +513,8 @@ export class ChartManager {
             if (!this.charts.portfolio) return;
         }
         
+        if (!assets || assets.length === 0) return;
+        
         const labels = assets.map(a => a.name);
         const data = assets.map(a => a.amount);
         
