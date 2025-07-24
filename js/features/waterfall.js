@@ -9,7 +9,7 @@ export class WaterfallFeature {
         this.trendChart = null;
     }
     
-    init() {
+    async initialize() {
         console.log('Initializing waterfall feature...');
         try {
             this.setupEventHandlers();
@@ -20,6 +20,10 @@ export class WaterfallFeature {
         } catch (error) {
             console.error('Error initializing waterfall feature:', error);
         }
+    }
+
+    init() {
+        return this.initialize();
     }
 
     setupStateListener() {
