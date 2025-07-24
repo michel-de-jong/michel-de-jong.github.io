@@ -12,13 +12,22 @@ export class WaterfallFeature {
     async initialize() {
         console.log('Initializing waterfall feature...');
         try {
-            this.setupEventHandlers();
-            this.populatePeriodSelector();
             this.setupStateListener();
-            this.update();
             console.log('Waterfall feature initialized successfully');
         } catch (error) {
             console.error('Error initializing waterfall feature:', error);
+        }
+    }
+
+    activate() {
+        console.log('Activating waterfall feature for tab access...');
+        try {
+            this.setupEventHandlers();
+            this.populatePeriodSelector();
+            this.update();
+            console.log('Waterfall feature activated successfully');
+        } catch (error) {
+            console.error('Error activating waterfall feature:', error);
         }
     }
 
