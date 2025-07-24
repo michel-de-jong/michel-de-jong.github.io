@@ -73,7 +73,18 @@ export class WaterfallFeature {
     }
     
     getWaterfallData(period) {
-        // Mock data for demonstration - replace with actual calculator data
+        // Get real data from calculator if available
+        if (this.calculator && typeof this.calculator.getWaterfallData === 'function') {
+            const data = this.calculator.getWaterfallData(period);
+            if (data && data.data && data.data.length > 0) {
+                return {
+                    data: data.data,
+                    totals: data.totals,
+                    period: period
+                };
+            }
+        }
+        
         const mockData = {
             data: [
                 { label: 'Start Kapitaal', value: 100000, type: 'start' },
@@ -94,11 +105,6 @@ export class WaterfallFeature {
             },
             period: period
         };
-        
-        // Try to get real data from calculator if available
-        if (this.calculator && typeof this.calculator.getWaterfallData === 'function') {
-            return this.calculator.getWaterfallData(period);
-        }
         
         return mockData;
     }
@@ -364,13 +370,37 @@ export class WaterfallFeature {
     }
     
     showTrendsAnalysis(container) {
-        // Mock quarterly data - replace with actual calculator data
-        const quarters = [
-            { quarter: 1, bruto: 3750, netto: 2100 },
-            { quarter: 2, bruto: 3750, netto: 2200 },
-            { quarter: 3, bruto: 3750, netto: 2300 },
-            { quarter: 4, bruto: 3750, netto: 2400 }
-        ];
+        // Get real quarterly data from calculator
+        let quarters = [];
+        
+        if (this.calculator && this.calculator.data && this.calculator.data.monthlyData) {
+            const monthlyData = this.calculator.data.monthlyData;
+            
+            for (let q = 1; q <= 4; q++) {
+                const quarterMonths = monthlyData.filter(month => {
+                    const quarterStart = (q - 1) * 3 + 1;
+                    const quarterEnd = q * 3;
+                    const monthInYear = ((month.month - 1) % 12) + 1;
+                    return monthInYear >= quarterStart && monthInYear <= quarterEnd;
+                });
+                
+                if (quarterMonths.length > 0) {
+                    const bruto = quarterMonths.reduce((sum, month) => sum + month.bruttoOpbrengst, 0);
+                    const netto = quarterMonths.reduce((sum, month) => sum + month.netto, 0);
+                    quarters.push({ quarter: q, bruto, netto });
+                }
+            }
+        }
+        
+        // Fallback to mock data if no real data available
+        if (quarters.length === 0) {
+            quarters = [
+                { quarter: 1, bruto: 3750, netto: 2100 },
+                { quarter: 2, bruto: 3750, netto: 2200 },
+                { quarter: 3, bruto: 3750, netto: 2300 },
+                { quarter: 4, bruto: 3750, netto: 2400 }
+            ];
+        }
         
         container.innerHTML = `
             <div class="trends-grid">
@@ -512,8 +542,160 @@ export class WaterfallFeature {
     }
     
     comparePeriods() {
-        // Feature for comparing multiple periods
-        alert('Periode vergelijking komt binnenkort beschikbaar! Deze functie stelt u in staat om meerdere periodes naast elkaar te analyseren.');
+        // Get data for all available periods
+        const periods = ['totaal'];
+        const years = this.calculator?.inputs?.jaren || 5;
+        
+        for (let i = 1; i <= years; i++) {
+            periods.push(`jaar${i}`);
+        }
+        
+        // Create comparison data
+        const comparisonData = periods.map(period => {
+            const data = this.getWaterfallData(period);
+            return {
+                period: this.getPeriodName(period),
+                totals: data.totals || {},
+                efficiency: data.totals ? 
+                    ((data.totals.bruttoOpbrengst - data.totals.belasting - data.totals.rente - data.totals.aflossing - data.totals.kosten) / data.totals.bruttoOpbrengst * 100) : 0
+            };
+        });
+        
+        // Create modal or overlay to show comparison
+        this.showPeriodComparison(comparisonData);
+    }
+    
+    showPeriodComparison(comparisonData) {
+        // Create a modal overlay for period comparison
+        const modal = document.createElement('div');
+        modal.className = 'period-comparison-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>📊 Periode Vergelijking</h3>
+                    <button class="modal-close" onclick="this.closest('.period-comparison-modal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="comparison-table-wrapper">
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Periode</th>
+                                    <th>Bruto Rendement</th>
+                                    <th>Belasting</th>
+                                    <th>Rente</th>
+                                    <th>Aflossing</th>
+                                    <th>Kosten</th>
+                                    <th>Efficiëntie</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${comparisonData.map(period => `
+                                    <tr>
+                                        <td><strong>${period.period}</strong></td>
+                                        <td>${this.formatCurrency(period.totals.bruttoOpbrengst || 0)}</td>
+                                        <td class="negative">${this.formatCurrency(period.totals.belasting || 0)}</td>
+                                        <td class="negative">${this.formatCurrency(period.totals.rente || 0)}</td>
+                                        <td class="negative">${this.formatCurrency(period.totals.aflossing || 0)}</td>
+                                        <td class="negative">${this.formatCurrency(period.totals.kosten || 0)}</td>
+                                        <td class="${period.efficiency > 50 ? 'positive' : period.efficiency < 20 ? 'negative' : ''}">${period.efficiency.toFixed(1)}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        `;
+        
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.style.cssText = `
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        `;
+        
+        const modalHeader = modal.querySelector('.modal-header');
+        modalHeader.style.cssText = `
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        `;
+        
+        const closeButton = modal.querySelector('.modal-close');
+        closeButton.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        const table = modal.querySelector('.comparison-table');
+        table.style.cssText = `
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        `;
+        
+        const tableHeaders = modal.querySelectorAll('.comparison-table th');
+        tableHeaders.forEach(th => {
+            th.style.cssText = `
+                background: #f8f9fa;
+                padding: 12px 8px;
+                text-align: left;
+                border: 1px solid #dee2e6;
+                font-weight: 600;
+            `;
+        });
+        
+        const tableCells = modal.querySelectorAll('.comparison-table td');
+        tableCells.forEach(td => {
+            td.style.cssText = `
+                padding: 10px 8px;
+                border: 1px solid #dee2e6;
+            `;
+            
+            if (td.classList.contains('negative')) {
+                td.style.color = '#dc3545';
+            } else if (td.classList.contains('positive')) {
+                td.style.color = '#28a745';
+            }
+        });
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     }
     
     getPeriodName(period) {
