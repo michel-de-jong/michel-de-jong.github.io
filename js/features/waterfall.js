@@ -12,9 +12,18 @@ export class WaterfallFeature {
     init() {
         this.setupEventHandlers();
         this.populatePeriodSelector();
+        this.setupStateListener();
         this.update();
     }
-    
+
+    setupStateListener() {
+        if (this.calculator && this.calculator.stateManager) {
+            this.calculator.stateManager.onChange(() => {
+                this.populatePeriodSelector();
+            });
+        }
+    }
+
     setupEventHandlers() {
         const periodSelect = document.getElementById('waterfallPeriod');
         if (periodSelect) {
@@ -48,7 +57,7 @@ export class WaterfallFeature {
         if (!select) return;
         
         // Get investment duration from calculator
-        const years = this.calculator?.inputs?.jaren || 5;
+        const years = this.calculator.stateManager.getInputs().jaren || 5;
         
         select.innerHTML = '<option value="totaal">Totale Periode</option>';
         
@@ -544,7 +553,7 @@ export class WaterfallFeature {
     comparePeriods() {
         // Get data for all available periods
         const periods = ['totaal'];
-        const years = this.calculator?.inputs?.jaren || 5;
+        const years = this.calculator.stateManager.getInputs().jaren || 5;
         
         for (let i = 1; i <= years; i++) {
             periods.push(`jaar${i}`);
