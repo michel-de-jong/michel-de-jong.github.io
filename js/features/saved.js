@@ -174,7 +174,6 @@ export class SavedScenariosFeature {
     
     showSuccess(message) {
         // Could be replaced with a toast notification
-        console.log('Success:', message);
         alert(message);
     }
     

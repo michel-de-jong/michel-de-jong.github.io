@@ -64,7 +64,6 @@ class ROICalculatorApp {
             console.error('Initialization error:', error);
             
             if (this.initializationAttempts < this.maxInitAttempts) {
-                console.log(`Retrying initialization (attempt ${this.initializationAttempts + 1}/${this.maxInitAttempts})...`);
                 setTimeout(() => this.init(), 1000);
             } else {
                 this.showFatalError('Kon de applicatie niet initialiseren. Ververs de pagina om het opnieuw te proberen.');
@@ -318,8 +317,6 @@ class ROICalculatorApp {
     }
     
     displayValidationErrors(errors) {
-        console.warn('Validation errors:', errors);
-        
         // Clear previous error messages
         document.querySelectorAll('.error-message').forEach(el => el.remove());
         

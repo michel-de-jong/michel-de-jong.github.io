@@ -67,7 +67,6 @@ export class ChartManager {
     initMainChart() {
         const canvas = document.getElementById('mainChart');
         if (!canvas) {
-            console.warn('Main chart canvas not found');
             return;
         }
         
@@ -691,7 +690,6 @@ export class ChartManager {
     destroyAll() {
         Object.entries(this.charts).forEach(([name, chart]) => {
             if (chart) {
-                console.log(`Destroying chart: ${name}`);
                 chart.destroy();
             }
         });

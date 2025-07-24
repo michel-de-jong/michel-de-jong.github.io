@@ -200,8 +200,6 @@ export const storage = {
      */
     cleanupOldData() {
         try {
-            console.log('Attempting to clean up old data...');
-            
             // Get all our keys with timestamps
             const items = [];
             
@@ -229,7 +227,6 @@ export const storage = {
                 }
             }
             
-            console.log(`Cleaned up ${removed} old items`);
             return removed > 0;
             
         } catch (e) {
