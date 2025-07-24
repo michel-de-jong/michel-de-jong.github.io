@@ -43,7 +43,6 @@ export class HistoricalDataService {
         const cacheKey = this.getCacheKey(source, params);
         const cached = this.getFromCache(cacheKey);
         if (cached) {
-            console.log('Returning cached data for:', cacheKey);
             return cached;
         }
         

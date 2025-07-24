@@ -21,7 +21,6 @@ export class PortfolioFeature {
     // Set DataService for integration
     setDataService(dataService) {
         this.dataService = dataService;
-        console.log('DataService integrated with PortfolioFeature');
     }
     
     setupListeners(stateManager) {
@@ -474,7 +473,6 @@ export class PortfolioFeature {
         if (portfolios && portfolios.length > 0) {
             this.savedPortfoliosCache = portfolios;
             this.cacheTimestamp = Date.now();
-            console.log(`PortfolioFeature received ${portfolios.length} portfolios`);
         }
     }
     
@@ -627,8 +625,6 @@ export class PortfolioFeature {
     }
     
     refresh() {
-        console.log('Refreshing portfolio feature');
-        
         // Reload saved portfolios if using DataService
         if (this.dataService && this.useDataService) {
             this.invalidateSavedPortfoliosCache();
@@ -657,6 +653,5 @@ export class PortfolioFeature {
     
     showInfo(message) {
         // Could be replaced with toast notification
-        console.log('Info: ' + message);
     }
 }

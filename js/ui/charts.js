@@ -67,7 +67,6 @@ export class ChartManager {
     initMainChart() {
         const canvas = document.getElementById('mainChart');
         if (!canvas) {
-            console.warn('Main chart canvas not found');
             return;
         }
         
@@ -525,7 +524,6 @@ export class ChartManager {
     // Update Monte Carlo charts
     updateMonteCarloCharts(stats) {
         if (!stats || !stats.paths) {
-            console.warn('No valid stats data for Monte Carlo charts');
             return;
         }
 
@@ -584,7 +582,6 @@ export class ChartManager {
         }
         
         if (!waterfallData || !waterfallData.data || waterfallData.data.length === 0) {
-            console.warn('No valid data for waterfall chart');
             return;
         }
         
@@ -693,7 +690,6 @@ export class ChartManager {
     destroyAll() {
         Object.entries(this.charts).forEach(([name, chart]) => {
             if (chart) {
-                console.log(`Destroying chart: ${name}`);
                 chart.destroy();
             }
         });
