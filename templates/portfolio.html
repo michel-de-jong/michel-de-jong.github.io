@@ -12,7 +12,16 @@
             <div class="form-group">
                 <label for="baseCurrencySelector">Basisvaluta</label>
                 <select id="baseCurrencySelector" class="currency-selector">
-                    <!-- Options populated by JavaScript -->
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                    <option value="CHF">CHF - Swiss Franc</option>
+                    <option value="AUD">AUD - Australian Dollar</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                    <option value="CNY">CNY - Chinese Yuan</option>
+                    <option value="SEK">SEK - Swedish Krona</option>
+                    <option value="NZD">NZD - New Zealand Dollar</option>
                 </select>
             </div>
             <div class="form-group">
@@ -34,32 +43,7 @@
         </h3>
         
         <div id="assetList" class="asset-list">
-            <div class="asset-row" data-asset-id="default-1">
-                <div class="asset-field">
-                    <label>Asset Naam</label>
-                    <input type="text" placeholder="bijv. Amerikaanse Aandelen" class="asset-name">
-                </div>
-                <div class="asset-field">
-                    <label>Valuta</label>
-                    <select class="asset-currency currency-selector">
-                        <!-- Options populated by JavaScript -->
-                    </select>
-                </div>
-                <div class="asset-field">
-                    <label>Bedrag</label>
-                    <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
-                    <div class="converted-value" style="display: none;"></div>
-                </div>
-                <div class="asset-field">
-                    <label>Rendement %</label>
-                    <input type="number" placeholder="7.5" class="asset-return" step="0.1">
-                </div>
-                <div class="asset-field">
-                    <label>Risico %</label>
-                    <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
-                </div>
-                <button class="btn-remove" data-action="remove">×</button>
-            </div>
+            <!-- Asset rows will be dynamically added here by JavaScript -->
         </div>
         
         <div class="portfolio-controls mt-3">
@@ -150,47 +134,31 @@
                 <span class="btn-icon">🧪</span>
                 Stresstest Uitvoeren
             </button>
-            <button class="btn btn-success" id="calculateHedgeBtn">
+            <button class="btn btn-info" id="calculateHedgeBtn">
                 <span class="btn-icon">🛡️</span>
-                Optimale Hedge Berekenen
+                Hedge Berekenen
             </button>
         </div>
         
-        <div id="fxRiskAnalysisResults" class="fx-risk-results" style="display: none;">
-            <!-- Risk analysis results populated by JavaScript -->
-        </div>
-        
-        <div id="stressTestResults" class="stress-test-results" style="display: none;">
-            <!-- Stress test results populated by JavaScript -->
+        <div id="fxRiskResults" class="fx-risk-results" style="display: none;">
+            <!-- FX risk analysis results will be displayed here -->
         </div>
     </div>
 
-    <!-- Active Hedges -->
-    <div class="active-hedges-section">
+    <!-- Charts Section -->
+    <div class="portfolio-charts mt-5">
         <h3 class="section-header">
-            <span class="header-icon">🛡️</span>
-            Actieve Hedgingstrategieën
-        </h3>
-        <div id="activeHedgesContainer" class="active-hedges-container">
-            <p class="no-hedges">Geen actieve hedgingstrategieën</p>
-        </div>
-    </div>
-
-    <!-- Portfolio Visualization -->
-    <div class="portfolio-visualization">
-        <h3 class="section-header">
-            <span class="header-icon">🎯</span>
-            Asset Verdeling
+            <span class="header-icon">📊</span>
+            Visualisaties
         </h3>
         
-        <div class="chart-container mt-4">
-            <div id="portfolioChart"></div>
+        <div class="chart-container">
+            <canvas id="portfolioChart"></canvas>
         </div>
-    </div>
-
-    <!-- Loading Indicator -->
-    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
-        <div class="spinner"></div>
-        <div class="loading-message">Bezig met laden...</div>
+        
+        <div class="currency-exposure-chart mt-4" style="display: none;">
+            <h4>Valuta Blootstelling</h4>
+            <canvas id="currencyExposureChart"></canvas>
+        </div>
     </div>
 </section>
