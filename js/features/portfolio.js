@@ -44,6 +44,8 @@ export class PortfolioFeature {
     }
     
     setupEventListeners() {
+        this.eventListenersSetup = true;
+        
         // Portfolio builder events - use arrow functions to preserve 'this' context
         const addAssetBtn = document.getElementById('addAssetBtn');
         const calculatePortfolioBtn = document.getElementById('calculatePortfolioBtn');
@@ -52,9 +54,19 @@ export class PortfolioFeature {
         const loadPortfolioBtn = document.getElementById('loadPortfolioBtn');
         const exportPortfolioBtn = document.getElementById('exportPortfolioBtn');
         
-        // Check if buttons exist before adding listeners
+        // Check if buttons exist before adding listeners with GitHub Pages/Brave compatibility
         if (addAssetBtn) {
-            addAssetBtn.addEventListener('click', () => this.addAsset());
+            addAssetBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addAsset();
+            });
+            
+            addAssetBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Left mouse button only
+                    e.preventDefault();
+                    setTimeout(() => this.addAsset(), 0);
+                }
+            });
         }
         if (calculatePortfolioBtn) {
             calculatePortfolioBtn.addEventListener('click', () => this.calculatePortfolio());

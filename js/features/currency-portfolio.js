@@ -68,13 +68,40 @@ export class CurrencyPortfolioFeature {
         const calculateHedgeBtn = document.getElementById('calculateHedgeBtn');
         
         if (analyzeFXRiskBtn) {
-            analyzeFXRiskBtn.addEventListener('click', () => this.analyzeFXRisk());
+            analyzeFXRiskBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.analyzeFXRisk();
+            });
+            analyzeFXRiskBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.analyzeFXRisk(), 0);
+                }
+            });
         }
         if (runStressTestBtn) {
-            runStressTestBtn.addEventListener('click', () => this.runStressTest());
+            runStressTestBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.runStressTest();
+            });
+            runStressTestBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.runStressTest(), 0);
+                }
+            });
         }
         if (calculateHedgeBtn) {
-            calculateHedgeBtn.addEventListener('click', () => this.calculateOptimalHedge());
+            calculateHedgeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.calculateOptimalHedge();
+            });
+            calculateHedgeBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.calculateOptimalHedge(), 0);
+                }
+            });
         }
     }
     
