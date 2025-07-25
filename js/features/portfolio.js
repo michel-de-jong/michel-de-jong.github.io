@@ -465,7 +465,7 @@ export class PortfolioFeature {
         if (!this.dataService || !this.useDataService) return;
         
         try {
-            const portfolios = await this.dataService.getSavedPortfolios();
+            const portfolios = await this.dataService.loadPortfolios();
             this.savedPortfoliosCache = portfolios;
         } catch (error) {
             console.error('Error loading portfolios from DataService:', error);

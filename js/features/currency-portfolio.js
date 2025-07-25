@@ -144,7 +144,7 @@ export class CurrencyPortfolioFeature {
                     convertedDiv.style.display = 'block';
                 } else {
                     // Fallback conversion
-                    const convertedAmount = await this.convertCurrency(amount, currency, this.currencyPortfolio.baseCurrency);
+                    const convertedAmount = await this.currencyService.convert(amount, currency, this.currencyPortfolio.baseCurrency);
                     if (convertedAmount !== null) {
                         convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
                         convertedDiv.style.display = 'block';
@@ -240,7 +240,7 @@ export class CurrencyPortfolioFeature {
         // Calculate exposures
         for (const [currency, currencyAssets] of Object.entries(currencyGroups)) {
             const totalInCurrency = currencyAssets.reduce((sum, asset) => sum + asset.amount, 0);
-            const totalInBase = await this.convertCurrency(totalInCurrency, currency, baseCurrency);
+            const totalInBase = await this.currencyService.convert(totalInCurrency, currency, baseCurrency);
             
             totalValueInBase += totalInBase;
             
