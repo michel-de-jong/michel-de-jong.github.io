@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  publicDir: 'public',
   build: {
     outDir: 'dist',
     minify: true,
@@ -16,7 +17,8 @@ export default defineConfig({
       }
     },
     cssCodeSplit: true,
-    sourcemap: false
+    sourcemap: false,
+    copyPublicDir: true
   },
   css: {
     devSourcemap: false

@@ -1,0 +1,156 @@
+<section id="montecarlo" class="tab-pane" role="tabpanel">
+    <h2>🎲 Monte Carlo Simulatie</h2>
+    <p class="tab-description">Geavanceerde probabilistische analyse met duizenden scenario's voor diepgaand risico-inzicht</p>
+    
+    <div class="monte-carlo-controls">
+        <h3 class="control-header">
+            <span class="header-icon">⚙️</span>
+            Simulatie Parameters
+        </h3>
+        
+        <div class="parameter-card">
+            <div class="parameter-header">
+                <span class="param-icon">🔢</span>
+                <label for="mcSimulations">Aantal Simulaties</label>
+            </div>
+            <div class="parameter-body">
+                <input type="number" id="mcSimulations" value="1000" min="10" max="5000" step="100">
+                <div class="parameter-scale">
+                    <span>10</span>
+                    <div class="scale-bar">
+                        <div class="scale-fill" style="width: 20%"></div>
+                    </div>
+                    <span>5K</span>
+                </div>
+                <div class="parameter-help">Meer simulaties = nauwkeuriger resultaat</div>
+            </div>
+        </div>
+            
+            <div class="parameter-card">
+                <div class="parameter-header">
+                    <span class="param-icon">📊</span>
+                    <label for="mcVolatility">Rendement Volatiliteit (%)</label>
+                </div>
+                <div class="parameter-body">
+                    <input type="number" id="mcVolatility" value="3" min="0" max="20" step="0.5">
+                    <div class="volatility-indicator">
+                        <div class="volatility-bar low"></div>
+                        <div class="volatility-bar medium active"></div>
+                        <div class="volatility-bar high"></div>
+                    </div>
+                    <div class="parameter-help">Standaarddeviatie van het rendement</div>
+                </div>
+            </div>
+            
+            <div class="parameter-card">
+                <div class="parameter-header">
+                    <span class="param-icon">💸</span>
+                    <label for="mcRenteVolatility">Rente Volatiliteit (%)</label>
+                </div>
+                <div class="parameter-body">
+                    <input type="number" id="mcRenteVolatility" value="1" min="0" max="5" step="0.1">
+                    <div class="volatility-indicator">
+                        <div class="volatility-bar low active"></div>
+                        <div class="volatility-bar medium"></div>
+                        <div class="volatility-bar high"></div>
+                    </div>
+                    <div class="parameter-help">Variatie in rentetarieven</div>
+                </div>
+            </div>
+            
+            <div class="parameter-card">
+                <div class="parameter-header">
+                    <span class="param-icon">📉</span>
+                    <label for="mcKostenVolatility">Kosten Volatiliteit (%)</label>
+                </div>
+                <div class="parameter-body">
+                    <input type="number" id="mcKostenVolatility" value="10" min="0" max="50" step="5">
+                    <div class="volatility-indicator">
+                        <div class="volatility-bar low"></div>
+                        <div class="volatility-bar medium active"></div>
+                        <div class="volatility-bar high"></div>
+                    </div>
+                    <div class="parameter-help">Variatie in vaste kosten</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="simulation-action">
+            <button class="btn btn-primary btn-xl" id="runMonteCarloBtn">
+                Start Monte Carlo Simulatie
+            </button>
+        </div>
+    </div>
+    
+    <div class="loading" id="mcLoading">
+        <div class="loading-header">
+            <h3 class="loading-title">
+                <span class="loading-icon">⚙️</span>
+                Monte Carlo Simulatie
+            </h3>
+            <p class="loading-subtitle">Analyseren van duizenden scenario's...</p>
+        </div>
+        
+        <div class="progress-percentage" id="mcProgressPercentage">0%</div>
+        
+        <div class="professional-progress-container">
+            <div class="professional-progress-bar" id="mcProgressBar"></div>
+        </div>
+        
+        <div class="progress-details">
+            <div class="progress-detail">
+                <span>🔄</span>
+                <span>Simulaties: <strong id="mcSimulationCount">0</strong> / <strong id="mcTotalSimulations">1000</strong></span>
+            </div>
+            <div class="progress-detail">
+                <span>⏱️</span>
+                <span>Tijd: <strong id="mcElapsedTime">0s</strong></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="simulation-results" id="mcResults" style="display: none;">
+        <h3 class="results-header">
+            <span class="header-icon">📊</span>
+            Simulatie Resultaten
+        </h3>
+        
+        <div class="results-grid">
+            <div class="result-card primary">
+                <div class="result-icon">📊</div>
+                <h4>Mediaan ROI (P50)</h4>
+                <div class="result-value" id="mcMedianROI">0%</div>
+            </div>
+            
+            <div class="result-card info">
+                <div class="result-icon">🎯</div>
+                <h4>P5-P95 Confidence Interval</h4>
+                <div class="result-value" id="mcConfidence">0% - 0%</div>
+            </div>
+            
+            <div class="result-card warning">
+                <div class="result-icon">⚠️</div>
+                <h4>Kans op Verlies</h4>
+                <div class="result-value" id="mcLossProb">0%</div>
+            </div>
+            
+            <div class="result-card danger">
+                <div class="result-icon">📉</div>
+                <h4>Value at Risk (5%)</h4>
+                <div class="result-value" id="mcVaR">€ 0</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="monte-carlo-charts">
+        <div class="chart-container mt-4" style="display: none;" id="mcChartContainer">
+            <h4 class="chart-title">ROI Distributie over Simulaties</h4>
+            <canvas id="monteCarloChart"></canvas>
+        </div>
+        
+        <div class="chart-container mt-4" style="display: none;" id="mcDistContainer">
+            <h4 class="chart-title">Waarschijnlijkheidsverdeling</h4>
+            <canvas id="distributionChart"></canvas>
+        </div>
+    </div>
+</section>
