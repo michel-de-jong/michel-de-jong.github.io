@@ -1,0 +1,123 @@
+<section id="waterfall" class="tab-pane" role="tabpanel">
+    <h2>💧 Cashflow Waterfall Analyse</h2>
+    <p class="tab-description">Gedetailleerd overzicht van alle geldstromen per periode met visuele breakdown</p>
+    
+    <!-- Controls Section -->
+    <div class="waterfall-controls">
+        <div class="period-selector-group">
+            <label for="waterfallPeriod">
+                <span class="label-icon">📅</span>
+                Selecteer Periode:
+            </label>
+            <select id="waterfallPeriod" class="period-select">
+                <option value="totaal">Totale Periode</option>
+                <option value="jaar1">Jaar 1</option>
+                <option value="jaar2">Jaar 2</option>
+                <option value="jaar3">Jaar 3</option>
+                <option value="jaar4">Jaar 4</option>
+                <option value="jaar5">Jaar 5</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" id="comparePeriodsBtn">
+                <span class="btn-icon">📊</span>
+                Vergelijk Periodes
+            </button>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="waterfall-summary">
+        <div class="summary-card positive">
+            <div class="summary-icon">📈</div>
+            <div class="summary-content">
+                <div class="summary-label">Totale Inkomsten</div>
+                <div class="summary-value" id="wfTotaleInkomsten">€ 0</div>
+                <div class="summary-detail" id="wfInkomstenDetail">Bruto: € 0 | Belasting: € 0</div>
+            </div>
+        </div>
+        
+        <div class="summary-card negative">
+            <div class="summary-icon">📉</div>
+            <div class="summary-content">
+                <div class="summary-label">Totale Uitgaven</div>
+                <div class="summary-value" id="wfTotaleUitgaven">€ 0</div>
+                <div class="summary-detail" id="wfUitgavenDetail">Rente: € 0 | Aflossing: € 0 | Kosten: € 0</div>
+            </div>
+        </div>
+        
+        <div class="summary-card primary">
+            <div class="summary-icon">💰</div>
+            <div class="summary-content">
+                <div class="summary-label">Netto Cashflow</div>
+                <div class="summary-value" id="wfNettoCashflow">€ 0</div>
+                <div class="summary-detail" id="wfCashflowDetail">0% van bruto inkomsten</div>
+            </div>
+        </div>
+        
+        <div class="summary-card info">
+            <div class="summary-icon">📊</div>
+            <div class="summary-content">
+                <div class="summary-label">Effectief Belastingtarief</div>
+                <div class="summary-value" id="wfBelastingTarief">0%</div>
+                <div class="summary-detail" id="wfBelastingDetail">Op bruto rendement</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Waterfall Chart -->
+    <div class="chart-container tall mt-4">
+        <canvas id="waterfallChart"></canvas>
+    </div>
+    
+    <!-- Analysis Section -->
+    <div class="waterfall-analysis mt-4">
+        <h3>📊 Cashflow Breakdown</h3>
+        <div class="analysis-tabs">
+            <button class="analysis-tab active" data-analysis="components">Componenten</button>
+            <button class="analysis-tab" data-analysis="trends">Trends</button>
+            <button class="analysis-tab" data-analysis="ratios">Ratio's</button>
+        </div>
+        
+        <div class="table-controls">
+            <div class="view-toggle">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="waterfallViewToggle" aria-label="Toon percentages">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span>Toon als percentages</span>
+            </div>
+        </div>
+        
+        <div class="analysis-content" id="analysisContent">
+            <!-- Components Table (default view) -->
+            <div class="table-wrapper">
+                <table class="cashflow-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Bedrag</th>
+                            <th>% van Bruto</th>
+                            <th>% van Totaal</th>
+                            <th>Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waterfallTableBody">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Insights Section -->
+    <div class="waterfall-insights mt-4">
+        <h3>💡 Inzichten & Aanbevelingen</h3>
+        <div id="waterfallInsights" class="insights-grid">
+            <!-- Dynamically populated insights -->
+        </div>
+    </div>
+    
+    <!-- Mobile Hint -->
+    <div class="mobile-table-hint mt-2">
+        💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
+    </div>
+</section>
