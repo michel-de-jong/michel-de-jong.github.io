@@ -70,6 +70,13 @@ export class CurrencyService {
     }
     
     /**
+     * Get available currencies (alias for getSupportedCurrencies)
+     */
+    getAvailableCurrencies() {
+        return this.getSupportedCurrencies();
+    }
+    
+    /**
      * Check if currency is supported
      */
     isSupported(currencyCode) {
@@ -199,9 +206,10 @@ export class CurrencyService {
         }
         
         try {
-            // Fetch from frankfurter.app which provides historical data
-            const url = `https://api.frankfurter.app/${startDate}..${endDate}?from=${fromCurrency}&to=${toCurrency}`;
-            const response = await fetch(url);
+            // Fetch historical rates from API
+            const response = await fetch(
+                `https://api.frankfurter.app/${startDate}..${endDate}?from=${fromCurrency}&to=${toCurrency}`
+            );
             
             if (!response.ok) {
                 throw new Error('Failed to fetch historical rates');
@@ -210,15 +218,14 @@ export class CurrencyService {
             const data = await response.json();
             const rates = [];
             
-            // Process the rates object
-            for (const [date, rateData] of Object.entries(data.rates)) {
+            Object.entries(data.rates).forEach(([date, rateData]) => {
                 rates.push({
-                    date: date,
+                    date,
                     rate: rateData[toCurrency],
                     from: fromCurrency,
                     to: toCurrency
                 });
-            }
+            });
             
             // Cache the results
             this.historicalRates.set(cacheKey, rates);
@@ -228,41 +235,37 @@ export class CurrencyService {
         } catch (error) {
             console.error('Error fetching historical rates:', error);
             
-            // Generate sample historical data for demonstration
-            return this.generateSampleHistoricalRates(
-                fromCurrency, 
-                toCurrency, 
-                startDate, 
-                endDate
-            );
+            // Generate sample rates as fallback
+            return this.generateSampleHistoricalRates(fromCurrency, toCurrency, startDate, endDate);
         }
     }
     
     /**
-     * Calculate currency volatility
+     * Calculate volatility for a series of historical rates
+     * @param {Array} historicalRates - Array of rate objects with date and rate properties
+     * @returns {number} Annualized volatility as percentage
      */
     calculateVolatility(historicalRates) {
-        if (historicalRates.length < 2) {
-            return 0;
+        if (!historicalRates || historicalRates.length < 2) {
+            return 10; // Default volatility
         }
         
         // Calculate daily returns
         const returns = [];
         for (let i = 1; i < historicalRates.length; i++) {
-            const dailyReturn = (historicalRates[i].rate - historicalRates[i-1].rate) / 
-                               historicalRates[i-1].rate;
+            const prevRate = historicalRates[i - 1].rate;
+            const currRate = historicalRates[i].rate;
+            const dailyReturn = (currRate - prevRate) / prevRate;
             returns.push(dailyReturn);
         }
         
-        // Calculate mean return
-        const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        // Calculate standard deviation
+        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
+        const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
+        const stdDev = Math.sqrt(variance);
         
-        // Calculate variance
-        const variance = returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / 
-                        (returns.length - 1);
-        
-        // Return annualized volatility (assuming 252 trading days)
-        return Math.sqrt(variance * 252) * 100; // Return as percentage
+        // Annualize (assuming 252 trading days)
+        return stdDev * Math.sqrt(252) * 100;
     }
     
     /**
@@ -378,14 +381,38 @@ export class CurrencyService {
     getDefaultRates(base) {
         // Default rates for offline functionality (approximate as of 2024)
         const defaultRates = {
-            EUR: { USD: 1.08, GBP: 0.86, JPY: 162, CHF: 0.96 },
-            USD: { EUR: 0.93, GBP: 0.80, JPY: 150, CHF: 0.89 },
-            GBP: { EUR: 1.16, USD: 1.25, JPY: 188, CHF: 1.12 },
-            JPY: { EUR: 0.0062, USD: 0.0067, GBP: 0.0053, CHF: 0.0059 },
-            CHF: { EUR: 1.04, USD: 1.12, GBP: 0.89, JPY: 169 }
+            EUR: { USD: 1.08, GBP: 0.86, JPY: 162, CHF: 0.96, CAD: 1.46, AUD: 1.65, CNY: 7.85, SEK: 11.2, NZD: 1.75 },
+            USD: { EUR: 0.93, GBP: 0.80, JPY: 150, CHF: 0.89, CAD: 1.35, AUD: 1.53, CNY: 7.27, SEK: 10.4, NZD: 1.62 },
+            GBP: { EUR: 1.16, USD: 1.25, JPY: 188, CHF: 1.12, CAD: 1.69, AUD: 1.91, CNY: 9.08, SEK: 13.0, NZD: 2.03 },
+            JPY: { EUR: 0.0062, USD: 0.0067, GBP: 0.0053, CHF: 0.0059, CAD: 0.009, AUD: 0.010, CNY: 0.048, SEK: 0.069, NZD: 0.011 },
+            CHF: { EUR: 1.04, USD: 1.12, GBP: 0.89, JPY: 169, CAD: 1.51, AUD: 1.71, CNY: 8.11, SEK: 11.6, NZD: 1.81 }
         };
         
         return defaultRates[base] || {};
+    }
+    
+    /**
+     * Simple fallback rates for offline functionality
+     * @returns {Object} Exchange rates relative to EUR
+     */
+    getFallbackRates() {
+        return {
+            'EUR': 1,
+            'USD': 1.08,
+            'GBP': 0.86,
+            'JPY': 161.5,
+            'CHF': 0.94,
+            'CAD': 1.48,
+            'AUD': 1.65,
+            'CNY': 7.85,
+            'SEK': 11.2,
+            'NZD': 1.75,
+            'SGD': 1.45,
+            'HKD': 8.45,
+            'NOK': 11.8,
+            'DKK': 7.46,
+            'ZAR': 20.5
+        };
     }
     
     generateSampleHistoricalRates(fromCurrency, toCurrency, startDate, endDate) {

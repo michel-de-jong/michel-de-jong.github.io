@@ -1,503 +1,642 @@
-// Currency Service - Handles exchange rates and currency conversions
-export class CurrencyService {
-    constructor() {
-        // Available currencies for the application
-        this.supportedCurrencies = [
-            { code: 'EUR', name: 'Euro', symbol: '€' },
-            { code: 'USD', name: 'US Dollar', symbol: '$' },
-            { code: 'GBP', name: 'British Pound', symbol: '£' },
-            { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-            { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF' },
-            { code: 'CNY', name: 'Chinese Yuan', symbol: '¥' },
-            { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-            { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-            { code: 'SEK', name: 'Swedish Krona', symbol: 'kr' },
-            { code: 'NOK', name: 'Norwegian Krone', symbol: 'kr' },
-            { code: 'DKK', name: 'Danish Krone', symbol: 'kr' },
-            { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
-            { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$' },
-            { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$' },
-            { code: 'ZAR', name: 'South African Rand', symbol: 'R' }
-        ];
+// Currency Portfolio Feature - Extends portfolio functionality with multi-currency support
+// Dutch translation and functionality fixes
+
+import { formatNumber } from '../utils/format-utils.js';
+import { generateId } from '../utils/calculation-utils.js';
+
+export class CurrencyPortfolioFeature {
+    constructor(portfolioFeature, currencyService, fxRiskAnalysis) {
+        this.portfolioFeature = portfolioFeature;
+        this.currencyService = currencyService;
+        this.fxRiskAnalysis = fxRiskAnalysis;
         
-        // API configurations for exchange rates
-        this.apiConfigs = {
-            ecb: {
-                baseUrl: 'https://api.exchangerate-api.com/v4/latest/',
-                fallbackUrl: 'https://api.frankfurter.app/latest'
-            },
-            cache: {
-                duration: 3600000, // 1 hour in milliseconds
-                key: 'roi_calculator_fx_rates'
+    // Extended portfolio state
+    this.currencyPortfolio = {
+        assets: [],
+        baseCurrency: 'EUR',
+        hedgingStrategies: [],
+        lastAnalysis: null
+    };
+    
+    // UI state
+    this.uiState = {
+        showRiskAnalysis: false,
+        selectedHedgingStrategy: null,
+        riskTolerance: 'moderate'
+    };
+    }
+    
+    async initialize() {
+        // Initialize currency service if it has an initialize method
+        if (this.currencyService && typeof this.currencyService.initialize === 'function') {
+            await this.currencyService.initialize();
+        }
+        
+        // Load saved currency portfolio data
+        this.loadSavedData();
+        
+        // Set up event listeners
+        this.setupEventListeners();
+        
+        // Update UI with currency options
+        this.updateCurrencySelectors();
+    }
+    
+    setupEventListeners() {
+        // Currency selector change
+        document.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('asset-currency')) {
+                await this.handleCurrencyChange(e.target);
+            } else if (e.target.id === 'baseCurrencySelector') {
+                await this.handleBaseCurrencyChange(e.target.value);
+            } else if (e.target.id === 'riskToleranceSelector') {
+                this.uiState.riskTolerance = e.target.value;
             }
+        });
+        
+        // Listen for new assets being added
+        document.addEventListener('assetAdded', (e) => {
+            // Update currency selectors when a new asset is added
+            setTimeout(() => {
+                this.updateCurrencySelectors();
+            }, 100);
+        });
+        
+        // FX Analysis buttons
+        const analyzeFXRiskBtn = document.getElementById('analyzeFXRiskBtn');
+        const runStressTestBtn = document.getElementById('runStressTestBtn');
+        const calculateHedgeBtn = document.getElementById('calculateHedgeBtn');
+        
+        if (analyzeFXRiskBtn) {
+            analyzeFXRiskBtn.addEventListener('click', () => this.analyzeFXRisk());
+        }
+        if (runStressTestBtn) {
+            runStressTestBtn.addEventListener('click', () => this.runStressTest());
+        }
+        if (calculateHedgeBtn) {
+            calculateHedgeBtn.addEventListener('click', () => this.calculateOptimalHedge());
+        }
+    }
+    
+    updateCurrencySelectors() {
+        const baseCurrencySelector = document.getElementById('baseCurrencySelector');
+        const assetCurrencySelectors = document.querySelectorAll('.asset-currency');
+        
+        if (!this.currencyService) {
+            console.warn('Currency service not available');
+            return;
+        }
+        
+        const currencies = this.currencyService.getSupportedCurrencies();
+        
+        // Update base currency selector
+        if (baseCurrencySelector && baseCurrencySelector.options.length === 0) {
+            currencies.forEach(currency => {
+                const option = document.createElement('option');
+                option.value = currency.code;
+                option.textContent = `${currency.code} - ${currency.name}`;
+                if (currency.code === this.currencyPortfolio.baseCurrency) {
+                    option.selected = true;
+                }
+                baseCurrencySelector.appendChild(option);
+            });
+        }
+        
+        // Update asset currency selectors - only update empty selectors
+        assetCurrencySelectors.forEach(selector => {
+            if (selector.options.length === 0) {
+                currencies.forEach(currency => {
+                    const option = document.createElement('option');
+                    option.value = currency.code;
+                    option.textContent = `${currency.code} - ${currency.name}`;
+                    if (currency.code === 'EUR') {
+                        option.selected = true;
+                    }
+                    selector.appendChild(option);
+                });
+            }
+        });
+    }
+    
+    async handleCurrencyChange(selector) {
+        const assetRow = selector.closest('.asset-row');
+        if (!assetRow) return;
+        
+        const currency = selector.value;
+        const amountInput = assetRow.querySelector('.asset-amount');
+        const convertedDiv = assetRow.querySelector('.converted-value');
+        
+        if (!amountInput || !convertedDiv) return;
+        
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (amount > 0 && currency !== this.currencyPortfolio.baseCurrency) {
+            try {
+                // Try to use currencyService convert method if available
+                if (this.currencyService && typeof this.currencyService.convert === 'function') {
+                    const convertedAmount = await this.currencyService.convert(amount, currency, this.currencyPortfolio.baseCurrency);
+                    convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
+                    convertedDiv.style.display = 'block';
+                } else if (this.currencyService && typeof this.currencyService.getExchangeRate === 'function') {
+                    const rate = await this.currencyService.getExchangeRate(currency, this.currencyPortfolio.baseCurrency);
+                    const convertedAmount = amount * rate;
+                    convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
+                    convertedDiv.style.display = 'block';
+                } else {
+                    // Fallback conversion
+                    const convertedAmount = await this.convertCurrency(amount, currency, this.currencyPortfolio.baseCurrency);
+                    if (convertedAmount !== null) {
+                        convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
+                        convertedDiv.style.display = 'block';
+                    } else {
+                        convertedDiv.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error converting currency:', error);
+                convertedDiv.style.display = 'none';
+            }
+        } else {
+            convertedDiv.style.display = 'none';
+        }
+    }
+    
+    async handleBaseCurrencyChange(newCurrency) {
+        this.currencyPortfolio.baseCurrency = newCurrency;
+        
+        // Update all converted values
+        const assetRows = document.querySelectorAll('.asset-row');
+        for (const row of assetRows) {
+            const currencySelector = row.querySelector('.asset-currency');
+            if (currencySelector) {
+                await this.handleCurrencyChange(currencySelector);
+            }
+        }
+        
+        // Save preference
+        this.savePreferences();
+    }
+    
+    async analyzeFXRisk() {
+        const assets = this.portfolioFeature.collectAssets();
+        
+        if (assets.length === 0) {
+            this.showError('Voeg eerst assets toe aan uw portfolio');
+            return;
+        }
+        
+        this.showInfo('FX risico analyse wordt uitgevoerd...');
+        
+        try {
+            // Check if FX Risk Analysis service is available
+            if (!this.fxRiskAnalysis) {
+                // Fallback: Simple FX exposure calculation
+                const analysis = await this.calculateSimpleFXExposure(assets);
+                this.currencyPortfolio.lastAnalysis = analysis;
+                this.displayFXRiskResults(analysis);
+                this.showSuccess('FX risico analyse voltooid');
+                return;
+            }
+            
+            // Use FX Risk Analysis service if available
+            if (typeof this.fxRiskAnalysis.analyzePortfolio === 'function') {
+                const analysis = await this.fxRiskAnalysis.analyzePortfolio(
+                    assets,
+                    this.currencyPortfolio.baseCurrency
+                );
+                
+                this.currencyPortfolio.lastAnalysis = analysis;
+                this.displayFXRiskResults(analysis);
+                this.showSuccess('FX risico analyse voltooid');
+            } else {
+                // Fallback if method doesn't exist
+                const analysis = await this.calculateSimpleFXExposure(assets);
+                this.currencyPortfolio.lastAnalysis = analysis;
+                this.displayFXRiskResults(analysis);
+                this.showSuccess('FX risico analyse voltooid (simplified)');
+            }
+        } catch (error) {
+            console.error('Error analyzing FX risk:', error);
+            this.showError('Fout bij het analyseren van FX risico');
+        }
+    }
+    
+    async calculateSimpleFXExposure(assets) {
+        const baseCurrency = this.currencyPortfolio.baseCurrency;
+        const exposures = [];
+        let totalExposure = 0;
+        let totalValueInBase = 0;
+        
+        // Group by currency
+        const currencyGroups = {};
+        for (const asset of assets) {
+            const currency = asset.currency || 'EUR';
+            if (!currencyGroups[currency]) {
+                currencyGroups[currency] = [];
+            }
+            currencyGroups[currency].push(asset);
+        }
+        
+        // Calculate exposures
+        for (const [currency, currencyAssets] of Object.entries(currencyGroups)) {
+            const totalInCurrency = currencyAssets.reduce((sum, asset) => sum + asset.amount, 0);
+            const totalInBase = await this.convertCurrency(totalInCurrency, currency, baseCurrency);
+            
+            totalValueInBase += totalInBase;
+            
+            if (currency !== baseCurrency) {
+                totalExposure += totalInBase;
+                exposures.push({
+                    currency,
+                    amount: totalInBase,
+                    percentage: 0, // Will calculate after total
+                    volatility: this.getEstimatedVolatility(currency)
+                });
+            }
+        }
+        
+        // Calculate percentages
+        exposures.forEach(exp => {
+            exp.percentage = (exp.amount / totalValueInBase) * 100;
+        });
+        
+        return {
+            totalExposure,
+            totalValue: totalValueInBase,
+            valueAtRisk: totalExposure * 0.05, // Simplified 5% VaR
+            exposures,
+            correlations: [] // Simplified - no correlation matrix
+        };
+    }
+    
+    getEstimatedVolatility(currency) {
+        // Estimated annual volatilities for major currencies
+        const volatilities = {
+            'USD': 8.5,
+            'EUR': 7.2,
+            'GBP': 9.1,
+            'JPY': 10.5,
+            'CHF': 7.8,
+            'AUD': 11.2,
+            'CAD': 9.8,
+            'CNY': 4.5,
+            'SEK': 10.1,
+            'NZD': 11.8
         };
         
-        // Exchange rate cache
-        this.ratesCache = new Map();
-        this.lastFetchTime = null;
-        
-        // Base currency (default EUR for European users)
-        this.baseCurrency = 'EUR';
-        
-        // Historical rates for backtesting
-        this.historicalRates = new Map();
+        return volatilities[currency] || 10.0;
     }
     
-    /**
-     * Initialize currency service with saved preferences
-     */
-    async initialize() {
-        // Load saved base currency preference
-        const savedBaseCurrency = localStorage.getItem('roi_calculator_base_currency');
-        if (savedBaseCurrency && this.isSupported(savedBaseCurrency)) {
-            this.baseCurrency = savedBaseCurrency;
+    displayFXRiskResults(analysis) {
+        const resultsDiv = document.getElementById('fxRiskResults');
+        if (!resultsDiv) return;
+        
+        resultsDiv.innerHTML = `
+            <div class="fx-analysis-results">
+                <h4>Valuta Blootstelling Analyse</h4>
+                
+                <div class="exposure-summary">
+                    <div class="exposure-metric">
+                        <span class="label">Totale FX Blootstelling:</span>
+                        <span class="value">${this.formatCurrency(analysis.totalExposure, this.currencyPortfolio.baseCurrency)}</span>
+                    </div>
+                    <div class="exposure-metric">
+                        <span class="label">FX Risico (VaR 95%):</span>
+                        <span class="value">${this.formatCurrency(analysis.valueAtRisk, this.currencyPortfolio.baseCurrency)}</span>
+                    </div>
+                </div>
+                
+                <div class="currency-breakdown">
+                    <h5>Blootstelling per Valuta</h5>
+                    ${analysis.exposures.map(exp => `
+                        <div class="currency-exposure">
+                            <div class="currency-header">
+                                <span class="currency-code">${exp.currency}</span>
+                                <span class="exposure-percentage">${exp.percentage.toFixed(1)}%</span>
+                            </div>
+                            <div class="exposure-bar">
+                                <div class="exposure-fill" style="width: ${exp.percentage}%"></div>
+                            </div>
+                            <div class="exposure-details">
+                                <span>Bedrag: ${this.formatCurrency(exp.amount, exp.currency)}</span>
+                                <span>Volatiliteit: ${exp.volatility.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                ${analysis.correlations && analysis.correlations.length > 0 ? `
+                <div class="correlation-matrix">
+                    <h5>Valuta Correlatie Matrix</h5>
+                    <div class="matrix-container">
+                        ${this.renderCorrelationMatrix(analysis.correlations)}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+        
+        resultsDiv.style.display = 'block';
+        
+        // Update currency exposure chart if available
+        this.updateCurrencyExposureChart(analysis);
+    }
+    
+    renderCorrelationMatrix(correlations) {
+        if (!correlations || correlations.length === 0) {
+            return '<p>Geen correlatie data beschikbaar</p>';
         }
         
-        // Load cached rates
-        this.loadCachedRates();
+        // Simplified correlation matrix rendering
+        let html = '<table class="correlation-table"><thead><tr><th></th>';
         
-        // Fetch fresh rates if cache is stale
-        if (this.isCacheStale()) {
-            await this.fetchLatestRates();
-        }
-    }
-    
-    /**
-     * Get list of supported currencies
-     */
-    getSupportedCurrencies() {
-        return [...this.supportedCurrencies];
-    }
-    
-    /**
-     * Get available currencies (alias for getSupportedCurrencies)
-     */
-    getAvailableCurrencies() {
-        return this.getSupportedCurrencies();
-    }
-    
-    /**
-     * Check if currency is supported
-     */
-    isSupported(currencyCode) {
-        return this.supportedCurrencies.some(c => c.code === currencyCode);
-    }
-    
-    /**
-     * Get currency details
-     */
-    getCurrencyDetails(currencyCode) {
-        return this.supportedCurrencies.find(c => c.code === currencyCode);
-    }
-    
-    /**
-     * Set base currency
-     */
-    setBaseCurrency(currencyCode) {
-        if (!this.isSupported(currencyCode)) {
-            throw new Error(`Currency ${currencyCode} is not supported`);
-        }
+        correlations.forEach(row => {
+            html += `<th>${row.currency}</th>`;
+        });
         
-        this.baseCurrency = currencyCode;
-        localStorage.setItem('roi_calculator_base_currency', currencyCode);
-    }
-    
-    /**
-     * Get current base currency
-     */
-    getBaseCurrency() {
-        return this.baseCurrency;
-    }
-    
-    /**
-     * Fetch latest exchange rates
-     */
-    async fetchLatestRates(base = null) {
-        const fetchBase = base || this.baseCurrency;
+        html += '</tr></thead><tbody>';
         
-        try {
-            // Try primary API
-            let response = await fetch(`${this.apiConfigs.ecb.baseUrl}${fetchBase}`);
-            
-            if (!response.ok) {
-                // Fallback to secondary API
-                response = await fetch(`${this.apiConfigs.ecb.fallbackUrl}?from=${fetchBase}`);
-            }
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch exchange rates');
-            }
-            
-            const data = await response.json();
-            const rates = data.rates || {};
-            
-            // Store in cache
-            this.ratesCache.set(fetchBase, {
-                rates: rates,
-                timestamp: Date.now(),
-                date: data.date || new Date().toISOString().split('T')[0]
+        correlations.forEach(row => {
+            html += `<tr><th>${row.currency}</th>`;
+            row.correlations.forEach(corr => {
+                const colorClass = corr > 0.5 ? 'high-positive' : 
+                                 corr < -0.5 ? 'high-negative' : 
+                                 corr > 0 ? 'low-positive' : 'low-negative';
+                html += `<td class="${colorClass}">${corr.toFixed(2)}</td>`;
             });
-            
-            this.lastFetchTime = Date.now();
-            this.saveCachedRates();
-            
-            return rates;
-            
-        } catch (error) {
-            console.error('Error fetching exchange rates:', error);
-            
-            // Return cached rates if available
-            const cached = this.ratesCache.get(fetchBase);
-            if (cached) {
-                return cached.rates;
-            }
-            
-            // Return default rates as last resort
-            return this.getDefaultRates(fetchBase);
-        }
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        return html;
     }
     
-    /**
-     * Get exchange rate between two currencies
-     */
-    async getExchangeRate(fromCurrency, toCurrency) {
-        if (fromCurrency === toCurrency) {
-            return 1.0;
+    async runStressTest() {
+        if (!this.currencyPortfolio.lastAnalysis) {
+            this.showError('Voer eerst een FX risico analyse uit');
+            return;
         }
         
-        // Ensure we have rates for the base currency
-        let rates = this.ratesCache.get(fromCurrency)?.rates;
-        
-        if (!rates || this.isCacheStale()) {
-            rates = await this.fetchLatestRates(fromCurrency);
-        }
-        
-        if (rates[toCurrency]) {
-            return rates[toCurrency];
-        }
-        
-        // If direct rate not available, calculate through EUR
-        if (fromCurrency !== 'EUR' && toCurrency !== 'EUR') {
-            const fromToEur = await this.getExchangeRate(fromCurrency, 'EUR');
-            const eurToTarget = await this.getExchangeRate('EUR', toCurrency);
-            return fromToEur * eurToTarget;
-        }
-        
-        throw new Error(`Cannot find exchange rate from ${fromCurrency} to ${toCurrency}`);
-    }
-    
-    /**
-     * Convert amount between currencies
-     */
-    async convert(amount, fromCurrency, toCurrency) {
-        const rate = await this.getExchangeRate(fromCurrency, toCurrency);
-        return amount * rate;
-    }
-    
-    /**
-     * Get historical exchange rates for a date range
-     */
-    async getHistoricalRates(fromCurrency, toCurrency, startDate, endDate) {
-        const cacheKey = `${fromCurrency}_${toCurrency}_${startDate}_${endDate}`;
-        
-        // Check cache first
-        if (this.historicalRates.has(cacheKey)) {
-            return this.historicalRates.get(cacheKey);
-        }
+        this.showInfo('Stresstest wordt uitgevoerd...');
         
         try {
-            // Fetch historical rates from API
-            const response = await fetch(
-                `https://api.frankfurter.app/${startDate}..${endDate}?from=${fromCurrency}&to=${toCurrency}`
+            const scenarios = [
+                { name: 'USD +10%', changes: { USD: 0.10 } },
+                { name: 'EUR -10%', changes: { EUR: -0.10 } },
+                { name: 'Emerging Markets Crisis', changes: { CNY: -0.20, INR: -0.25, BRL: -0.30 } },
+                { name: 'Flight to Quality', changes: { USD: 0.15, CHF: 0.10, JPY: 0.12, EUR: -0.05 } }
+            ];
+            
+            const results = await this.fxRiskAnalysis.runStressTest(
+                this.portfolioFeature.assets,
+                scenarios,
+                this.currencyPortfolio.baseCurrency
             );
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch historical rates');
-            }
-            
-            const data = await response.json();
-            const rates = [];
-            
-            Object.entries(data.rates).forEach(([date, rateData]) => {
-                rates.push({
-                    date,
-                    rate: rateData[toCurrency],
-                    from: fromCurrency,
-                    to: toCurrency
-                });
-            });
-            
-            // Cache the results
-            this.historicalRates.set(cacheKey, rates);
-            
-            return rates;
-            
+            this.displayStressTestResults(results);
+            this.showSuccess('Stresstest voltooid');
         } catch (error) {
-            console.error('Error fetching historical rates:', error);
+            console.error('Error running stress test:', error);
+            this.showError('Fout bij het uitvoeren van stresstest');
+        }
+    }
+    
+    displayStressTestResults(results) {
+        const resultsDiv = document.getElementById('fxRiskResults');
+        if (!resultsDiv) return;
+        
+        let html = '<div class="stress-test-results"><h4>Stresstest Resultaten</h4>';
+        
+        results.forEach(result => {
+            const impactClass = result.impact < -5 ? 'negative' : 
+                              result.impact > 5 ? 'positive' : 'neutral';
             
-            // Generate sample rates as fallback
-            return this.generateSampleHistoricalRates(fromCurrency, toCurrency, startDate, endDate);
+            html += `
+                <div class="stress-scenario ${impactClass}">
+                    <h5>${result.scenario}</h5>
+                    <div class="scenario-impact">
+                        <span class="label">Portfolio Impact:</span>
+                        <span class="value">${result.impact > 0 ? '+' : ''}${result.impact.toFixed(2)}%</span>
+                    </div>
+                    <div class="scenario-value">
+                        <span class="label">Nieuwe Waarde:</span>
+                        <span class="value">${this.formatCurrency(result.newValue, this.currencyPortfolio.baseCurrency)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        resultsDiv.innerHTML += html;
+    }
+    
+    async calculateOptimalHedge() {
+        if (!this.currencyPortfolio.lastAnalysis) {
+            this.showError('Voer eerst een FX risico analyse uit');
+            return;
+        }
+        
+        this.showInfo('Optimale hedge strategie wordt berekend...');
+        
+        try {
+            const hedgingStrategy = await this.fxRiskAnalysis.calculateOptimalHedge(
+                this.portfolioFeature.assets,
+                this.currencyPortfolio.baseCurrency,
+                this.uiState.riskTolerance
+            );
+            
+            this.currencyPortfolio.hedgingStrategies.push(hedgingStrategy);
+            this.displayHedgingRecommendations(hedgingStrategy);
+            
+            this.showSuccess('Hedge strategie berekend');
+        } catch (error) {
+            console.error('Error calculating hedge:', error);
+            this.showError('Fout bij het berekenen van hedge strategie');
         }
     }
     
-    /**
-     * Calculate volatility for a series of historical rates
-     * @param {Array} historicalRates - Array of rate objects with date and rate properties
-     * @returns {number} Annualized volatility as percentage
-     */
-    calculateVolatility(historicalRates) {
-        if (!historicalRates || historicalRates.length < 2) {
-            return 10; // Default volatility
+    displayHedgingRecommendations(strategy) {
+        const resultsDiv = document.getElementById('fxRiskResults');
+        if (!resultsDiv) return;
+        
+        const container = document.createElement('div');
+        container.className = 'hedging-strategy';
+        
+        if (!strategy || !strategy.recommendations) {
+            container.innerHTML = '<p>Geen hedging aanbevelingen beschikbaar voor huidige allocatie</p>';
+            return;
         }
         
-        // Calculate daily returns
-        const returns = [];
-        for (let i = 1; i < historicalRates.length; i++) {
-            const prevRate = historicalRates[i - 1].rate;
-            const currRate = historicalRates[i].rate;
-            const dailyReturn = (currRate - prevRate) / prevRate;
-            returns.push(dailyReturn);
-        }
+        let html = '<div class="hedging-recommendations">';
         
-        // Calculate standard deviation
-        const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-        const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
-        const stdDev = Math.sqrt(variance);
+        strategy.recommendations.forEach(rec => {
+            html += `
+                <div class="hedge-recommendation">
+                    <h5>Hedge ${rec.currency} Blootstelling</h5>
+                    <div class="hedge-details">
+                        <p><strong>Blootstelling:</strong> ${this.formatCurrency(rec.exposure, strategy.baseCurrency)} (${rec.percentage.toFixed(1)}%)</p>
+                        <p><strong>Aanbevolen Hedge:</strong> ${this.formatCurrency(rec.recommendedHedge, strategy.baseCurrency)} (${rec.hedgeRatio.toFixed(0)}%)</p>
+                        <p><strong>Instrument:</strong> ${rec.instrument}</p>
+                    </div>
+                    <button class="btn btn-sm btn-primary implement-hedge" data-currency="${rec.currency}">
+                        Implementeer Hedge
+                    </button>
+                </div>
+            `;
+        });
         
-        // Annualize (assuming 252 trading days)
-        return stdDev * Math.sqrt(252) * 100;
+        html += '</div>';
+        container.innerHTML = html;
+        resultsDiv.appendChild(container);
+        
+        // Add event listeners for implementation buttons
+        container.querySelectorAll('.implement-hedge').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const currency = e.target.dataset.currency;
+                this.showInfo(`Hedge implementatie voor ${currency} wordt voorbereid...`);
+            });
+        });
     }
     
-    /**
-     * Calculate Value at Risk (VaR) for currency exposure
-     */
-    calculateVaR(exposure, volatility, confidenceLevel = 0.95, timeHorizon = 1) {
-        // Z-scores for common confidence levels
-        const zScores = {
-            0.90: 1.645,
-            0.95: 1.96,
-            0.99: 2.576
+    updateCurrencyExposureChart(analysis) {
+        const chartDiv = document.querySelector('.currency-exposure-chart');
+        const canvas = document.getElementById('currencyExposureChart');
+        
+        if (!chartDiv || !canvas || !this.portfolioFeature.chartManager) return;
+        
+        // Show the chart container
+        chartDiv.style.display = 'block';
+        
+        // Prepare data for chart
+        const chartData = {
+            labels: analysis.exposures.map(exp => exp.currency),
+            datasets: [{
+                label: 'Valuta Blootstelling',
+                data: analysis.exposures.map(exp => exp.amount),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
         };
         
-        const zScore = zScores[confidenceLevel] || 1.96;
-        
-        // VaR = exposure * volatility * z-score * sqrt(time)
-        const dailyVolatility = volatility / Math.sqrt(252);
-        const var95 = exposure * (dailyVolatility / 100) * zScore * Math.sqrt(timeHorizon);
-        
-        return var95;
+        // Create or update chart
+        if (typeof this.portfolioFeature.chartManager.createCurrencyExposureChart === 'function') {
+            this.portfolioFeature.chartManager.createCurrencyExposureChart(canvas, chartData);
+        }
     }
     
-    /**
-     * Calculate currency correlation matrix
-     */
-    async calculateCorrelationMatrix(currencies, startDate, endDate) {
-        const matrix = {};
-        
-        for (const currency1 of currencies) {
-            matrix[currency1] = {};
-            
-            for (const currency2 of currencies) {
-                if (currency1 === currency2) {
-                    matrix[currency1][currency2] = 1.0;
-                } else {
-                    const correlation = await this.calculatePairCorrelation(
-                        currency1, 
-                        currency2, 
-                        startDate, 
-                        endDate
-                    );
-                    matrix[currency1][currency2] = correlation;
+    loadSavedData() {
+        try {
+            const saved = localStorage.getItem('currencyPortfolioSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.currencyPortfolio.baseCurrency = settings.baseCurrency || 'EUR';
+                this.uiState.riskTolerance = settings.riskTolerance || 'moderate';
+                
+                // Update UI
+                const baseCurrencySelector = document.getElementById('baseCurrencySelector');
+                if (baseCurrencySelector) {
+                    baseCurrencySelector.value = this.currencyPortfolio.baseCurrency;
+                }
+                
+                const riskToleranceSelector = document.getElementById('riskToleranceSelector');
+                if (riskToleranceSelector) {
+                    riskToleranceSelector.value = this.uiState.riskTolerance;
                 }
             }
-        }
-        
-        return matrix;
-    }
-    
-    /**
-     * Calculate correlation between two currency pairs
-     */
-    async calculatePairCorrelation(currency1, currency2, startDate, endDate) {
-        try {
-            const rates1 = await this.getHistoricalRates('EUR', currency1, startDate, endDate);
-            const rates2 = await this.getHistoricalRates('EUR', currency2, startDate, endDate);
-            
-            // Align the data by date
-            const alignedData = this.alignTimeSeriesData(rates1, rates2);
-            
-            if (alignedData.length < 2) {
-                return 0;
-            }
-            
-            // Calculate returns
-            const returns1 = this.calculateReturns(alignedData.map(d => d.rate1));
-            const returns2 = this.calculateReturns(alignedData.map(d => d.rate2));
-            
-            // Calculate correlation
-            return this.calculateCorrelation(returns1, returns2);
-            
         } catch (error) {
-            console.error('Error calculating pair correlation:', error);
-            return 0;
+            console.error('Error loading saved currency portfolio data:', error);
         }
     }
     
-    /**
-     * Helper functions
-     */
-    
-    isCacheStale() {
-        if (!this.lastFetchTime) return true;
-        
-        const now = Date.now();
-        const cacheAge = now - this.lastFetchTime;
-        
-        return cacheAge > this.apiConfigs.cache.duration;
-    }
-    
-    loadCachedRates() {
-        const cached = localStorage.getItem(this.apiConfigs.cache.key);
-        if (!cached) return;
-        
+    savePreferences() {
         try {
-            const data = JSON.parse(cached);
-            this.ratesCache = new Map(data.rates);
-            this.lastFetchTime = data.lastFetchTime;
+            const settings = {
+                baseCurrency: this.currencyPortfolio.baseCurrency,
+                riskTolerance: this.uiState.riskTolerance
+            };
+            localStorage.setItem('currencyPortfolioSettings', JSON.stringify(settings));
         } catch (error) {
-            console.error('Error loading cached rates:', error);
+            console.error('Error saving currency portfolio settings:', error);
         }
     }
     
-    saveCachedRates() {
-        const data = {
-            rates: Array.from(this.ratesCache.entries()),
-            lastFetchTime: this.lastFetchTime
-        };
-        
-        localStorage.setItem(this.apiConfigs.cache.key, JSON.stringify(data));
+    formatCurrency(amount, currency) {
+        return new Intl.NumberFormat('nl-NL', {
+            style: 'currency',
+            currency: currency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
     }
     
-    getDefaultRates(base) {
-        // Default rates for offline functionality (approximate as of 2024)
-        const defaultRates = {
-            EUR: { USD: 1.08, GBP: 0.86, JPY: 162, CHF: 0.96, CAD: 1.46, AUD: 1.65, CNY: 7.85, SEK: 11.2, NZD: 1.75 },
-            USD: { EUR: 0.93, GBP: 0.80, JPY: 150, CHF: 0.89, CAD: 1.35, AUD: 1.53, CNY: 7.27, SEK: 10.4, NZD: 1.62 },
-            GBP: { EUR: 1.16, USD: 1.25, JPY: 188, CHF: 1.12, CAD: 1.69, AUD: 1.91, CNY: 9.08, SEK: 13.0, NZD: 2.03 },
-            JPY: { EUR: 0.0062, USD: 0.0067, GBP: 0.0053, CHF: 0.0059, CAD: 0.009, AUD: 0.010, CNY: 0.048, SEK: 0.069, NZD: 0.011 },
-            CHF: { EUR: 1.04, USD: 1.12, GBP: 0.89, JPY: 169, CAD: 1.51, AUD: 1.71, CNY: 8.11, SEK: 11.6, NZD: 1.81 }
-        };
-        
-        return defaultRates[base] || {};
+    showError(message) {
+        if (this.portfolioFeature && typeof this.portfolioFeature.showError === 'function') {
+            this.portfolioFeature.showError(message);
+        } else {
+            console.error(message);
+        }
     }
     
-    /**
-     * Simple fallback rates for offline functionality
-     * @returns {Object} Exchange rates relative to EUR
-     */
-    getFallbackRates() {
-        return {
-            'EUR': 1,
-            'USD': 1.08,
-            'GBP': 0.86,
-            'JPY': 161.5,
-            'CHF': 0.94,
-            'CAD': 1.48,
-            'AUD': 1.65,
-            'CNY': 7.85,
-            'SEK': 11.2,
-            'NZD': 1.75,
-            'SGD': 1.45,
-            'HKD': 8.45,
-            'NOK': 11.8,
-            'DKK': 7.46,
-            'ZAR': 20.5
-        };
+    showSuccess(message) {
+        if (this.portfolioFeature && typeof this.portfolioFeature.showSuccess === 'function') {
+            this.portfolioFeature.showSuccess(message);
+        } else {
+            console.log(message);
+        }
     }
     
-    generateSampleHistoricalRates(fromCurrency, toCurrency, startDate, endDate) {
-        const rates = [];
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+    showInfo(message) {
+        if (this.portfolioFeature && typeof this.portfolioFeature.showInfo === 'function') {
+            this.portfolioFeature.showInfo(message);
+        } else {
+            console.info(message);
+        }
+    }
+    
+    showLoadingIndicator(show) {
+        // Simple loading indicator implementation
+        let indicator = document.getElementById('loadingIndicator');
         
-        // Starting rate (approximate)
-        let baseRate = 1.0;
-        try {
-            const currentRates = this.getDefaultRates(fromCurrency);
-            baseRate = currentRates[toCurrency] || 1.0;
-        } catch (e) {
-            baseRate = 1.0;
+        if (!indicator && show) {
+            // Create loading indicator if it doesn't exist
+            indicator = document.createElement('div');
+            indicator.id = 'loadingIndicator';
+            indicator.className = 'loading-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            indicator.innerHTML = '<div class="spinner"></div><span>Bezig met laden...</span>';
+            document.body.appendChild(indicator);
         }
         
-        let currentRate = baseRate;
-        const volatility = 0.01; // 1% daily volatility
-        
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-            // Skip weekends
-            if (d.getDay() === 0 || d.getDay() === 6) continue;
-            
-            // Random walk
-            const change = (Math.random() - 0.5) * volatility * 2;
-            currentRate = currentRate * (1 + change);
-            
-            rates.push({
-                date: d.toISOString().split('T')[0],
-                rate: currentRate,
-                from: fromCurrency,
-                to: toCurrency
-            });
+        if (indicator) {
+            indicator.style.display = show ? 'flex' : 'none';
         }
-        
-        return rates;
-    }
-    
-    alignTimeSeriesData(series1, series2) {
-        const aligned = [];
-        const map2 = new Map(series2.map(item => [item.date, item]));
-        
-        for (const item1 of series1) {
-            const item2 = map2.get(item1.date);
-            if (item2) {
-                aligned.push({
-                    date: item1.date,
-                    rate1: item1.rate,
-                    rate2: item2.rate
-                });
-            }
-        }
-        
-        return aligned;
-    }
-    
-    calculateReturns(prices) {
-        const returns = [];
-        for (let i = 1; i < prices.length; i++) {
-            returns.push((prices[i] - prices[i-1]) / prices[i-1]);
-        }
-        return returns;
-    }
-    
-    calculateCorrelation(x, y) {
-        if (x.length !== y.length || x.length === 0) return 0;
-        
-        const n = x.length;
-        const meanX = x.reduce((sum, val) => sum + val, 0) / n;
-        const meanY = y.reduce((sum, val) => sum + val, 0) / n;
-        
-        let numerator = 0;
-        let denomX = 0;
-        let denomY = 0;
-        
-        for (let i = 0; i < n; i++) {
-            const dx = x[i] - meanX;
-            const dy = y[i] - meanY;
-            numerator += dx * dy;
-            denomX += dx * dx;
-            denomY += dy * dy;
-        }
-        
-        if (denomX === 0 || denomY === 0) return 0;
-        
-        return numerator / Math.sqrt(denomX * denomY);
     }
 }
