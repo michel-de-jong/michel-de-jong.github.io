@@ -105,57 +105,64 @@ export class PortfolioFeature {
     }
     
     addAsset() {
-        const assetList = document.getElementById('assetList');
-        if (!assetList) {
-            console.warn('Asset list element not found');
-            return;
+        try {
+            const assetList = document.getElementById('assetList');
+            if (!assetList) {
+                this.showError('Asset lijst niet gevonden');
+                return;
+            }
+            
+            const assetRow = document.createElement('div');
+            assetRow.className = 'asset-row';
+            assetRow.dataset.assetId = this.generateAssetId();
+            
+            assetRow.innerHTML = `
+                <div class="asset-field">
+                    <label>Asset Naam</label>
+                    <input type="text" placeholder="bijv. Amerikaanse Aandelen" class="asset-name">
+                </div>
+                <div class="asset-field">
+                    <label>Valuta</label>
+                    <select class="asset-currency currency-selector">
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="JPY">JPY - Japanese Yen</option>
+                        <option value="CHF">CHF - Swiss Franc</option>
+                        <option value="AUD">AUD - Australian Dollar</option>
+                        <option value="CAD">CAD - Canadian Dollar</option>
+                        <option value="CNY">CNY - Chinese Yuan</option>
+                        <option value="SEK">SEK - Swedish Krona</option>
+                        <option value="NZD">NZD - New Zealand Dollar</option>
+                    </select>
+                </div>
+                <div class="asset-field">
+                    <label>Bedrag</label>
+                    <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
+                    <div class="converted-value" style="display: none;"></div>
+                </div>
+                <div class="asset-field">
+                    <label>Rendement %</label>
+                    <input type="number" placeholder="7.5" class="asset-return" step="0.1">
+                </div>
+                <div class="asset-field">
+                    <label>Risico %</label>
+                    <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
+                </div>
+                <button class="btn-remove" data-action="remove" type="button">×</button>
+            `;
+            
+            assetList.appendChild(assetRow);
+            
+            // Trigger currency update if currency portfolio feature is available
+            const event = new CustomEvent('assetAdded', { detail: { assetId: assetRow.dataset.assetId } });
+            document.dispatchEvent(event);
+            
+            this.showSuccess('Asset toegevoegd');
+        } catch (error) {
+            console.error('Error adding asset:', error);
+            this.showError('Fout bij het toevoegen van asset: ' + error.message);
         }
-        
-        const assetRow = document.createElement('div');
-        assetRow.className = 'asset-row';
-        assetRow.dataset.assetId = this.generateAssetId();
-        
-        assetRow.innerHTML = `
-            <div class="asset-field">
-                <label>Asset Naam</label>
-                <input type="text" placeholder="bijv. Amerikaanse Aandelen" class="asset-name">
-            </div>
-            <div class="asset-field">
-                <label>Valuta</label>
-                <select class="asset-currency currency-selector">
-                    <option value="EUR">EUR - Euro</option>
-                    <option value="USD">USD - US Dollar</option>
-                    <option value="GBP">GBP - British Pound</option>
-                    <option value="JPY">JPY - Japanese Yen</option>
-                    <option value="CHF">CHF - Swiss Franc</option>
-                    <option value="AUD">AUD - Australian Dollar</option>
-                    <option value="CAD">CAD - Canadian Dollar</option>
-                    <option value="CNY">CNY - Chinese Yuan</option>
-                    <option value="SEK">SEK - Swedish Krona</option>
-                    <option value="NZD">NZD - New Zealand Dollar</option>
-                </select>
-            </div>
-            <div class="asset-field">
-                <label>Bedrag</label>
-                <input type="number" placeholder="100000" class="asset-amount" min="0" step="1000">
-                <div class="converted-value" style="display: none;"></div>
-            </div>
-            <div class="asset-field">
-                <label>Rendement %</label>
-                <input type="number" placeholder="7.5" class="asset-return" step="0.1">
-            </div>
-            <div class="asset-field">
-                <label>Risico %</label>
-                <input type="number" placeholder="15" class="asset-risk" min="0" max="100" step="1">
-            </div>
-            <button class="btn-remove" data-action="remove" type="button">×</button>
-        `;
-        
-        assetList.appendChild(assetRow);
-        
-        // Trigger currency update if currency portfolio feature is available
-        const event = new CustomEvent('assetAdded', { detail: { assetId: assetRow.dataset.assetId } });
-        document.dispatchEvent(event);
     }
     
     removeAsset(assetRow) {
@@ -207,49 +214,54 @@ export class PortfolioFeature {
     }
     
     calculatePortfolio() {
-        this.assets = this.collectAssets();
-        
-        if (this.assets.length === 0) {
-            this.showError('Voer minimaal één asset in met een bedrag');
-            return;
+        try {
+            this.assets = this.collectAssets();
+            
+            if (this.assets.length === 0) {
+                this.showError('Voer minimaal één asset in met een bedrag');
+                return;
+            }
+            
+            // Calculate portfolio metrics
+            const totalValue = this.assets.reduce((sum, asset) => sum + asset.amount, 0);
+            
+            this.assets.forEach(asset => {
+                asset.weight = asset.amount / totalValue;
+                asset.contribution = asset.weight * asset.expectedReturn;
+            });
+            
+            const portfolioReturn = this.assets.reduce((sum, asset) => sum + asset.contribution, 0);
+            const portfolioRisk = this.calculatePortfolioRisk();
+            const sharpeRatio = this.calculateSharpeRatio(portfolioReturn, portfolioRisk);
+            
+            // Store portfolio data
+            this.portfolioData = {
+                assets: this.assets,
+                totalValue,
+                expectedReturn: portfolioReturn,
+                risk: portfolioRisk,
+                sharpeRatio,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Update display
+            this.displayResults();
+            this.updateCharts();
+            
+            // Enable portfolio management buttons
+            const optimizeBtn = document.getElementById('optimizePortfolioBtn');
+            const saveBtn = document.getElementById('savePortfolioBtn');
+            const exportBtn = document.getElementById('exportPortfolioBtn');
+            
+            if (optimizeBtn) optimizeBtn.disabled = false;
+            if (saveBtn) saveBtn.disabled = false;
+            if (exportBtn) exportBtn.disabled = false;
+            
+            this.showSuccess('Portfolio berekening voltooid');
+        } catch (error) {
+            console.error('Error calculating portfolio:', error);
+            this.showError('Fout bij het berekenen van portfolio: ' + error.message);
         }
-        
-        // Calculate portfolio metrics
-        const totalValue = this.assets.reduce((sum, asset) => sum + asset.amount, 0);
-        
-        this.assets.forEach(asset => {
-            asset.weight = asset.amount / totalValue;
-            asset.contribution = asset.weight * asset.expectedReturn;
-        });
-        
-        const portfolioReturn = this.assets.reduce((sum, asset) => sum + asset.contribution, 0);
-        const portfolioRisk = this.calculatePortfolioRisk();
-        const sharpeRatio = this.calculateSharpeRatio(portfolioReturn, portfolioRisk);
-        
-        // Store portfolio data
-        this.portfolioData = {
-            assets: this.assets,
-            totalValue,
-            expectedReturn: portfolioReturn,
-            risk: portfolioRisk,
-            sharpeRatio,
-            timestamp: new Date().toISOString()
-        };
-        
-        // Update display
-        this.displayResults();
-        this.updateCharts();
-        
-        // Enable portfolio management buttons
-        const optimizeBtn = document.getElementById('optimizePortfolioBtn');
-        const saveBtn = document.getElementById('savePortfolioBtn');
-        const exportBtn = document.getElementById('exportPortfolioBtn');
-        
-        if (optimizeBtn) optimizeBtn.disabled = false;
-        if (saveBtn) saveBtn.disabled = false;
-        if (exportBtn) exportBtn.disabled = false;
-        
-        this.showSuccess('Portfolio berekening voltooid');
     }
     
     calculatePortfolioRisk() {
@@ -355,20 +367,30 @@ export class PortfolioFeature {
     }
     
     async optimizePortfolio() {
-        if (!this.portfolioData || this.assets.length === 0) {
-            this.showError('Bereken eerst het portfolio voordat u optimaliseert');
-            return;
+        try {
+            if (!this.portfolioData || this.assets.length === 0) {
+                this.showError('Bereken eerst het portfolio voordat u optimaliseert');
+                return;
+            }
+            
+            this.showInfo('Portfolio optimalisatie wordt uitgevoerd...');
+            
+            // Simulate optimization process
+            setTimeout(() => {
+                try {
+                    const optimizedWeights = this.calculateOptimalWeights();
+                    this.applyOptimizedWeights(optimizedWeights);
+                    this.calculatePortfolio();
+                    this.showSuccess('Portfolio is geoptimaliseerd voor maximaal rendement/risico verhouding');
+                } catch (error) {
+                    console.error('Error during optimization:', error);
+                    this.showError('Fout tijdens optimalisatie: ' + error.message);
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error optimizing portfolio:', error);
+            this.showError('Fout bij het optimaliseren van portfolio: ' + error.message);
         }
-        
-        this.showInfo('Portfolio optimalisatie wordt uitgevoerd...');
-        
-        // Simulate optimization process
-        setTimeout(() => {
-            const optimizedWeights = this.calculateOptimalWeights();
-            this.applyOptimizedWeights(optimizedWeights);
-            this.calculatePortfolio();
-            this.showSuccess('Portfolio is geoptimaliseerd voor maximaal rendement/risico verhouding');
-        }, 1000);
     }
     
     calculateOptimalWeights() {
