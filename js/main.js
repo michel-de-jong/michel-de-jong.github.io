@@ -142,10 +142,28 @@ class ROICalculatorApp {
             this.performCalculation();
         });
         
-        // Tab change handler
+        // // Tab change handler
+        // this.tabManager.onTabChange((tabName) => {
+        //     this.handleTabChange(tabName);
+        // });
+
+        // Add tab change listener for portfolio initialization
         this.tabManager.onTabChange((tabName) => {
+            if (tabName === 'portfolio') {
+                // Ensure portfolio is properly initialized when tab is activated
+                if (this.features.portfolio && !this.features.portfolio.initialized) {
+                    this.features.portfolio.initializePortfolio();
+                    this.features.portfolio.initialized = true;
+                }
+                
+                // Also ensure currency portfolio is initialized
+                if (this.features.currencyPortfolio && !this.features.currencyPortfolio.initialized) {
+                    this.features.currencyPortfolio.updateCurrencySelectors();
+                    this.features.currencyPortfolio.initialized = true;
+                }
+            }
             this.handleTabChange(tabName);
-        });
+    });
         
         // Form change handler with debouncing
         let formChangeTimeout;

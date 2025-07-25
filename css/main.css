@@ -22,6 +22,7 @@
 @import 'components/tables.css';
 @import 'components/tooltips.css';
 @import 'components/modals.css';
+@import 'components/spinners.css';
 
 /* Page specific styles */
 @import 'pages/calculator.css';
