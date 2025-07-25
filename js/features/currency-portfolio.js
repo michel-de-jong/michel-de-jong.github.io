@@ -68,13 +68,40 @@ export class CurrencyPortfolioFeature {
         const calculateHedgeBtn = document.getElementById('calculateHedgeBtn');
         
         if (analyzeFXRiskBtn) {
-            analyzeFXRiskBtn.addEventListener('click', () => this.analyzeFXRisk());
+            analyzeFXRiskBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.analyzeFXRisk();
+            });
+            analyzeFXRiskBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.analyzeFXRisk(), 0);
+                }
+            });
         }
         if (runStressTestBtn) {
-            runStressTestBtn.addEventListener('click', () => this.runStressTest());
+            runStressTestBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.runStressTest();
+            });
+            runStressTestBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.runStressTest(), 0);
+                }
+            });
         }
         if (calculateHedgeBtn) {
-            calculateHedgeBtn.addEventListener('click', () => this.calculateOptimalHedge());
+            calculateHedgeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.calculateOptimalHedge();
+            });
+            calculateHedgeBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    e.preventDefault();
+                    setTimeout(() => this.calculateOptimalHedge(), 0);
+                }
+            });
         }
     }
     
@@ -194,7 +221,7 @@ export class CurrencyPortfolioFeature {
                 const analysis = await this.calculateSimpleFXExposure(assets);
                 this.currencyPortfolio.lastAnalysis = analysis;
                 this.displayFXRiskResults(analysis);
-                this.showSuccess('FX risico analyse voltooid');
+                this.showSuccess('FX risico analyse voltooid (simplified)');
                 return;
             }
             
@@ -217,56 +244,73 @@ export class CurrencyPortfolioFeature {
             }
         } catch (error) {
             console.error('Error analyzing FX risk:', error);
-            this.showError('Fout bij het analyseren van FX risico');
+            this.showError('Fout bij het analyseren van FX risico: ' + error.message);
         }
     }
     
     async calculateSimpleFXExposure(assets) {
-        const baseCurrency = this.currencyPortfolio.baseCurrency;
-        const exposures = [];
-        let totalExposure = 0;
-        let totalValueInBase = 0;
-        
-        // Group by currency
-        const currencyGroups = {};
-        for (const asset of assets) {
-            const currency = asset.currency || 'EUR';
-            if (!currencyGroups[currency]) {
-                currencyGroups[currency] = [];
-            }
-            currencyGroups[currency].push(asset);
-        }
-        
-        // Calculate exposures
-        for (const [currency, currencyAssets] of Object.entries(currencyGroups)) {
-            const totalInCurrency = currencyAssets.reduce((sum, asset) => sum + asset.amount, 0);
-            const totalInBase = await this.currencyService.convert(totalInCurrency, currency, baseCurrency);
+        try {
+            const baseCurrency = this.currencyPortfolio.baseCurrency;
+            const exposures = [];
+            let totalExposure = 0;
+            let totalValueInBase = 0;
             
-            totalValueInBase += totalInBase;
-            
-            if (currency !== baseCurrency) {
-                totalExposure += totalInBase;
-                exposures.push({
-                    currency,
-                    amount: totalInBase,
-                    percentage: 0, // Will calculate after total
-                    volatility: this.getEstimatedVolatility(currency)
-                });
+            // Group by currency
+            const currencyGroups = {};
+            for (const asset of assets) {
+                const currency = asset.currency || 'EUR';
+                if (!currencyGroups[currency]) {
+                    currencyGroups[currency] = [];
+                }
+                currencyGroups[currency].push(asset);
             }
+            
+            // Calculate exposures
+            for (const [currency, currencyAssets] of Object.entries(currencyGroups)) {
+                const totalInCurrency = currencyAssets.reduce((sum, asset) => sum + asset.amount, 0);
+                
+                // Use simple conversion if currency service is not available
+                let totalInBase;
+                if (this.currencyService && typeof this.currencyService.convert === 'function') {
+                    try {
+                        totalInBase = await this.currencyService.convert(totalInCurrency, currency, baseCurrency);
+                    } catch (conversionError) {
+                        console.warn('Currency conversion failed, using 1:1 rate:', conversionError);
+                        totalInBase = totalInCurrency; // Fallback to 1:1 conversion
+                    }
+                } else {
+                    totalInBase = totalInCurrency; // Fallback if no currency service
+                }
+                
+                totalValueInBase += totalInBase;
+                
+                if (currency !== baseCurrency) {
+                    totalExposure += totalInBase;
+                    exposures.push({
+                        currency,
+                        amount: totalInBase,
+                        percentage: 0, // Will calculate after total
+                        volatility: this.getEstimatedVolatility(currency)
+                    });
+                }
+            }
+            
+            // Calculate percentages
+            exposures.forEach(exp => {
+                exp.percentage = (exp.amount / totalValueInBase) * 100;
+            });
+            
+            return {
+                totalExposure,
+                totalValue: totalValueInBase,
+                valueAtRisk: totalExposure * 0.05, // Simplified 5% VaR
+                exposures,
+                correlations: [] // Simplified - no correlation matrix
+            };
+        } catch (error) {
+            console.error('Error calculating FX exposure:', error);
+            throw new Error('Fout bij het berekenen van FX blootstelling: ' + error.message);
         }
-        
-        // Calculate percentages
-        exposures.forEach(exp => {
-            exp.percentage = (exp.amount / totalValueInBase) * 100;
-        });
-        
-        return {
-            totalExposure,
-            totalValue: totalValueInBase,
-            valueAtRisk: totalExposure * 0.05, // Simplified 5% VaR
-            exposures,
-            correlations: [] // Simplified - no correlation matrix
-        };
     }
     
     getEstimatedVolatility(currency) {
