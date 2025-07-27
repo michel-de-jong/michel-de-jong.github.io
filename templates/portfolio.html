@@ -47,118 +47,98 @@
         </div>
         
         <div class="portfolio-controls mt-3">
-            <button class="btn btn-secondary" id="addAssetBtn">
+            <button class="btn btn-secondary" id="addAssetBtn" type="button">
                 <span class="btn-icon">➕</span>
                 Asset Toevoegen
             </button>
-            <button class="btn btn-success" id="calculatePortfolioBtn">
+            <button class="btn btn-success" id="calculatePortfolioBtn" type="button">
                 <span class="btn-icon">📊</span>
                 Portfolio Berekenen
             </button>
-            <button id="optimizePortfolioBtn" class="btn btn-primary" disabled>
+            <button id="optimizePortfolioBtn" class="btn btn-primary" disabled type="button">
                 <span class="btn-icon">📈</span>
                 Portfolio Optimaliseren
             </button>
-            <button id="savePortfolioBtn" class="btn btn-info" disabled>
+            <button id="savePortfolioBtn" class="btn btn-info" disabled type="button">
                 <span class="btn-icon">💾</span>
                 Portfolio Opslaan
             </button>
-            <button id="loadPortfolioBtn" class="btn btn-warning">
+            <button id="loadPortfolioBtn" class="btn btn-warning" type="button">
                 <span class="btn-icon">📂</span>
                 Portfolio Laden
             </button>
-            <button id="exportPortfolioBtn" class="btn btn-secondary" disabled>
-                <span class="btn-icon">📥</span>
-                Portfolio Exporteren
+            <button id="exportPortfolioBtn" class="btn btn-secondary" disabled type="button">
+                <span class="btn-icon">📤</span>
+                Exporteren
             </button>
         </div>
     </div>
     
-    <!-- Portfolio Metrics -->
-    <div class="portfolio-metrics">
+    <!-- Portfolio Results Section -->
+    <div id="portfolioResults" class="portfolio-results" style="display: none;">
         <h3 class="section-header">
             <span class="header-icon">📈</span>
-            Portfolio Prestaties
+            Portfolio Analyse
         </h3>
         
-        <div class="kpi-grid mt-4">
+        <!-- KPI Cards -->
+        <div class="kpi-cards">
             <div class="kpi-card">
-                <div class="kpi-icon">💰</div>
-                <div class="kpi-label">Portfolio Waarde</div>
-                <div class="kpi-value" id="portfolioWaarde">€ 0</div>
+                <div class="kpi-label">Totale Waarde</div>
+                <div class="kpi-value" id="portfolioWaarde">€0</div>
             </div>
-            <div class="kpi-card green">
-                <div class="kpi-icon">📈</div>
-                <div class="kpi-label">Gewogen Rendement</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Verwacht Rendement</div>
                 <div class="kpi-value" id="portfolioRendement">0%</div>
             </div>
-            <div class="kpi-card orange">
-                <div class="kpi-icon">⚠️</div>
+            <div class="kpi-card">
                 <div class="kpi-label">Portfolio Risico</div>
                 <div class="kpi-value" id="portfolioRisico">0%</div>
             </div>
         </div>
-    </div>
-
-    <!-- Portfolio Results -->
-    <div id="portfolioResults" class="portfolio-results-section" style="display: none;">
-        <h3 class="section-header">
-            <span class="header-icon">📊</span>
-            Portfolio Analyse
-        </h3>
-        <div class="results-grid">
-            <div class="result-card">
-                <h4>Portfolio Metrieken</h4>
-                <div class="metric-list" id="portfolioMetrics"></div>
-            </div>
-            <div class="result-card">
-                <h4>Asset Allocatie</h4>
-                <div class="allocation-breakdown" id="allocationBreakdown"></div>
+        
+        <!-- Detailed Metrics -->
+        <div id="portfolioMetrics" class="portfolio-metrics mt-3">
+            <!-- Metrics will be populated by JavaScript -->
+        </div>
+        
+        <!-- Allocation Breakdown -->
+        <div class="allocation-section mt-4">
+            <h4>Asset Allocatie</h4>
+            <div id="allocationBreakdown" class="allocation-breakdown">
+                <!-- Allocation items will be populated by JavaScript -->
             </div>
         </div>
-    </div>
-
-    <!-- Currency Analysis -->
-    <div class="currency-analysis-section">
-        <h3 class="section-header">
-            <span class="header-icon">💱</span>
-            Valuta Risico Analyse
-        </h3>
         
-        <div class="analysis-controls mt-3">
-            <button class="btn btn-primary" id="analyzeFXRiskBtn">
-                <span class="btn-icon">📊</span>
-                FX Risico Analyseren
-            </button>
-            <button class="btn btn-secondary" id="runStressTestBtn">
-                <span class="btn-icon">🧪</span>
-                Stresstest Uitvoeren
-            </button>
-            <button class="btn btn-info" id="calculateHedgeBtn">
-                <span class="btn-icon">🛡️</span>
-                Hedge Berekenen
-            </button>
-        </div>
-        
-        <div id="fxRiskResults" class="fx-risk-results" style="display: none;">
-            <!-- FX risk analysis results will be displayed here -->
+        <!-- Portfolio Chart -->
+        <div class="chart-section mt-4">
+            <h4>Portfolio Visualisatie</h4>
+            <div class="chart-container">
+                <canvas id="portfolioChart"></canvas>
+            </div>
         </div>
     </div>
-
-    <!-- Charts Section -->
-    <div class="portfolio-charts mt-5">
+    
+    <!-- FX Risk Analysis Section -->
+    <div class="fx-risk-section mt-4">
         <h3 class="section-header">
-            <span class="header-icon">📊</span>
-            Visualisaties
+            <span class="header-icon">💹</span>
+            FX Risico Analyse
         </h3>
         
-        <div class="chart-container">
-            <canvas id="portfolioChart"></canvas>
+        <div class="fx-controls">
+            <button id="analyzeFXRiskBtn" class="btn btn-primary" type="button">
+                <span class="btn-icon">🔍</span>
+                Analyseer FX Risico
+            </button>
+            <button id="runStressTestBtn" class="btn btn-warning" type="button">
+                <span class="btn-icon">⚡</span>
+                Stress Test
+            </button>
         </div>
         
-        <div class="currency-exposure-chart mt-4" style="display: none;">
-            <h4>Valuta Blootstelling</h4>
-            <canvas id="currencyExposureChart"></canvas>
+        <div id="fxRiskResults" class="fx-risk-results mt-3" style="display: none;">
+            <!-- FX risk analysis results will be populated here -->
         </div>
     </div>
 </section>

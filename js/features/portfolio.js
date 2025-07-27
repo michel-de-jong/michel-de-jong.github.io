@@ -1,5 +1,5 @@
 // Portfolio Feature - Multi-asset portfolio analysis with optimization
-// Translated to Dutch and functionality fixes
+// Complete implementation with error handling and fixes
 
 import { formatNumber, formatPercentage } from '../utils/format-utils.js';
 
@@ -14,9 +14,21 @@ export class PortfolioFeature {
         this.portfolioData = null;
         this.savedPortfoliosCache = null;
         this.useDataService = dataService !== null;
+        this.initialized = false;
+        
+        // Bind methods to preserve context
+        this.addAsset = this.addAsset.bind(this);
+        this.removeAsset = this.removeAsset.bind(this);
+        this.calculatePortfolio = this.calculatePortfolio.bind(this);
+        this.optimizePortfolio = this.optimizePortfolio.bind(this);
+        this.savePortfolio = this.savePortfolio.bind(this);
+        this.loadPortfolio = this.loadPortfolio.bind(this);
+        this.exportPortfolio = this.exportPortfolio.bind(this);
     }
     
     initialize() {
+        console.log('Initializing Portfolio Feature');
+        
         // Wait for DOM to be ready before setting up event listeners
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -31,6 +43,8 @@ export class PortfolioFeature {
     }
     
     initializePortfolio() {
+        console.log('Initializing portfolio UI');
+        
         // Check if we're on the portfolio tab
         const portfolioSection = document.getElementById('portfolio');
         if (portfolioSection) {
@@ -40,13 +54,15 @@ export class PortfolioFeature {
             if (this.dataService && this.useDataService) {
                 this.loadSavedPortfoliosFromDataService();
             }
+            
+            this.initialized = true;
         }
     }
     
     setupEventListeners() {
-        this.eventListenersSetup = true;
+        console.log('Setting up portfolio event listeners');
         
-        // Portfolio builder events - use arrow functions to preserve 'this' context
+        // Portfolio builder events
         const addAssetBtn = document.getElementById('addAssetBtn');
         const calculatePortfolioBtn = document.getElementById('calculatePortfolioBtn');
         const optimizePortfolioBtn = document.getElementById('optimizePortfolioBtn');
@@ -54,39 +70,60 @@ export class PortfolioFeature {
         const loadPortfolioBtn = document.getElementById('loadPortfolioBtn');
         const exportPortfolioBtn = document.getElementById('exportPortfolioBtn');
         
-        // Check if buttons exist before adding listeners with GitHub Pages/Brave compatibility
+        // Add event listeners with proper error handling
         if (addAssetBtn) {
             addAssetBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.addAsset();
-            });
-            
-            addAssetBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // Left mouse button only
-                    e.preventDefault();
-                    setTimeout(() => this.addAsset(), 0);
+                e.stopPropagation();
+                try {
+                    this.addAsset();
+                } catch (error) {
+                    console.error('Error adding asset:', error);
+                    this.showError('Fout bij het toevoegen van asset');
                 }
             });
         }
+        
         if (calculatePortfolioBtn) {
-            calculatePortfolioBtn.addEventListener('click', () => this.calculatePortfolio());
+            calculatePortfolioBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.calculatePortfolio();
+            });
         }
+        
         if (optimizePortfolioBtn) {
-            optimizePortfolioBtn.addEventListener('click', () => this.optimizePortfolio());
+            optimizePortfolioBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.optimizePortfolio();
+            });
         }
+        
         if (savePortfolioBtn) {
-            savePortfolioBtn.addEventListener('click', () => this.savePortfolio());
+            savePortfolioBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.savePortfolio();
+            });
         }
+        
         if (loadPortfolioBtn) {
-            loadPortfolioBtn.addEventListener('click', () => this.loadPortfolio());
+            loadPortfolioBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.loadPortfolio();
+            });
         }
+        
         if (exportPortfolioBtn) {
-            exportPortfolioBtn.addEventListener('click', () => this.exportPortfolio());
+            exportPortfolioBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.exportPortfolio();
+            });
         }
         
         // Event delegation for dynamic elements
         document.addEventListener('click', (e) => {
+            // Handle remove button clicks
             if (e.target.matches('.btn-remove') || e.target.closest('.btn-remove')) {
+                e.preventDefault();
                 const assetRow = e.target.closest('.asset-row');
                 if (assetRow) {
                     this.removeAsset(assetRow);
@@ -102,13 +139,11 @@ export class PortfolioFeature {
         });
     }
     
-    // Move generateAssetId to the top for better organization
     generateAssetId() {
         return 'asset_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
     
     addInitialAsset() {
-        // Clear any existing static asset rows and add a fresh one
         const assetList = document.getElementById('assetList');
         if (assetList) {
             assetList.innerHTML = '';
@@ -120,7 +155,7 @@ export class PortfolioFeature {
         try {
             const assetList = document.getElementById('assetList');
             if (!assetList) {
-                this.showError('Asset lijst niet gevonden');
+                console.error('Asset list element not found');
                 return;
             }
             
@@ -166,14 +201,16 @@ export class PortfolioFeature {
             
             assetList.appendChild(assetRow);
             
-            // Trigger currency update if currency portfolio feature is available
-            const event = new CustomEvent('assetAdded', { detail: { assetId: assetRow.dataset.assetId } });
+            // Trigger event for currency portfolio feature
+            const event = new CustomEvent('assetAdded', { 
+                detail: { assetId: assetRow.dataset.assetId } 
+            });
             document.dispatchEvent(event);
             
-            this.showSuccess('Asset toegevoegd');
+            console.log('Asset added successfully');
         } catch (error) {
-            console.error('Error adding asset:', error);
-            this.showError('Fout bij het toevoegen van asset: ' + error.message);
+            console.error('Error in addAsset:', error);
+            this.showError('Fout bij het toevoegen van asset');
         }
     }
     
@@ -183,9 +220,9 @@ export class PortfolioFeature {
         const assetList = document.getElementById('assetList');
         const remainingAssets = assetList.querySelectorAll('.asset-row').length;
         
-        // Keep at least one asset
         if (remainingAssets > 1) {
             assetRow.remove();
+            this.showSuccess('Asset verwijderd');
         } else {
             this.showError('U moet minimaal één asset hebben');
         }
@@ -203,7 +240,7 @@ export class PortfolioFeature {
         const assets = [];
         
         assetRows.forEach(row => {
-            const name = row.querySelector('.asset-name').value;
+            const name = row.querySelector('.asset-name').value.trim();
             const currency = row.querySelector('.asset-currency').value;
             const amount = parseFloat(row.querySelector('.asset-amount').value) || 0;
             const expectedReturn = parseFloat(row.querySelector('.asset-return').value) || 0;
@@ -227,6 +264,7 @@ export class PortfolioFeature {
     
     calculatePortfolio() {
         try {
+            console.log('Calculating portfolio');
             this.assets = this.collectAssets();
             
             if (this.assets.length === 0) {
@@ -261,18 +299,12 @@ export class PortfolioFeature {
             this.updateCharts();
             
             // Enable portfolio management buttons
-            const optimizeBtn = document.getElementById('optimizePortfolioBtn');
-            const saveBtn = document.getElementById('savePortfolioBtn');
-            const exportBtn = document.getElementById('exportPortfolioBtn');
-            
-            if (optimizeBtn) optimizeBtn.disabled = false;
-            if (saveBtn) saveBtn.disabled = false;
-            if (exportBtn) exportBtn.disabled = false;
+            this.enablePortfolioButtons();
             
             this.showSuccess('Portfolio berekening voltooid');
         } catch (error) {
             console.error('Error calculating portfolio:', error);
-            this.showError('Fout bij het berekenen van portfolio: ' + error.message);
+            this.showError('Fout bij het berekenen van portfolio');
         }
     }
     
@@ -280,14 +312,9 @@ export class PortfolioFeature {
         if (!this.assets || this.assets.length === 0) return 0;
         
         // Simplified risk calculation (assumes no correlation)
-        // In reality, you'd need a correlation matrix
         let variance = 0;
         
         this.assets.forEach(asset => {
-            if (typeof asset.weight === 'undefined') {
-                const totalValue = this.assets.reduce((sum, a) => sum + a.amount, 0);
-                asset.weight = asset.amount / totalValue;
-            }
             variance += Math.pow(asset.weight * asset.risk / 100, 2);
         });
         
@@ -302,6 +329,12 @@ export class PortfolioFeature {
     displayResults() {
         if (!this.portfolioData) return;
         
+        // Show results section
+        const resultsDiv = document.getElementById('portfolioResults');
+        if (resultsDiv) {
+            resultsDiv.style.display = 'block';
+        }
+        
         // Update KPI cards
         const waardeEl = document.getElementById('portfolioWaarde');
         const rendementEl = document.getElementById('portfolioRendement');
@@ -313,8 +346,6 @@ export class PortfolioFeature {
         
         // Update detailed metrics
         const metricsDiv = document.getElementById('portfolioMetrics');
-        const resultsDiv = document.getElementById('portfolioResults');
-        
         if (metricsDiv) {
             const sharpe = this.portfolioData.sharpeRatio;
             const risk = this.portfolioData.risk;
@@ -352,30 +383,67 @@ export class PortfolioFeature {
                 </div>
             `).join('');
         }
-        
-        if (resultsDiv) resultsDiv.style.display = 'block';
     }
     
     updateCharts() {
         if (this.chartManager && this.portfolioData && this.assets) {
-            // Update portfolio chart with current data
             if (typeof this.chartManager.updatePortfolioChart === 'function') {
                 this.chartManager.updatePortfolioChart(this.assets);
             } else {
-                console.warn('updatePortfolioChart method not available on chartManager');
-                this.createPortfolioChart();
+                console.log('Chart manager does not have updatePortfolioChart method');
+                this.createBasicChart();
             }
         }
     }
     
-    createPortfolioChart() {
-        if (!this.portfolioData || !this.assets) return;
+    createBasicChart() {
+        const canvas = document.getElementById('portfolioChart');
+        if (!canvas || !window.Chart) return;
         
-        const chartContainer = document.getElementById('portfolioChart');
-        if (!chartContainer) return;
+        const ctx = canvas.getContext('2d');
         
-        // Create a simple visualization if chartManager is not available
-        console.log('Creating fallback portfolio chart');
+        // Destroy existing chart if any
+        if (this.portfolioChart) {
+            this.portfolioChart.destroy();
+        }
+        
+        // Create pie chart
+        this.portfolioChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: this.assets.map(a => a.name),
+                datasets: [{
+                    data: this.assets.map(a => a.amount),
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const percentage = ((value / context.dataset.data.reduce((a, b) => a + b, 0)) * 100).toFixed(1);
+                                return `${label}: €${value.toLocaleString('nl-NL')} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
     
     async optimizePortfolio() {
@@ -396,47 +464,46 @@ export class PortfolioFeature {
                     this.showSuccess('Portfolio is geoptimaliseerd voor maximaal rendement/risico verhouding');
                 } catch (error) {
                     console.error('Error during optimization:', error);
-                    this.showError('Fout tijdens optimalisatie: ' + error.message);
+                    this.showError('Fout tijdens optimalisatie');
                 }
             }, 1000);
         } catch (error) {
             console.error('Error optimizing portfolio:', error);
-            this.showError('Fout bij het optimaliseren van portfolio: ' + error.message);
+            this.showError('Fout bij het optimaliseren van portfolio');
         }
     }
     
     calculateOptimalWeights() {
-        // Simplified optimization logic
-        // Real implementation would use mean-variance optimization
+        // Simplified optimization using Sharpe ratio
         const weights = [];
-        const n = this.assets.length;
         
-        this.assets.forEach((asset, i) => {
-            // Simple heuristic: weight by return/risk ratio
-            const score = asset.expectedReturn / (asset.risk || 1);
+        this.assets.forEach((asset) => {
+            const score = asset.risk > 0 ? asset.expectedReturn / asset.risk : 0;
             weights.push(score);
         });
         
         // Normalize weights
         const sum = weights.reduce((a, b) => a + b, 0);
-        return weights.map(w => w / sum);
+        return sum > 0 ? weights.map(w => w / sum) : weights.map(() => 1 / this.assets.length);
     }
     
     applyOptimizedWeights(weights) {
         const totalValue = this.portfolioData.totalValue;
         
         this.assets.forEach((asset, i) => {
-            asset.amount = weights[i] * totalValue;
+            asset.amount = Math.round(weights[i] * totalValue);
             
             // Update UI
             const row = document.querySelector(`[data-asset-id="${asset.id}"]`);
             if (row) {
-                row.querySelector('.asset-amount').value = Math.round(asset.amount);
+                const amountInput = row.querySelector('.asset-amount');
+                if (amountInput) {
+                    amountInput.value = asset.amount;
+                }
             }
         });
     }
     
-    // Integration with DataService
     savePortfolio() {
         if (!this.portfolioData) {
             this.showError('Bereken eerst het portfolio voordat u het opslaat');
@@ -447,12 +514,13 @@ export class PortfolioFeature {
         if (!name || name.trim() === '') return;
         
         const portfolioToSave = {
+            id: this.generateAssetId(),
             name: name.trim(),
             ...this.portfolioData,
             savedAt: new Date().toISOString()
         };
         
-        // Use DataService if available, otherwise use local method
+        // Use DataService if available, otherwise use localStorage
         if (this.useDataService && this.dataService) {
             this.saveToDataService(portfolioToSave);
         } else {
@@ -474,15 +542,12 @@ export class PortfolioFeature {
     saveToLocalStorage(portfolio) {
         try {
             const saved = this.getLocalSavedPortfolios();
-            saved.push({
-                ...portfolio,
-                id: this.generateAssetId()
-            });
+            saved.push(portfolio);
             localStorage.setItem('savedPortfolios', JSON.stringify(saved));
-            this.showSuccess(`Portfolio "${portfolio.name}" lokaal opgeslagen`);
+            this.showSuccess(`Portfolio "${portfolio.name}" opgeslagen`);
         } catch (error) {
             console.error('Error saving to localStorage:', error);
-            this.showError('Fout bij het lokaal opslaan van portfolio');
+            this.showError('Fout bij het opslaan van portfolio');
         }
     }
     
@@ -490,7 +555,8 @@ export class PortfolioFeature {
         try {
             const saved = localStorage.getItem('savedPortfolios');
             return saved ? JSON.parse(saved) : [];
-        } catch {
+        } catch (error) {
+            console.error('Error loading from localStorage:', error);
             return [];
         }
     }
@@ -500,9 +566,10 @@ export class PortfolioFeature {
         
         try {
             const portfolios = await this.dataService.loadPortfolios();
-            this.savedPortfoliosCache = portfolios;
+            this.savedPortfoliosCache = portfolios || [];
         } catch (error) {
             console.error('Error loading portfolios from DataService:', error);
+            this.savedPortfoliosCache = [];
         }
     }
     
@@ -523,6 +590,10 @@ export class PortfolioFeature {
         }
         
         // Create and show dialog
+        this.showPortfolioLoadDialog(savedPortfolios);
+    }
+    
+    showPortfolioLoadDialog(savedPortfolios) {
         const dialog = document.createElement('div');
         dialog.className = 'portfolio-load-dialog';
         dialog.innerHTML = `
@@ -534,9 +605,9 @@ export class PortfolioFeature {
                         <div class="portfolio-item" data-portfolio-id="${p.id}">
                             <div class="portfolio-name">${p.name}</div>
                             <div class="portfolio-info">
-                                <span>${formatNumber(p.totalValue)}</span>
+                                <span>€ ${formatNumber(p.totalValue)}</span>
                                 <span>${formatPercentage(p.expectedReturn)}</span>
-                                <span>${new Date(p.savedAt || p.timestamp).toLocaleDateString()}</span>
+                                <span>${new Date(p.savedAt || p.timestamp).toLocaleDateString('nl-NL')}</span>
                             </div>
                         </div>
                     `).join('')}
@@ -576,27 +647,15 @@ export class PortfolioFeature {
                 return;
             }
             
-            // Clear existing assets except first
+            // Clear existing assets
             const assetList = document.getElementById('assetList');
-            while (assetList.children.length > 1) {
-                assetList.lastElementChild.remove();
-            }
+            assetList.innerHTML = '';
             
             // Load assets
-            assets.forEach((asset, index) => {
-                if (index === 0) {
-                    // Update first row
-                    const firstRow = assetList.firstElementChild;
-                    firstRow.dataset.assetId = asset.id;
-                    firstRow.querySelector('.asset-name').value = asset.name;
-                    firstRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
-                    firstRow.querySelector('.asset-amount').value = asset.amount;
-                    firstRow.querySelector('.asset-return').value = asset.expectedReturn;
-                    firstRow.querySelector('.asset-risk').value = asset.risk;
-                } else {
-                    // Add new rows
-                    this.addAsset();
-                    const newRow = assetList.lastElementChild;
+            assets.forEach((asset) => {
+                this.addAsset();
+                const newRow = assetList.lastElementChild;
+                if (newRow) {
                     newRow.dataset.assetId = asset.id;
                     newRow.querySelector('.asset-name').value = asset.name;
                     newRow.querySelector('.asset-currency').value = asset.currency || 'EUR';
@@ -645,6 +704,16 @@ export class PortfolioFeature {
         this.showSuccess('Portfolio geëxporteerd');
     }
     
+    enablePortfolioButtons() {
+        const optimizeBtn = document.getElementById('optimizePortfolioBtn');
+        const saveBtn = document.getElementById('savePortfolioBtn');
+        const exportBtn = document.getElementById('exportPortfolioBtn');
+        
+        if (optimizeBtn) optimizeBtn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
+        if (exportBtn) exportBtn.disabled = false;
+    }
+    
     refresh() {
         // Reload saved portfolios if using DataService
         if (this.dataService && this.useDataService) {
@@ -658,12 +727,13 @@ export class PortfolioFeature {
         }
     }
     
+    // UI Helper methods
     showError(message) {
-        this.showToast('error', 'Fout: ' + message);
+        this.showToast('error', message);
     }
     
     showSuccess(message) {
-        this.showToast('success', 'Succes: ' + message);
+        this.showToast('success', message);
     }
     
     showInfo(message) {
@@ -697,6 +767,7 @@ export class PortfolioFeature {
             border-radius: 4px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             animation: slideIn 0.3s ease-out;
+            font-size: 14px;
         `;
         toast.textContent = message;
         

@@ -1,8 +1,7 @@
 // Currency Portfolio Feature - Extends portfolio functionality with multi-currency support
-// Dutch translation and functionality fixes
+// Complete implementation with error handling
 
 import { formatNumber } from '../utils/format-utils.js';
-import { generateId } from '../utils/calculation-utils.js';
 
 export class CurrencyPortfolioFeature {
     constructor(portfolioFeature, currencyService, fxRiskAnalysis) {
@@ -10,36 +9,46 @@ export class CurrencyPortfolioFeature {
         this.currencyService = currencyService;
         this.fxRiskAnalysis = fxRiskAnalysis;
         
-    // Extended portfolio state
-    this.currencyPortfolio = {
-        assets: [],
-        baseCurrency: 'EUR',
-        hedgingStrategies: [],
-        lastAnalysis: null
-    };
-    
-    // UI state
-    this.uiState = {
-        showRiskAnalysis: false,
-        selectedHedgingStrategy: null,
-        riskTolerance: 'moderate'
-    };
+        // Extended portfolio state
+        this.currencyPortfolio = {
+            assets: [],
+            baseCurrency: 'EUR',
+            hedgingStrategies: [],
+            lastAnalysis: null
+        };
+        
+        // UI state
+        this.uiState = {
+            showRiskAnalysis: false,
+            selectedHedgingStrategy: null,
+            riskTolerance: 'moderate'
+        };
+        
+        this.initialized = false;
     }
     
     async initialize() {
-        // Initialize currency service if it has an initialize method
-        if (this.currencyService && typeof this.currencyService.initialize === 'function') {
-            await this.currencyService.initialize();
+        console.log('Initializing Currency Portfolio Feature');
+        
+        try {
+            // Initialize currency service if it has an initialize method
+            if (this.currencyService && typeof this.currencyService.initialize === 'function') {
+                await this.currencyService.initialize();
+            }
+            
+            // Load saved data
+            this.loadSavedData();
+            
+            // Set up event listeners
+            this.setupEventListeners();
+            
+            // Update UI with currency options
+            this.updateCurrencySelectors();
+            
+            this.initialized = true;
+        } catch (error) {
+            console.error('Error initializing currency portfolio:', error);
         }
-        
-        // Load saved currency portfolio data
-        this.loadSavedData();
-        
-        // Set up event listeners
-        this.setupEventListeners();
-        
-        // Update UI with currency options
-        this.updateCurrencySelectors();
     }
     
     setupEventListeners() {
@@ -63,60 +72,60 @@ export class CurrencyPortfolioFeature {
         });
         
         // FX Analysis buttons
-        const analyzeFXRiskBtn = document.getElementById('analyzeFXRiskBtn');
-        const runStressTestBtn = document.getElementById('runStressTestBtn');
-        const calculateHedgeBtn = document.getElementById('calculateHedgeBtn');
+        const analyzeFXBtn = document.getElementById('analyzeFXRiskBtn');
+        const stressTestBtn = document.getElementById('runStressTestBtn');
         
-        if (analyzeFXRiskBtn) {
-            analyzeFXRiskBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.analyzeFXRisk();
-            });
-            analyzeFXRiskBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    e.preventDefault();
-                    setTimeout(() => this.analyzeFXRisk(), 0);
-                }
-            });
+        if (analyzeFXBtn) {
+            analyzeFXBtn.addEventListener('click', () => this.analyzeFXRisk());
         }
-        if (runStressTestBtn) {
-            runStressTestBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.runStressTest();
-            });
-            runStressTestBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    e.preventDefault();
-                    setTimeout(() => this.runStressTest(), 0);
-                }
-            });
+        
+        if (stressTestBtn) {
+            stressTestBtn.addEventListener('click', () => this.runStressTest());
         }
-        if (calculateHedgeBtn) {
-            calculateHedgeBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.calculateOptimalHedge();
-            });
-            calculateHedgeBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    e.preventDefault();
-                    setTimeout(() => this.calculateOptimalHedge(), 0);
+        
+        // Listen for portfolio loaded events
+        document.addEventListener('portfolioLoaded', (e) => {
+            if (e.detail && e.detail.assets) {
+                this.updateCurrencySelectors();
+                this.updateConvertedValues();
+            }
+        });
+    }
+    
+    loadSavedData() {
+        try {
+            const savedData = localStorage.getItem('currencyPortfolioPreferences');
+            if (savedData) {
+                const preferences = JSON.parse(savedData);
+                if (preferences.baseCurrency) {
+                    this.currencyPortfolio.baseCurrency = preferences.baseCurrency;
                 }
-            });
+                if (preferences.riskTolerance) {
+                    this.uiState.riskTolerance = preferences.riskTolerance;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading saved currency preferences:', error);
+        }
+    }
+    
+    savePreferences() {
+        try {
+            const preferences = {
+                baseCurrency: this.currencyPortfolio.baseCurrency,
+                riskTolerance: this.uiState.riskTolerance
+            };
+            localStorage.setItem('currencyPortfolioPreferences', JSON.stringify(preferences));
+        } catch (error) {
+            console.error('Error saving currency preferences:', error);
         }
     }
     
     updateCurrencySelectors() {
-        const baseCurrencySelector = document.getElementById('baseCurrencySelector');
-        const assetCurrencySelectors = document.querySelectorAll('.asset-currency');
-        
-        if (!this.currencyService) {
-            console.warn('Currency service not available');
-            return;
-        }
-        
-        const currencies = this.currencyService.getSupportedCurrencies();
+        const currencies = this.getAvailableCurrencies();
         
         // Update base currency selector
+        const baseCurrencySelector = document.getElementById('baseCurrencySelector');
         if (baseCurrencySelector && baseCurrencySelector.options.length === 0) {
             currencies.forEach(currency => {
                 const option = document.createElement('option');
@@ -129,7 +138,14 @@ export class CurrencyPortfolioFeature {
             });
         }
         
+        // Update risk tolerance selector
+        const riskToleranceSelector = document.getElementById('riskToleranceSelector');
+        if (riskToleranceSelector && this.uiState.riskTolerance) {
+            riskToleranceSelector.value = this.uiState.riskTolerance;
+        }
+        
         // Update asset currency selectors - only update empty selectors
+        const assetCurrencySelectors = document.querySelectorAll('.asset-currency');
         assetCurrencySelectors.forEach(selector => {
             if (selector.options.length === 0) {
                 currencies.forEach(currency => {
@@ -145,39 +161,55 @@ export class CurrencyPortfolioFeature {
         });
     }
     
+    getAvailableCurrencies() {
+        // Default currency list
+        return [
+            { code: 'EUR', name: 'Euro' },
+            { code: 'USD', name: 'US Dollar' },
+            { code: 'GBP', name: 'British Pound' },
+            { code: 'JPY', name: 'Japanese Yen' },
+            { code: 'CHF', name: 'Swiss Franc' },
+            { code: 'AUD', name: 'Australian Dollar' },
+            { code: 'CAD', name: 'Canadian Dollar' },
+            { code: 'CNY', name: 'Chinese Yuan' },
+            { code: 'SEK', name: 'Swedish Krona' },
+            { code: 'NZD', name: 'New Zealand Dollar' }
+        ];
+    }
+    
     async handleCurrencyChange(selector) {
         const assetRow = selector.closest('.asset-row');
         if (!assetRow) return;
         
         const currency = selector.value;
         const amountInput = assetRow.querySelector('.asset-amount');
-        const convertedDiv = assetRow.querySelector('.converted-value');
+        let convertedDiv = assetRow.querySelector('.converted-value');
         
-        if (!amountInput || !convertedDiv) return;
+        if (!amountInput) return;
+        
+        // Create converted value div if it doesn't exist
+        if (!convertedDiv) {
+            convertedDiv = document.createElement('div');
+            convertedDiv.className = 'converted-value';
+            convertedDiv.style.display = 'none';
+            amountInput.parentNode.appendChild(convertedDiv);
+        }
         
         const amount = parseFloat(amountInput.value) || 0;
         
         if (amount > 0 && currency !== this.currencyPortfolio.baseCurrency) {
             try {
-                // Try to use currencyService convert method if available
-                if (this.currencyService && typeof this.currencyService.convert === 'function') {
-                    const convertedAmount = await this.currencyService.convert(amount, currency, this.currencyPortfolio.baseCurrency);
-                    convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
-                    convertedDiv.style.display = 'block';
-                } else if (this.currencyService && typeof this.currencyService.getExchangeRate === 'function') {
-                    const rate = await this.currencyService.getExchangeRate(currency, this.currencyPortfolio.baseCurrency);
-                    const convertedAmount = amount * rate;
+                const convertedAmount = await this.convertCurrency(
+                    amount,
+                    currency,
+                    this.currencyPortfolio.baseCurrency
+                );
+                
+                if (convertedAmount !== null) {
                     convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
                     convertedDiv.style.display = 'block';
                 } else {
-                    // Fallback conversion
-                    const convertedAmount = await this.currencyService.convert(amount, currency, this.currencyPortfolio.baseCurrency);
-                    if (convertedAmount !== null) {
-                        convertedDiv.textContent = `≈ ${this.formatCurrency(convertedAmount, this.currencyPortfolio.baseCurrency)}`;
-                        convertedDiv.style.display = 'block';
-                    } else {
-                        convertedDiv.style.display = 'none';
-                    }
+                    convertedDiv.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error converting currency:', error);
@@ -188,10 +220,50 @@ export class CurrencyPortfolioFeature {
         }
     }
     
+    async convertCurrency(amount, fromCurrency, toCurrency) {
+        if (fromCurrency === toCurrency) return amount;
+        
+        try {
+            // Try to use currencyService if available
+            if (this.currencyService && typeof this.currencyService.convert === 'function') {
+                return await this.currencyService.convert(amount, fromCurrency, toCurrency);
+            } else if (this.currencyService && typeof this.currencyService.getExchangeRate === 'function') {
+                const rate = await this.currencyService.getExchangeRate(fromCurrency, toCurrency);
+                return amount * rate;
+            } else {
+                // Fallback to hardcoded approximate rates
+                const rates = {
+                    'EUR_USD': 1.08,
+                    'USD_EUR': 0.93,
+                    'EUR_GBP': 0.86,
+                    'GBP_EUR': 1.16,
+                    'EUR_JPY': 162,
+                    'JPY_EUR': 0.0062,
+                    'EUR_CHF': 0.96,
+                    'CHF_EUR': 1.04
+                };
+                const key = `${fromCurrency}_${toCurrency}`;
+                return amount * (rates[key] || 1);
+            }
+        } catch (error) {
+            console.error('Currency conversion error:', error);
+            return null;
+        }
+    }
+    
     async handleBaseCurrencyChange(newCurrency) {
         this.currencyPortfolio.baseCurrency = newCurrency;
         
         // Update all converted values
+        await this.updateConvertedValues();
+        
+        // Save preference
+        this.savePreferences();
+        
+        this.showSuccess(`Basisvaluta gewijzigd naar ${newCurrency}`);
+    }
+    
+    async updateConvertedValues() {
         const assetRows = document.querySelectorAll('.asset-row');
         for (const row of assetRows) {
             const currencySelector = row.querySelector('.asset-currency');
@@ -199,9 +271,6 @@ export class CurrencyPortfolioFeature {
                 await this.handleCurrencyChange(currencySelector);
             }
         }
-        
-        // Save preference
-        this.savePreferences();
     }
     
     async analyzeFXRisk() {
@@ -215,194 +284,182 @@ export class CurrencyPortfolioFeature {
         this.showInfo('FX risico analyse wordt uitgevoerd...');
         
         try {
-            // Check if FX Risk Analysis service is available
-            if (!this.fxRiskAnalysis) {
-                // Fallback: Simple FX exposure calculation
-                const analysis = await this.calculateSimpleFXExposure(assets);
-                this.currencyPortfolio.lastAnalysis = analysis;
-                this.displayFXRiskResults(analysis);
-                this.showSuccess('FX risico analyse voltooid (simplified)');
-                return;
+            // Show loading state
+            const resultsDiv = document.getElementById('fxRiskResults');
+            if (resultsDiv) {
+                resultsDiv.innerHTML = '<div class="loading">Analyseren...</div>';
+                resultsDiv.style.display = 'block';
             }
             
-            // Use FX Risk Analysis service if available
-            if (typeof this.fxRiskAnalysis.analyzePortfolio === 'function') {
-                const analysis = await this.fxRiskAnalysis.analyzePortfolio(
+            let analysisResults;
+            
+            // Check if FX Risk Analysis service is available
+            if (this.fxRiskAnalysis) {
+                analysisResults = await this.fxRiskAnalysis.analyzeCurrencyExposure(
                     assets,
                     this.currencyPortfolio.baseCurrency
                 );
-                
-                this.currencyPortfolio.lastAnalysis = analysis;
-                this.displayFXRiskResults(analysis);
-                this.showSuccess('FX risico analyse voltooid');
             } else {
-                // Fallback if method doesn't exist
-                const analysis = await this.calculateSimpleFXExposure(assets);
-                this.currencyPortfolio.lastAnalysis = analysis;
-                this.displayFXRiskResults(analysis);
-                this.showSuccess('FX risico analyse voltooid (simplified)');
+                // Fallback: Simple FX exposure calculation
+                analysisResults = await this.calculateSimpleFXExposure(assets);
             }
+            
+            this.currencyPortfolio.lastAnalysis = analysisResults;
+            this.displayFXRiskResults(analysisResults);
+            
+            this.showSuccess('FX risico analyse voltooid');
         } catch (error) {
             console.error('Error analyzing FX risk:', error);
-            this.showError('Fout bij het analyseren van FX risico: ' + error.message);
+            this.showError('Fout bij FX risico analyse');
+            
+            const resultsDiv = document.getElementById('fxRiskResults');
+            if (resultsDiv) {
+                resultsDiv.style.display = 'none';
+            }
         }
     }
     
     async calculateSimpleFXExposure(assets) {
-        try {
-            const baseCurrency = this.currencyPortfolio.baseCurrency;
-            const exposures = [];
-            let totalExposure = 0;
-            let totalValueInBase = 0;
-            
-            // Group by currency
-            const currencyGroups = {};
-            for (const asset of assets) {
-                const currency = asset.currency || 'EUR';
-                if (!currencyGroups[currency]) {
-                    currencyGroups[currency] = [];
-                }
-                currencyGroups[currency].push(asset);
-            }
-            
-            // Calculate exposures
-            for (const [currency, currencyAssets] of Object.entries(currencyGroups)) {
-                const totalInCurrency = currencyAssets.reduce((sum, asset) => sum + asset.amount, 0);
-                
-                // Use simple conversion if currency service is not available
-                let totalInBase;
-                if (this.currencyService && typeof this.currencyService.convert === 'function') {
-                    try {
-                        totalInBase = await this.currencyService.convert(totalInCurrency, currency, baseCurrency);
-                    } catch (conversionError) {
-                        console.warn('Currency conversion failed, using 1:1 rate:', conversionError);
-                        totalInBase = totalInCurrency; // Fallback to 1:1 conversion
-                    }
-                } else {
-                    totalInBase = totalInCurrency; // Fallback if no currency service
-                }
-                
-                totalValueInBase += totalInBase;
-                
-                if (currency !== baseCurrency) {
-                    totalExposure += totalInBase;
-                    exposures.push({
-                        currency,
-                        amount: totalInBase,
-                        percentage: 0, // Will calculate after total
-                        volatility: this.getEstimatedVolatility(currency)
-                    });
-                }
-            }
-            
-            // Calculate percentages
-            exposures.forEach(exp => {
-                exp.percentage = (exp.amount / totalValueInBase) * 100;
-            });
-            
-            return {
-                totalExposure,
-                totalValue: totalValueInBase,
-                valueAtRisk: totalExposure * 0.05, // Simplified 5% VaR
-                exposures,
-                correlations: [] // Simplified - no correlation matrix
-            };
-        } catch (error) {
-            console.error('Error calculating FX exposure:', error);
-            throw new Error('Fout bij het berekenen van FX blootstelling: ' + error.message);
-        }
-    }
-    
-    getEstimatedVolatility(currency) {
-        // Estimated annual volatilities for major currencies
-        const volatilities = {
-            'USD': 8.5,
-            'EUR': 7.2,
-            'GBP': 9.1,
-            'JPY': 10.5,
-            'CHF': 7.8,
-            'AUD': 11.2,
-            'CAD': 9.8,
-            'CNY': 4.5,
-            'SEK': 10.1,
-            'NZD': 11.8
-        };
+        const baseCurrency = this.currencyPortfolio.baseCurrency;
+        const exposures = {};
+        let totalValue = 0;
         
-        return volatilities[currency] || 10.0;
+        // Calculate exposure by currency
+        for (const asset of assets) {
+            const currency = asset.currency || 'EUR';
+            
+            if (!exposures[currency]) {
+                exposures[currency] = {
+                    currency: currency,
+                    value: 0,
+                    assets: []
+                };
+            }
+            
+            let valueInBase = asset.amount;
+            if (currency !== baseCurrency) {
+                valueInBase = await this.convertCurrency(asset.amount, currency, baseCurrency) || asset.amount;
+            }
+            
+            exposures[currency].value += valueInBase;
+            exposures[currency].assets.push(asset.name);
+            totalValue += valueInBase;
+        }
+        
+        // Calculate percentages
+        Object.values(exposures).forEach(exposure => {
+            exposure.percentage = (exposure.value / totalValue) * 100;
+        });
+        
+        return {
+            exposures: Object.values(exposures),
+            totalValue,
+            baseCurrency,
+            diversificationScore: Object.keys(exposures).length / 10 * 100 // Simple score
+        };
     }
     
     displayFXRiskResults(analysis) {
         const resultsDiv = document.getElementById('fxRiskResults');
         if (!resultsDiv) return;
         
-        resultsDiv.innerHTML = `
-            <div class="fx-analysis-results">
-                <h4>Valuta Blootstelling Analyse</h4>
-                
-                <div class="exposure-summary">
-                    <div class="exposure-metric">
-                        <span class="label">Totale FX Blootstelling:</span>
-                        <span class="value">${this.formatCurrency(analysis.totalExposure, this.currencyPortfolio.baseCurrency)}</span>
+        let html = '<div class="fx-analysis-results">';
+        
+        // Summary
+        html += `
+            <div class="fx-summary">
+                <h4>Valuta Blootstelling Overzicht</h4>
+                <div class="summary-metrics">
+                    <div class="metric">
+                        <span class="label">Totale Waarde:</span>
+                        <span class="value">${this.formatCurrency(analysis.totalValue, analysis.baseCurrency)}</span>
                     </div>
-                    <div class="exposure-metric">
-                        <span class="label">FX Risico (VaR 95%):</span>
-                        <span class="value">${this.formatCurrency(analysis.valueAtRisk, this.currencyPortfolio.baseCurrency)}</span>
+                    <div class="metric">
+                        <span class="label">Aantal Valuta:</span>
+                        <span class="value">${analysis.exposures.length}</span>
                     </div>
-                </div>
-                
-                <div class="currency-breakdown">
-                    <h5>Blootstelling per Valuta</h5>
-                    ${analysis.exposures.map(exp => `
-                        <div class="currency-exposure">
-                            <div class="currency-header">
-                                <span class="currency-code">${exp.currency}</span>
-                                <span class="exposure-percentage">${exp.percentage.toFixed(1)}%</span>
-                            </div>
-                            <div class="exposure-bar">
-                                <div class="exposure-fill" style="width: ${exp.percentage}%"></div>
-                            </div>
-                            <div class="exposure-details">
-                                <span>Bedrag: ${this.formatCurrency(exp.amount, exp.currency)}</span>
-                                <span>Volatiliteit: ${exp.volatility.toFixed(1)}%</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                ${analysis.correlations && analysis.correlations.length > 0 ? `
-                <div class="correlation-matrix">
-                    <h5>Valuta Correlatie Matrix</h5>
-                    <div class="matrix-container">
-                        ${this.renderCorrelationMatrix(analysis.correlations)}
+                    <div class="metric">
+                        <span class="label">Diversificatie Score:</span>
+                        <span class="value">${analysis.diversificationScore ? analysis.diversificationScore.toFixed(0) + '%' : 'N/A'}</span>
                     </div>
                 </div>
-                ` : ''}
             </div>
         `;
         
-        resultsDiv.style.display = 'block';
+        // Currency exposures
+        html += '<div class="currency-exposures"><h4>Valuta Verdeling</h4>';
         
-        // Update currency exposure chart if available
-        this.updateCurrencyExposureChart(analysis);
-    }
-    
-    renderCorrelationMatrix(correlations) {
-        if (!correlations || correlations.length === 0) {
-            return '<p>Geen correlatie data beschikbaar</p>';
-        }
-        
-        // Simplified correlation matrix rendering
-        let html = '<table class="correlation-table"><thead><tr><th></th>';
-        
-        correlations.forEach(row => {
-            html += `<th>${row.currency}</th>`;
+        analysis.exposures.forEach(exposure => {
+            const barWidth = Math.max(exposure.percentage, 1);
+            html += `
+                <div class="exposure-item">
+                    <div class="exposure-header">
+                        <span class="currency">${exposure.currency}</span>
+                        <span class="percentage">${exposure.percentage.toFixed(1)}%</span>
+                    </div>
+                    <div class="exposure-bar-container">
+                        <div class="exposure-bar" style="width: ${barWidth}%"></div>
+                    </div>
+                    <div class="exposure-details">
+                        <span class="value">${this.formatCurrency(exposure.value, analysis.baseCurrency)}</span>
+                        <span class="assets">${exposure.assets.join(', ')}</span>
+                    </div>
+                </div>
+            `;
         });
         
+        html += '</div>';
+        
+        // Risk metrics if available
+        if (analysis.riskMetrics) {
+            html += this.displayRiskMetrics(analysis.riskMetrics);
+        }
+        
+        // Hedging recommendations if available
+        if (analysis.hedgingRecommendations) {
+            html += this.displayHedgingRecommendations(analysis.hedgingRecommendations);
+        }
+        
+        html += '</div>';
+        
+        resultsDiv.innerHTML = html;
+        resultsDiv.style.display = 'block';
+    }
+    
+    displayRiskMetrics(riskMetrics) {
+        let html = '<div class="risk-metrics"><h4>Risico Metrieken</h4>';
+        
+        if (riskMetrics.VaR) {
+            html += `
+                <div class="metric">
+                    <span class="label">Value at Risk (95%):</span>
+                    <span class="value">${this.formatCurrency(riskMetrics.VaR, this.currencyPortfolio.baseCurrency)}</span>
+                </div>
+            `;
+        }
+        
+        if (riskMetrics.correlationMatrix) {
+            html += '<h5>Valuta Correlaties</h5>';
+            html += this.createCorrelationMatrix(riskMetrics.correlationMatrix);
+        }
+        
+        html += '</div>';
+        return html;
+    }
+    
+    createCorrelationMatrix(correlations) {
+        const currencies = Object.keys(correlations);
+        let html = '<table class="correlation-matrix"><thead><tr><th></th>';
+        
+        currencies.forEach(curr => {
+            html += `<th>${curr}</th>`;
+        });
         html += '</tr></thead><tbody>';
         
-        correlations.forEach(row => {
-            html += `<tr><th>${row.currency}</th>`;
-            row.correlations.forEach(corr => {
+        currencies.forEach(curr1 => {
+            html += `<tr><th>${curr1}</th>`;
+            currencies.forEach(curr2 => {
+                const corr = correlations[curr1][curr2] || 0;
                 const colorClass = corr > 0.5 ? 'high-positive' : 
                                  corr < -0.5 ? 'high-negative' : 
                                  corr > 0 ? 'low-positive' : 'low-negative';
@@ -412,6 +469,26 @@ export class CurrencyPortfolioFeature {
         });
         
         html += '</tbody></table>';
+        return html;
+    }
+    
+    displayHedgingRecommendations(recommendations) {
+        let html = '<div class="hedging-recommendations"><h4>Hedging Aanbevelingen</h4>';
+        
+        recommendations.forEach(rec => {
+            html += `
+                <div class="recommendation">
+                    <h5>${rec.instrument}</h5>
+                    <p>${rec.description}</p>
+                    <div class="rec-details">
+                        <span>Kosten: ${rec.estimatedCost}</span>
+                        <span>Effectiviteit: ${rec.effectiveness}</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
         return html;
     }
     
@@ -431,11 +508,18 @@ export class CurrencyPortfolioFeature {
                 { name: 'Flight to Quality', changes: { USD: 0.15, CHF: 0.10, JPY: 0.12, EUR: -0.05 } }
             ];
             
-            const results = await this.fxRiskAnalysis.runStressTest(
-                this.portfolioFeature.assets,
-                scenarios,
-                this.currencyPortfolio.baseCurrency
-            );
+            let results;
+            
+            if (this.fxRiskAnalysis && typeof this.fxRiskAnalysis.runStressTest === 'function') {
+                results = await this.fxRiskAnalysis.runStressTest(
+                    this.portfolioFeature.assets,
+                    scenarios,
+                    this.currencyPortfolio.baseCurrency
+                );
+            } else {
+                // Fallback simple stress test
+                results = await this.runSimpleStressTest(scenarios);
+            }
             
             this.displayStressTestResults(results);
             this.showSuccess('Stresstest voltooid');
@@ -443,6 +527,41 @@ export class CurrencyPortfolioFeature {
             console.error('Error running stress test:', error);
             this.showError('Fout bij het uitvoeren van stresstest');
         }
+    }
+    
+    async runSimpleStressTest(scenarios) {
+        const results = [];
+        const assets = this.portfolioFeature.collectAssets();
+        const baseCurrency = this.currencyPortfolio.baseCurrency;
+        
+        for (const scenario of scenarios) {
+            let totalImpact = 0;
+            let currentValue = 0;
+            let stressedValue = 0;
+            
+            for (const asset of assets) {
+                const currency = asset.currency || 'EUR';
+                const valueInBase = await this.convertCurrency(asset.amount, currency, baseCurrency) || asset.amount;
+                
+                currentValue += valueInBase;
+                
+                // Apply stress
+                const change = scenario.changes[currency] || 0;
+                const stressedAssetValue = valueInBase * (1 + change);
+                stressedValue += stressedAssetValue;
+            }
+            
+            totalImpact = ((stressedValue - currentValue) / currentValue) * 100;
+            
+            results.push({
+                scenario: scenario.name,
+                impact: totalImpact,
+                currentValue,
+                stressedValue
+            });
+        }
+        
+        return results;
     }
     
     displayStressTestResults(results) {
@@ -462,161 +581,19 @@ export class CurrencyPortfolioFeature {
                         <span class="label">Portfolio Impact:</span>
                         <span class="value">${result.impact > 0 ? '+' : ''}${result.impact.toFixed(2)}%</span>
                     </div>
-                    <div class="scenario-value">
-                        <span class="label">Nieuwe Waarde:</span>
-                        <span class="value">${this.formatCurrency(result.newValue, this.currencyPortfolio.baseCurrency)}</span>
+                    <div class="scenario-values">
+                        <span>Huidige waarde: ${this.formatCurrency(result.currentValue, this.currencyPortfolio.baseCurrency)}</span>
+                        <span>Stressed waarde: ${this.formatCurrency(result.stressedValue, this.currencyPortfolio.baseCurrency)}</span>
                     </div>
                 </div>
             `;
         });
         
         html += '</div>';
-        resultsDiv.innerHTML += html;
-    }
-    
-    async calculateOptimalHedge() {
-        if (!this.currencyPortfolio.lastAnalysis) {
-            this.showError('Voer eerst een FX risico analyse uit');
-            return;
-        }
         
-        this.showInfo('Optimale hedge strategie wordt berekend...');
-        
-        try {
-            const hedgingStrategy = await this.fxRiskAnalysis.calculateOptimalHedge(
-                this.portfolioFeature.assets,
-                this.currencyPortfolio.baseCurrency,
-                this.uiState.riskTolerance
-            );
-            
-            this.currencyPortfolio.hedgingStrategies.push(hedgingStrategy);
-            this.displayHedgingRecommendations(hedgingStrategy);
-            
-            this.showSuccess('Hedge strategie berekend');
-        } catch (error) {
-            console.error('Error calculating hedge:', error);
-            this.showError('Fout bij het berekenen van hedge strategie');
-        }
-    }
-    
-    displayHedgingRecommendations(strategy) {
-        const resultsDiv = document.getElementById('fxRiskResults');
-        if (!resultsDiv) return;
-        
-        const container = document.createElement('div');
-        container.className = 'hedging-strategy';
-        
-        if (!strategy || !strategy.recommendations) {
-            container.innerHTML = '<p>Geen hedging aanbevelingen beschikbaar voor huidige allocatie</p>';
-            return;
-        }
-        
-        let html = '<div class="hedging-recommendations">';
-        
-        strategy.recommendations.forEach(rec => {
-            html += `
-                <div class="hedge-recommendation">
-                    <h5>Hedge ${rec.currency} Blootstelling</h5>
-                    <div class="hedge-details">
-                        <p><strong>Blootstelling:</strong> ${this.formatCurrency(rec.exposure, strategy.baseCurrency)} (${rec.percentage.toFixed(1)}%)</p>
-                        <p><strong>Aanbevolen Hedge:</strong> ${this.formatCurrency(rec.recommendedHedge, strategy.baseCurrency)} (${rec.hedgeRatio.toFixed(0)}%)</p>
-                        <p><strong>Instrument:</strong> ${rec.instrument}</p>
-                    </div>
-                    <button class="btn btn-sm btn-primary implement-hedge" data-currency="${rec.currency}">
-                        Implementeer Hedge
-                    </button>
-                </div>
-            `;
-        });
-        
-        html += '</div>';
-        container.innerHTML = html;
-        resultsDiv.appendChild(container);
-        
-        // Add event listeners for implementation buttons
-        container.querySelectorAll('.implement-hedge').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const currency = e.target.dataset.currency;
-                this.showInfo(`Hedge implementatie voor ${currency} wordt voorbereid...`);
-            });
-        });
-    }
-    
-    updateCurrencyExposureChart(analysis) {
-        const chartDiv = document.querySelector('.currency-exposure-chart');
-        const canvas = document.getElementById('currencyExposureChart');
-        
-        if (!chartDiv || !canvas || !this.portfolioFeature.chartManager) return;
-        
-        // Show the chart container
-        chartDiv.style.display = 'block';
-        
-        // Prepare data for chart
-        const chartData = {
-            labels: analysis.exposures.map(exp => exp.currency),
-            datasets: [{
-                label: 'Valuta Blootstelling',
-                data: analysis.exposures.map(exp => exp.amount),
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.8)',
-                    'rgba(54, 162, 235, 0.8)',
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                    'rgba(255, 159, 64, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        };
-        
-        // Create or update chart
-        if (typeof this.portfolioFeature.chartManager.createCurrencyExposureChart === 'function') {
-            this.portfolioFeature.chartManager.createCurrencyExposureChart(canvas, chartData);
-        }
-    }
-    
-    loadSavedData() {
-        try {
-            const saved = localStorage.getItem('currencyPortfolioSettings');
-            if (saved) {
-                const settings = JSON.parse(saved);
-                this.currencyPortfolio.baseCurrency = settings.baseCurrency || 'EUR';
-                this.uiState.riskTolerance = settings.riskTolerance || 'moderate';
-                
-                // Update UI
-                const baseCurrencySelector = document.getElementById('baseCurrencySelector');
-                if (baseCurrencySelector) {
-                    baseCurrencySelector.value = this.currencyPortfolio.baseCurrency;
-                }
-                
-                const riskToleranceSelector = document.getElementById('riskToleranceSelector');
-                if (riskToleranceSelector) {
-                    riskToleranceSelector.value = this.uiState.riskTolerance;
-                }
-            }
-        } catch (error) {
-            console.error('Error loading saved currency portfolio data:', error);
-        }
-    }
-    
-    savePreferences() {
-        try {
-            const settings = {
-                baseCurrency: this.currencyPortfolio.baseCurrency,
-                riskTolerance: this.uiState.riskTolerance
-            };
-            localStorage.setItem('currencyPortfolioSettings', JSON.stringify(settings));
-        } catch (error) {
-            console.error('Error saving currency portfolio settings:', error);
-        }
+        // Append to existing results
+        const existingContent = resultsDiv.innerHTML;
+        resultsDiv.innerHTML = existingContent + html;
     }
     
     formatCurrency(amount, currency) {
@@ -628,6 +605,7 @@ export class CurrencyPortfolioFeature {
         }).format(amount);
     }
     
+    // UI Helper methods (delegate to portfolio feature if available)
     showError(message) {
         if (this.portfolioFeature && typeof this.portfolioFeature.showError === 'function') {
             this.portfolioFeature.showError(message);
@@ -649,38 +627,6 @@ export class CurrencyPortfolioFeature {
             this.portfolioFeature.showInfo(message);
         } else {
             console.info(message);
-        }
-    }
-    
-    showLoadingIndicator(show) {
-        // Simple loading indicator implementation
-        let indicator = document.getElementById('loadingIndicator');
-        
-        if (!indicator && show) {
-            // Create loading indicator if it doesn't exist
-            indicator = document.createElement('div');
-            indicator.id = 'loadingIndicator';
-            indicator.className = 'loading-indicator';
-            indicator.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                z-index: 1000;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            `;
-            indicator.innerHTML = '<div class="spinner"></div><span>Bezig met laden...</span>';
-            document.body.appendChild(indicator);
-        }
-        
-        if (indicator) {
-            indicator.style.display = show ? 'flex' : 'none';
         }
     }
 }
