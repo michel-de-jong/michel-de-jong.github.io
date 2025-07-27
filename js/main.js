@@ -110,17 +110,19 @@ class ROICalculatorApp {
     async initializeFeatures() {
         
         // Initialize feature modules - Create portfolio feature first
-        const portfolioFeature = new PortfolioFeature(this.chartManager, this.state, this.dataService);
+        // const portfolioFeature = new PortfolioFeature(this.chartManager, this.state, this.dataService);
+        // const currencyPortfolioFeature = new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis);
         
         this.features = {
             scenarios: new ScenariosFeature(this.calculator, this.chartManager),
             montecarlo: new MonteCarloFeature(this.calculator, this.chartManager),
             waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolio: portfolioFeature,
+            portfolioFeature: new PortfolioFeature(this.chartManager, this.stateManager,this.dataService),
+            currencyPortfolioFeature: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis),
             historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
             saved: new SavedScenariosFeature(this.calculator, this.dataService),
             export: new ExportFeature(this.calculator, this.chartManager),
-            currencyPortfolio: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis)
+            // currencyPortfolio: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis)
         };
         
         // Initialize each feature
