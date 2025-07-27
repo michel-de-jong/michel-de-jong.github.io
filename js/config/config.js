@@ -24,7 +24,7 @@ export const Config = {
         looptijd: 10,
         leningLooptijd: 10,
         rendementType: 'vast',
-        rendement: 8,
+        rendement: 3,
         aflossingsType: 'lineair',
         herinvestering: 70,
         herinvesteringDrempel: 1000,
