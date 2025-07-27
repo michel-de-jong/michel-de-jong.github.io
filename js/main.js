@@ -107,41 +107,41 @@ class ROICalculatorApp {
         this.kpiDisplay.initialize();
     }
     
-    async initializeFeatures() {
-        
-        // Initialize feature modules - Create portfolio feature first
-        // const portfolioFeature = new PortfolioFeature(this.chartManager, this.state, this.dataService);
-        // const currencyPortfolioFeature = new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis);
-        
-        this.features = {
-            scenarios: new ScenariosFeature(this.calculator, this.chartManager),
-            montecarlo: new MonteCarloFeature(this.calculator, this.chartManager),
-            waterfall: new WaterfallFeature(this.calculator, this.chartManager),
-            portfolioFeature: new PortfolioFeature(this.chartManager, this.stateManager,this.dataService),
-            currencyPortfolioFeature: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis),
-            historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
-            saved: new SavedScenariosFeature(this.calculator, this.dataService),
-            export: new ExportFeature(this.calculator, this.chartManager),
-            // currencyPortfolio: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis)
-        };
-        
-        // Initialize each feature
-        for (const [name, feature] of Object.entries(this.features)) {
-            try {
-                if (feature.initialize) {
-                    await feature.initialize();
-                }
-            } catch (error) {
-                console.error(`Error initializing feature ${name}:`, error);
+async initializeFeatures() {
+    // Create portfolio feature first as a variable for reference
+    const portfolioFeature = new PortfolioFeature(this.chartManager, this.state, this.dataService);
+    
+    // Create all features with consistent naming
+    this.features = {
+        scenarios: new ScenariosFeature(this.calculator, this.chartManager),
+        montecarlo: new MonteCarloFeature(this.calculator, this.chartManager),
+        waterfall: new WaterfallFeature(this.calculator, this.chartManager),
+        portfolio: portfolioFeature,  // Using consistent name 'portfolio'
+        currencyPortfolio: new CurrencyPortfolioFeature(portfolioFeature, this.currencyService, this.fxRiskAnalysis),
+        historical: new HistoricalFeature(this.calculator, this.chartManager, this.historicalDataService),
+        saved: new SavedScenariosFeature(this.calculator, this.dataService),
+        export: new ExportFeature(this.calculator, this.chartManager)
+    };
+    
+    // Initialize each feature
+    for (const [name, feature] of Object.entries(this.features)) {
+        try {
+            if (feature && typeof feature.initialize === 'function') {
+                await feature.initialize();
+                console.log(`Feature ${name} initialized successfully`);
             }
+        } catch (error) {
+            console.error(`Error initializing feature ${name}:`, error);
+            // Continue with other features even if one fails
         }
     }
+}
     
     setupEventHandlers() {
         
         // State change handler
         this.state.onChange((state) => {
-            this.performCalculation();
+        this.performCalculation();
         });
         
         // // Tab change handler
@@ -149,7 +149,7 @@ class ROICalculatorApp {
         //     this.handleTabChange(tabName);
         // });
 
-        // Add tab change listener for portfolio initialization
+        // Tab change handler
         this.tabManager.onTabChange((tabName) => {
             if (tabName === 'portfolio') {
                 // Ensure portfolio is properly initialized when tab is activated
@@ -164,8 +164,10 @@ class ROICalculatorApp {
                     this.features.currencyPortfolio.initialized = true;
                 }
             }
+            
+            // Handle other tabs if needed
             this.handleTabChange(tabName);
-    });
+        });
         
         // Form change handler with debouncing
         let formChangeTimeout;
@@ -399,6 +401,25 @@ class ROICalculatorApp {
             `;
         }
     }
+}
+
+// Additional method to verify feature initialization
+verifyFeatureInitialization() {
+    console.log('=== Feature Initialization Status ===');
+    
+    for (const [name, feature] of Object.entries(this.features)) {
+        const status = feature && feature.initialized ? '✓ Initialized' : '✗ Not initialized';
+        console.log(`${name}: ${status}`);
+        
+        // Log any specific feature dependencies
+        if (name === 'currencyPortfolio' && feature) {
+            console.log(`  - Portfolio reference: ${feature.portfolioFeature ? '✓' : '✗'}`);
+            console.log(`  - Currency service: ${feature.currencyService ? '✓' : '✗'}`);
+            console.log(`  - FX Risk Analysis: ${feature.fxRiskAnalysis ? '✓' : '✗'}`);
+        }
+    }
+    
+    console.log('=====================================');
 }
 
 // Initialize application when DOM is ready
