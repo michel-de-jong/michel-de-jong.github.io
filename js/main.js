@@ -401,25 +401,24 @@ async initializeFeatures() {
             `;
         }
     }
-}
-
-// Additional method to verify feature initialization
-verifyFeatureInitialization() {
-    console.log('=== Feature Initialization Status ===');
-    
-    for (const [name, feature] of Object.entries(this.features)) {
-        const status = feature && feature.initialized ? '✓ Initialized' : '✗ Not initialized';
-        console.log(`${name}: ${status}`);
+    // Additional method to verify feature initialization
+    verifyFeatureInitialization() {
+        console.log('=== Feature Initialization Status ===');
         
-        // Log any specific feature dependencies
-        if (name === 'currencyPortfolio' && feature) {
-            console.log(`  - Portfolio reference: ${feature.portfolioFeature ? '✓' : '✗'}`);
-            console.log(`  - Currency service: ${feature.currencyService ? '✓' : '✗'}`);
-            console.log(`  - FX Risk Analysis: ${feature.fxRiskAnalysis ? '✓' : '✗'}`);
+        for (const [name, feature] of Object.entries(this.features)) {
+            const status = feature && feature.initialized ? '✓ Initialized' : '✗ Not initialized';
+            console.log(`${name}: ${status}`);
+            
+            // Log any specific feature dependencies
+            if (name === 'currencyPortfolio' && feature) {
+                console.log(`  - Portfolio reference: ${feature.portfolioFeature ? '✓' : '✗'}`);
+                console.log(`  - Currency service: ${feature.currencyService ? '✓' : '✗'}`);
+                console.log(`  - FX Risk Analysis: ${feature.fxRiskAnalysis ? '✓' : '✗'}`);
+            }
         }
+        
+        console.log('=====================================');
     }
-    
-    console.log('=====================================');
 }
 
 // Initialize application when DOM is ready
