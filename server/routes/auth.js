@@ -9,18 +9,19 @@ import {
   logout 
 } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
-import { authRateLimit } from '../middleware/security.js';
+import { registerRateLimit, loginRateLimit } from '../middleware/security.js';
 
 const router = express.Router();
 
-router.post('/register', authRateLimit, register);
-router.post('/login', authRateLimit, login);
+router.post('/register', registerRateLimit, register);
+router.post('/login', loginRateLimit, login);
+router.post('/logout', logout);
+router.get('/verify', authenticateToken, getProfile);
 
 router.use(authenticateToken);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.post('/change-password', changePassword);
 router.post('/refresh-token', refreshToken);
-router.post('/logout', logout);
 
 export default router;

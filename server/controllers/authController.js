@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
+import { validateEmail, validatePassword, sanitizeInput } from '../utils/validation.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -8,10 +9,42 @@ const generateToken = (userId) => {
   });
 };
 
+const setTokenCookie = (res, token) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/'
+  });
+};
+
 export const register = asyncHandler(async (req, res) => {
   const { email, password, firstName, lastName, company } = req.body;
 
-  const existingUser = await User.findOne({ email });
+  const sanitizedEmail = sanitizeInput(email);
+  const sanitizedFirstName = sanitizeInput(firstName);
+  const sanitizedLastName = sanitizeInput(lastName);
+  const sanitizedCompany = sanitizeInput(company);
+
+  if (!validateEmail(sanitizedEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid email address'
+    });
+  }
+
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: passwordValidation.message
+    });
+  }
+
+  const existingUser = await User.findOne({ email: sanitizedEmail });
   if (existingUser) {
     return res.status(400).json({
       success: false,
@@ -20,25 +53,29 @@ export const register = asyncHandler(async (req, res) => {
   }
 
   const user = new User({
-    email,
+    email: sanitizedEmail,
     password,
     profile: {
-      firstName,
-      lastName,
-      company
+      firstName: sanitizedFirstName,
+      lastName: sanitizedLastName,
+      company: sanitizedCompany
     }
   });
 
   await user.save();
 
   const token = generateToken(user._id);
+  
+  if (process.env.NODE_ENV === 'production') {
+    setTokenCookie(res, token);
+  }
 
   res.status(201).json({
     success: true,
     message: 'User registered successfully',
     data: {
       user: user.toJSON(),
-      token
+      token: process.env.NODE_ENV === 'production' ? undefined : token
     }
   });
 });
@@ -46,7 +83,16 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
+  const sanitizedEmail = sanitizeInput(email);
+
+  if (!validateEmail(sanitizedEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid email address'
+    });
+  }
+
+  const user = await User.findOne({ email: sanitizedEmail });
   
   if (!user || !user.isActive) {
     return res.status(401).json({
@@ -67,13 +113,17 @@ export const login = asyncHandler(async (req, res) => {
   await user.save();
 
   const token = generateToken(user._id);
+  
+  if (process.env.NODE_ENV === 'production') {
+    setTokenCookie(res, token);
+  }
 
   res.json({
     success: true,
     message: 'Login successful',
     data: {
       user: user.toJSON(),
-      token
+      token: process.env.NODE_ENV === 'production' ? undefined : token
     }
   });
 });
@@ -147,6 +197,15 @@ export const refreshToken = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict',
+      path: '/'
+    });
+  }
+
   res.json({
     success: true,
     message: 'Logged out successfully'

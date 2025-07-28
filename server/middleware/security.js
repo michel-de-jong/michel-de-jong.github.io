@@ -17,7 +17,8 @@ export const createRateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
   });
 };
 
-export const authRateLimit = createRateLimit(15 * 60 * 1000, 5); // 5 attempts per 15 minutes
+export const registerRateLimit = createRateLimit(60 * 60 * 1000, 5); // 5 registration attempts per hour
+export const loginRateLimit = createRateLimit(15 * 60 * 1000, 10); // 10 login attempts per 15 minutes
 export const apiRateLimit = createRateLimit(15 * 60 * 1000, 100); // 100 requests per 15 minutes
 export const paymentRateLimit = createRateLimit(60 * 60 * 1000, 10); // 10 payment attempts per hour
 
