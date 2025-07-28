@@ -11,6 +11,8 @@ import { ValidationService } from './services/validation-service.js';
 import { HistoricalDataService } from './services/historical-data-service.js';
 import { CurrencyService } from './services/currency-service.js';
 import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
+import { AuthService } from './services/auth-service.js';
+import { AuthModal } from './components/auth-modal.js';
 
 // Feature Modules
 import { ScenariosFeature } from './features/scenarios.js';
@@ -77,9 +79,14 @@ class ROICalculatorApp {
         this.validationService = new ValidationService();
         this.historicalDataService = new HistoricalDataService();
         
+        this.authService = new AuthService();
+        
         // Currency services
         this.currencyService = new CurrencyService();
         this.fxRiskAnalysis = new FXRiskAnalysis(this.currencyService);
+        
+        // Initialize authentication UI
+        this.initializeAuth();
     }
     
     initializeCore() {
@@ -418,6 +425,87 @@ async initializeFeatures() {
         }
         
         console.log('=====================================');
+    }
+    
+    initializeAuth() {
+        this.authModal = new AuthModal(this.authService, this.validationService);
+        
+        this.authModal.setAuthSuccessCallback((user) => {
+            this.updateAuthStatus(user);
+        });
+        
+        this.setupAuthEventListeners();
+        
+        this.checkAuthStatus();
+    }
+    
+    setupAuthEventListeners() {
+        const loginBtn = document.getElementById('loginBtn');
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                this.authModal.showLogin();
+            });
+        }
+    }
+    
+    async checkAuthStatus() {
+        if (this.authService.isAuthenticated()) {
+            const isValid = await this.authService.verifyToken();
+            if (isValid) {
+                this.updateAuthStatus(this.authService.getCurrentUser());
+            } else {
+                this.updateAuthStatus(null);
+            }
+        }
+    }
+    
+    updateAuthStatus(user) {
+        const authStatus = document.getElementById('authStatus');
+        if (!authStatus) return;
+        
+        if (user) {
+            authStatus.innerHTML = `
+                <div class="user-menu">
+                    <div class="user-info" id="userInfo">
+                        <span>Welkom, ${user.profile.firstName}</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button class="user-dropdown-item" id="profileBtn">Profiel</button>
+                        <button class="user-dropdown-item" id="logoutBtn">Uitloggen</button>
+                    </div>
+                </div>
+            `;
+            
+            const userInfo = document.getElementById('userInfo');
+            const userDropdown = document.getElementById('userDropdown');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            userInfo.addEventListener('click', () => {
+                userDropdown.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!userInfo.contains(e.target)) {
+                    userDropdown.classList.remove('active');
+                }
+            });
+            
+            logoutBtn.addEventListener('click', async () => {
+                await this.authService.logout();
+                this.updateAuthStatus(null);
+            });
+            
+        } else {
+            authStatus.innerHTML = `
+                <button class="btn btn-primary" id="loginBtn">Inloggen</button>
+            `;
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.addEventListener('click', () => {
+                this.authModal.showLogin();
+            });
+        }
     }
 }
 

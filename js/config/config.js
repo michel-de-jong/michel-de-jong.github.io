@@ -223,13 +223,20 @@ export const Config = {
         darkMode: false // Future feature
     },
     
-    // API endpoints (for future use)
+    // API endpoints
     api: {
-        baseURL: null,
+        baseURL: 'http://localhost:3000/api',
         endpoints: {
-            marketData: '/api/market-data',
-            exchangeRates: '/api/exchange-rates',
-            benchmarks: '/api/benchmarks'
+            auth: {
+                login: '/auth/login',
+                register: '/auth/register',
+                logout: '/auth/logout',
+                verify: '/auth/verify',
+                profile: '/auth/profile'
+            },
+            marketData: '/market-data',
+            exchangeRates: '/exchange-rates',
+            benchmarks: '/benchmarks'
         }
     },
     

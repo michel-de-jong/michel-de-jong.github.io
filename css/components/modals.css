@@ -116,6 +116,157 @@
     color: var(--danger-color);
 }
 
+/* Authentication Modal Styles */
+.auth-modal {
+    max-width: 480px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 1001;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.auth-modal-backdrop {
+    background: rgba(30, 60, 114, 0.8);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.auth-modal-backdrop.active {
+    pointer-events: auto;
+}
+
+.auth-tabs {
+    display: flex;
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid #e9ecef;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: none;
+    border: none;
+    font-size: var(--font-base);
+    color: var(--gray-color);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.auth-tab:hover {
+    color: var(--primary-color);
+}
+
+.auth-tab.active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.auth-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+}
+
+.auth-form .form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.auth-form label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.auth-form input {
+    width: 100%;
+    padding: var(--spacing-base) var(--spacing-md);
+    border: 1px solid #ced4da;
+    border-radius: var(--radius-md);
+    font-size: var(--font-base);
+    transition: border-color var(--transition-normal);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+    background: rgba(255, 255, 255, 1);
+}
+
+.auth-form input.is-invalid {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.auth-form .invalid-feedback {
+    color: var(--danger-color);
+    font-size: var(--font-xs);
+    margin-top: var(--spacing-xs);
+    display: block;
+}
+
+.auth-form .form-help {
+    color: var(--gray-color);
+    font-size: var(--font-xs);
+    margin-top: var(--spacing-xs);
+    display: block;
+}
+
+.auth-actions {
+    margin-top: var(--spacing-xl);
+}
+
+.auth-submit {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.auth-error {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    color: var(--danger-color);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-lg);
+    font-size: var(--font-sm);
+}
+
 /* Responsive modals */
 @media (max-width: 768px) {
     .modal {
@@ -125,5 +276,21 @@
     
     .modal-body {
         max-height: calc(90vh - 120px);
+    }
+    
+    .auth-modal {
+        width: 95%;
+        margin: 10px;
+        max-width: none;
+    }
+    
+    .auth-tab {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-sm);
+    }
+    
+    .auth-form input {
+        padding: var(--spacing-md);
+        font-size: var(--font-base);
     }
 }
