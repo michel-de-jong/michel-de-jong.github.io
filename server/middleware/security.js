@@ -43,10 +43,13 @@ export const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
       'http://localhost:5173',
+      'http://localhost:8080',
       'https://michel-de-jong.github.io'
     ];
     
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
     
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
