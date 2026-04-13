@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import Database from './config/database.js';
 import { helmetConfig, corsOptions, apiRateLimit } from './middleware/security.js';
@@ -11,12 +12,21 @@ import featureRoutes from './routes/features.js';
 
 dotenv.config();
 
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-super-secure-jwt-secret-key-here') {
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'development';
+}
+
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-super-secure-jwt-secret-key-here' || process.env.JWT_SECRET === 'CHANGE_ME_BEFORE_DEPLOYING') {
   if (process.env.NODE_ENV === 'production') {
     console.error('FATAL: JWT_SECRET must be set to a secure value in production.');
     process.exit(1);
   }
-  console.warn('WARNING: JWT_SECRET is not set or is using the placeholder value. Set a strong secret before deploying.');
+  if (!process.env.JWT_SECRET) {
+    process.env.JWT_SECRET = 'dev-fallback-jwt-secret-not-for-production-use';
+    console.warn('WARNING: JWT_SECRET not set. Using development fallback. Do NOT use this in production.');
+  } else {
+    console.warn('WARNING: JWT_SECRET is using a placeholder value. Set a strong secret before deploying.');
+  }
 }
 
 const app = express();
@@ -28,6 +38,7 @@ app.use(helmetConfig);
 app.use(cors(corsOptions));
 app.use(apiRateLimit);
 
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

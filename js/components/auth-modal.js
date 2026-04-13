@@ -282,13 +282,16 @@ export class AuthModal {
     }
     
     setLoading(loading) {
-        const submitBtn = this.modal.querySelector('.auth-submit');
+        const activeForm = this.modal.querySelector('.auth-form.active');
+        const submitBtn = activeForm?.querySelector('.auth-submit') 
+            || this.modal.querySelector('.auth-submit');
+        if (!submitBtn) return;
         const btnText = submitBtn.querySelector('.btn-text');
         const btnSpinner = submitBtn.querySelector('.btn-spinner');
         
         submitBtn.disabled = loading;
-        btnText.style.display = loading ? 'none' : 'inline';
-        btnSpinner.style.display = loading ? 'inline' : 'none';
+        if (btnText) btnText.style.display = loading ? 'none' : 'inline';
+        if (btnSpinner) btnSpinner.style.display = loading ? 'inline' : 'none';
     }
     
     showError(message) {
