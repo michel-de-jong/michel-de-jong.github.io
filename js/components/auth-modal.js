@@ -11,10 +11,10 @@ export class AuthModal {
     
     createModal() {
         this.backdrop = document.createElement('div');
-        this.backdrop.className = 'modal-backdrop auth-modal-backdrop';
+        this.backdrop.className = 'auth-modal-backdrop';
         
         this.modal = document.createElement('div');
-        this.modal.className = 'modal auth-modal';
+        this.modal.className = 'auth-modal';
         
         this.modal.innerHTML = `
             <div class="modal-header">
