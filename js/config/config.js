@@ -225,7 +225,9 @@ export const Config = {
     
     // API endpoints
     api: {
-        baseURL: 'http://localhost:3000/api',
+        baseURL: (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+            ? `${window.location.origin}/api`
+            : 'http://localhost:3000/api',
         endpoints: {
             auth: {
                 login: '/auth/login',

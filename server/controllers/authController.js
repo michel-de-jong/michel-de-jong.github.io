@@ -1,7 +1,15 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
-import { validateEmail, validatePassword, sanitizeInput } from '../utils/validation.js';
+import {
+  validateEmail,
+  validatePassword,
+  sanitizeInput,
+  sanitizeProfileField,
+  validateCurrency,
+  validateLanguage,
+  validateCountry
+} from '../utils/validation.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, process.env.JWT_SECRET, {
@@ -16,7 +24,7 @@ const setTokenCookie = (res, token) => {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? 'strict' : 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/'
   });
 };
@@ -25,9 +33,9 @@ export const register = asyncHandler(async (req, res) => {
   const { email, password, firstName, lastName, company } = req.body;
 
   const sanitizedEmail = sanitizeInput(email);
-  const sanitizedFirstName = sanitizeInput(firstName);
-  const sanitizedLastName = sanitizeInput(lastName);
-  const sanitizedCompany = sanitizeInput(company);
+  const sanitizedFirstName = sanitizeProfileField(firstName, 50);
+  const sanitizedLastName = sanitizeProfileField(lastName, 50);
+  const sanitizedCompany = sanitizeProfileField(company, 100);
 
   if (!validateEmail(sanitizedEmail)) {
     return res.status(400).json({
@@ -65,17 +73,14 @@ export const register = asyncHandler(async (req, res) => {
   await user.save();
 
   const token = generateToken(user._id);
-  
-  if (process.env.NODE_ENV === 'production') {
-    setTokenCookie(res, token);
-  }
+  setTokenCookie(res, token);
 
   res.status(201).json({
     success: true,
     message: 'User registered successfully',
     data: {
       user: user.toJSON(),
-      token: process.env.NODE_ENV === 'production' ? undefined : token
+      token
     }
   });
 });
@@ -113,17 +118,14 @@ export const login = asyncHandler(async (req, res) => {
   await user.save();
 
   const token = generateToken(user._id);
-  
-  if (process.env.NODE_ENV === 'production') {
-    setTokenCookie(res, token);
-  }
+  setTokenCookie(res, token);
 
   res.json({
     success: true,
     message: 'Login successful',
     data: {
       user: user.toJSON(),
-      token: process.env.NODE_ENV === 'production' ? undefined : token
+      token
     }
   });
 });
@@ -142,14 +144,34 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   const user = req.user;
 
-  if (firstName !== undefined) user.profile.firstName = firstName;
-  if (lastName !== undefined) user.profile.lastName = lastName;
-  if (company !== undefined) user.profile.company = company;
-  if (country !== undefined) user.profile.country = country;
+  if (firstName !== undefined) user.profile.firstName = sanitizeProfileField(firstName, 50);
+  if (lastName !== undefined) user.profile.lastName = sanitizeProfileField(lastName, 50);
+  if (company !== undefined) user.profile.company = sanitizeProfileField(company, 100);
 
-  if (currency !== undefined) user.preferences.currency = currency;
-  if (language !== undefined) user.preferences.language = language;
-  if (emailNotifications !== undefined) user.preferences.emailNotifications = emailNotifications;
+  if (country !== undefined) {
+    if (!validateCountry(country)) {
+      return res.status(400).json({ success: false, message: 'Invalid country code' });
+    }
+    user.profile.country = country.toUpperCase();
+  }
+
+  if (currency !== undefined) {
+    if (!validateCurrency(currency)) {
+      return res.status(400).json({ success: false, message: 'Invalid currency code' });
+    }
+    user.preferences.currency = currency.toUpperCase();
+  }
+
+  if (language !== undefined) {
+    if (!validateLanguage(language)) {
+      return res.status(400).json({ success: false, message: 'Invalid language code' });
+    }
+    user.preferences.language = language.toLowerCase();
+  }
+
+  if (emailNotifications !== undefined) {
+    user.preferences.emailNotifications = Boolean(emailNotifications);
+  }
 
   await user.save();
 
@@ -164,6 +186,14 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
 export const changePassword = asyncHandler(async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.isValid) {
+    return res.status(400).json({
+      success: false,
+      message: passwordValidation.message
+    });
+  }
 
   const user = await User.findById(req.user._id);
 
@@ -188,6 +218,8 @@ export const refreshToken = asyncHandler(async (req, res) => {
   const user = req.user;
   const token = generateToken(user._id);
 
+  setTokenCookie(res, token);
+
   res.json({
     success: true,
     data: {
@@ -197,14 +229,12 @@ export const refreshToken = asyncHandler(async (req, res) => {
 });
 
 export const logout = asyncHandler(async (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
-    res.clearCookie('auth_token', {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      path: '/'
-    });
-  }
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    path: '/'
+  });
 
   res.json({
     success: true,

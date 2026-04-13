@@ -15,10 +15,10 @@ const router = express.Router();
 
 router.post('/register', registerRateLimit, register);
 router.post('/login', loginRateLimit, login);
-router.post('/logout', logout);
-router.get('/verify', authenticateToken, getProfile);
 
 router.use(authenticateToken);
+router.post('/logout', logout);
+router.get('/verify', getProfile);
 router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 router.post('/change-password', changePassword);
