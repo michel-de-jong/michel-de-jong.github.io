@@ -122,8 +122,39 @@ export const getLicensePlans = asyncHandler(async (req, res) => {
 });
 
 export const upgradeLicense = asyncHandler(async (req, res) => {
-  const { licenseType, period } = req.body;
+  const { licenseType, period, paymentIntentId } = req.body;
   const user = req.user;
+
+  const validTypes = ['subscription', 'lifetime'];
+  if (!validTypes.includes(licenseType)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid license type'
+    });
+  }
+
+  if (licenseType === 'subscription' && !['monthly', 'yearly'].includes(period)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid subscription period'
+    });
+  }
+
+  if (!paymentIntentId || typeof paymentIntentId !== 'string') {
+    return res.status(400).json({
+      success: false,
+      message: 'A valid payment is required to upgrade your license'
+    });
+  }
+
+  const existingPayment = await Payment.find({ stripePaymentIntentId: paymentIntentId });
+  const paymentRecords = Array.isArray(existingPayment) ? existingPayment : [existingPayment].filter(Boolean);
+  if (paymentRecords.length > 0 && paymentRecords[0] && paymentRecords[0].status === 'succeeded') {
+    return res.status(400).json({
+      success: false,
+      message: 'This payment has already been applied'
+    });
+  }
 
   let expiresAt = null;
 

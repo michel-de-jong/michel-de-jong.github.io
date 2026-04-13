@@ -102,18 +102,6 @@ class Database {
       counters: { users: 0, payments: 0 }
     };
   }
-
-  getInMemoryData() {
-    return this.inMemoryData;
-  }
-
-  clearInMemoryData() {
-    this.inMemoryData = {
-      users: new Map(),
-      payments: new Map(),
-      counters: { users: 0, payments: 0 }
-    };
-  }
 }
 
 export default new Database();

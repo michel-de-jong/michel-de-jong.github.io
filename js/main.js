@@ -463,31 +463,53 @@ async initializeFeatures() {
         const authStatus = document.getElementById('authStatus');
         if (!authStatus) return;
         
+        authStatus.textContent = '';
+        
         if (user) {
-            authStatus.innerHTML = `
-                <div class="user-menu">
-                    <div class="user-info" id="userInfo">
-                        <span>Welkom, ${user.profile.firstName}</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="user-dropdown" id="userDropdown">
-                        <button class="user-dropdown-item" id="profileBtn">Profiel</button>
-                        <button class="user-dropdown-item" id="logoutBtn">Uitloggen</button>
-                    </div>
-                </div>
-            `;
+            const menu = document.createElement('div');
+            menu.className = 'user-menu';
             
-            const userInfo = document.getElementById('userInfo');
-            const userDropdown = document.getElementById('userDropdown');
-            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfo = document.createElement('div');
+            userInfo.className = 'user-info';
+            userInfo.id = 'userInfo';
+            
+            const nameSpan = document.createElement('span');
+            const displayName = (user.profile && user.profile.firstName) ? String(user.profile.firstName) : '';
+            nameSpan.textContent = `Welkom, ${displayName}`;
+            
+            const arrow = document.createElement('span');
+            arrow.textContent = '\u25BC';
+            
+            userInfo.appendChild(nameSpan);
+            userInfo.appendChild(arrow);
+            
+            const dropdown = document.createElement('div');
+            dropdown.className = 'user-dropdown';
+            dropdown.id = 'userDropdown';
+            
+            const profileBtn = document.createElement('button');
+            profileBtn.className = 'user-dropdown-item';
+            profileBtn.id = 'profileBtn';
+            profileBtn.textContent = 'Profiel';
+            
+            const logoutBtn = document.createElement('button');
+            logoutBtn.className = 'user-dropdown-item';
+            logoutBtn.id = 'logoutBtn';
+            logoutBtn.textContent = 'Uitloggen';
+            
+            dropdown.appendChild(profileBtn);
+            dropdown.appendChild(logoutBtn);
+            menu.appendChild(userInfo);
+            menu.appendChild(dropdown);
+            authStatus.appendChild(menu);
             
             userInfo.addEventListener('click', () => {
-                userDropdown.classList.toggle('active');
+                dropdown.classList.toggle('active');
             });
             
             document.addEventListener('click', (e) => {
                 if (!userInfo.contains(e.target)) {
-                    userDropdown.classList.remove('active');
+                    dropdown.classList.remove('active');
                 }
             });
             
@@ -497,11 +519,12 @@ async initializeFeatures() {
             });
             
         } else {
-            authStatus.innerHTML = `
-                <button class="btn btn-primary" id="loginBtn">Inloggen</button>
-            `;
+            const loginBtn = document.createElement('button');
+            loginBtn.className = 'btn btn-primary';
+            loginBtn.id = 'loginBtn';
+            loginBtn.textContent = 'Inloggen';
+            authStatus.appendChild(loginBtn);
             
-            const loginBtn = document.getElementById('loginBtn');
             loginBtn.addEventListener('click', () => {
                 this.authModal.showLogin();
             });

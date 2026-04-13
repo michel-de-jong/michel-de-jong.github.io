@@ -11,6 +11,14 @@ import featureRoutes from './routes/features.js';
 
 dotenv.config();
 
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-super-secure-jwt-secret-key-here') {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET must be set to a secure value in production.');
+    process.exit(1);
+  }
+  console.warn('WARNING: JWT_SECRET is not set or is using the placeholder value. Set a strong secret before deploying.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
