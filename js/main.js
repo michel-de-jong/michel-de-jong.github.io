@@ -408,6 +408,46 @@ async initializeFeatures() {
             `;
         }
     }
+    showProfileInfo(user) {
+        const email = user.email || '';
+        const firstName = user.profile?.firstName || '';
+        const lastName = user.profile?.lastName || '';
+        const licenseType = user.license?.type || 'free';
+        
+        const profileModal = document.createElement('div');
+        profileModal.className = 'modal-backdrop active';
+        profileModal.style.zIndex = '1002';
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) {
+                profileModal.remove();
+                profileContent.remove();
+            }
+        });
+        
+        const profileContent = document.createElement('div');
+        profileContent.className = 'modal active';
+        profileContent.style.zIndex = '1003';
+        profileContent.innerHTML = `
+            <div class="modal-header">
+                <h2 class="modal-title">Profiel</h2>
+                <button class="modal-close" aria-label="Sluiten">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 12px;"><strong>Naam:</strong> ${firstName} ${lastName}</div>
+                <div style="margin-bottom: 12px;"><strong>E-mail:</strong> ${email}</div>
+                <div style="margin-bottom: 12px;"><strong>Licentie:</strong> ${licenseType}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(profileModal);
+        document.body.appendChild(profileContent);
+        
+        profileContent.querySelector('.modal-close').addEventListener('click', () => {
+            profileModal.remove();
+            profileContent.remove();
+        });
+    }
+
     // Additional method to verify feature initialization
     verifyFeatureInitialization() {
         console.log('=== Feature Initialization Status ===');
@@ -450,10 +490,15 @@ async initializeFeatures() {
     
     async checkAuthStatus() {
         if (this.authService.isAuthenticated()) {
-            const isValid = await this.authService.verifyToken();
-            if (isValid) {
-                this.updateAuthStatus(this.authService.getCurrentUser());
-            } else {
+            try {
+                const isValid = await this.authService.verifyToken();
+                if (isValid) {
+                    this.updateAuthStatus(this.authService.getCurrentUser());
+                } else {
+                    this.updateAuthStatus(null);
+                }
+            } catch (error) {
+                console.warn('Auth verification failed (API may be unavailable):', error.message);
                 this.updateAuthStatus(null);
             }
         }
@@ -513,7 +558,13 @@ async initializeFeatures() {
                 }
             });
             
+            profileBtn.addEventListener('click', () => {
+                dropdown.classList.remove('active');
+                this.showProfileInfo(user);
+            });
+            
             logoutBtn.addEventListener('click', async () => {
+                dropdown.classList.remove('active');
                 await this.authService.logout();
                 this.updateAuthStatus(null);
             });

@@ -41,20 +41,20 @@ export const helmetConfig = helmet({
 
 export const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = process.env.CORS_ORIGINS?.split(',') || [
+    const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || [
       'http://localhost:5173',
       'http://localhost:8080',
+      'http://localhost:3000',
       'https://michel-de-jong.github.io'
     ];
     
     if (!origin) {
-      if (process.env.NODE_ENV === 'production') {
-        return callback(new Error('Origin header required'));
-      }
       return callback(null, true);
     }
     
     if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

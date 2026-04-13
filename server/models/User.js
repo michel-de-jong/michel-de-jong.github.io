@@ -166,8 +166,12 @@ userSchema.methods.toJSON = function() {
 
 class InMemoryUser {
   constructor(data) {
-    const db = Database.getInMemoryData();
-    this._id = `user_${++db.counters.users}`;
+    if (data._id) {
+      this._id = data._id;
+    } else {
+      const db = Database.getInMemoryData();
+      this._id = `user_${++db.counters.users}`;
+    }
     this.email = data.email;
     this.password = data.password;
     this.oauth = data.oauth || { google: { id: null, email: null } };
@@ -186,15 +190,15 @@ class InMemoryUser {
     };
     this.lastLogin = data.lastLogin || null;
     this.isActive = data.isActive !== undefined ? data.isActive : true;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.createdAt = data.createdAt || new Date();
+    this.updatedAt = data.updatedAt || new Date();
   }
 
   async save() {
     const db = Database.getInMemoryData();
     this.updatedAt = new Date();
     
-    if (this.password && !this.password.startsWith('$2a$')) {
+    if (this.password && !this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
       const salt = await bcrypt.genSalt(12);
       this.password = await bcrypt.hash(this.password, salt);
     }
@@ -246,8 +250,14 @@ class InMemoryUser {
   }
 
   toJSON() {
-    const user = { ...this };
-    delete user.password;
+    const { password, ...user } = { ...this };
+    return user;
+  }
+
+  static _hydrate(id, userData) {
+    const user = new InMemoryUser({ ...userData, _id: id });
+    user.select = () => user;
+    user.populate = () => user;
     return user;
   }
 
@@ -255,22 +265,10 @@ class InMemoryUser {
     const db = Database.getInMemoryData();
     for (const [id, userData] of db.users) {
       if (query.email && userData.email === query.email) {
-        const user = new InMemoryUser(userData);
-        user._id = id;
-        const queryResult = Object.assign(user, {
-          select: (fields) => queryResult,
-          populate: (path) => queryResult
-        });
-        return queryResult;
+        return InMemoryUser._hydrate(id, userData);
       }
       if (query._id && id === query._id) {
-        const user = new InMemoryUser(userData);
-        user._id = id;
-        const queryResult = Object.assign(user, {
-          select: (fields) => queryResult,
-          populate: (path) => queryResult
-        });
-        return queryResult;
+        return InMemoryUser._hydrate(id, userData);
       }
     }
     return null;
@@ -280,14 +278,7 @@ class InMemoryUser {
     const db = Database.getInMemoryData();
     const userData = db.users.get(id);
     if (!userData) return null;
-    
-    const user = new InMemoryUser(userData);
-    user._id = id;
-    const queryResult = Object.assign(user, {
-      select: (fields) => queryResult,
-      populate: (path) => queryResult
-    });
-    return queryResult;
+    return InMemoryUser._hydrate(id, userData);
   }
 
   static async find(query = {}) {
@@ -305,9 +296,7 @@ class InMemoryUser {
       }
       
       if (matches) {
-        const user = new InMemoryUser(userData);
-        user._id = id;
-        results.push(user);
+        results.push(InMemoryUser._hydrate(id, userData));
       }
     }
     
