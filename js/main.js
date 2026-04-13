@@ -490,17 +490,7 @@ async initializeFeatures() {
     
     async checkAuthStatus() {
         if (this.authService.isAuthenticated()) {
-            try {
-                const isValid = await this.authService.verifyToken();
-                if (isValid) {
-                    this.updateAuthStatus(this.authService.getCurrentUser());
-                } else {
-                    this.updateAuthStatus(null);
-                }
-            } catch (error) {
-                console.warn('Auth verification failed (API may be unavailable):', error.message);
-                this.updateAuthStatus(null);
-            }
+            this.updateAuthStatus(this.authService.getCurrentUser());
         }
     }
     
