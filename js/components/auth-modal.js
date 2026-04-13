@@ -22,6 +22,8 @@ export class AuthModal {
                 <button class="modal-close" aria-label="Sluiten">&times;</button>
             </div>
             <div class="modal-body">
+                <div class="auth-error" style="display: none;"></div>
+                
                 <div class="auth-tabs">
                     <button class="auth-tab active" data-tab="login">Inloggen</button>
                     <button class="auth-tab" data-tab="register">Registreren</button>
@@ -93,8 +95,6 @@ export class AuthModal {
                         </form>
                     </div>
                 </div>
-                
-                <div class="auth-error" style="display: none;"></div>
             </div>
         `;
         
@@ -220,22 +220,29 @@ export class AuthModal {
         const email = form.querySelector('#loginEmail').value.trim();
         const password = form.querySelector('#loginPassword').value;
         
-        if (!this.validateForm(form)) {
+        this.hideError();
+
+        if (!email || !password) {
+            this.showError('Vul alle velden in');
             return;
         }
-        
+
         this.setLoading(true);
-        this.hideError();
         
-        const result = await this.authService.login(email, password);
-        
-        this.setLoading(false);
-        
-        if (result.success) {
-            this.hide();
-            this.onAuthSuccess(result.user);
-        } else {
-            this.showError(result.error);
+        try {
+            const result = await this.authService.login(email, password);
+            
+            this.setLoading(false);
+            
+            if (result.success) {
+                this.hide();
+                this.onAuthSuccess(result.user);
+            } else {
+                this.showError(result.error);
+            }
+        } catch (error) {
+            this.setLoading(false);
+            this.showError('Er is een onverwachte fout opgetreden. Probeer het opnieuw.');
         }
     }
     
@@ -249,22 +256,48 @@ export class AuthModal {
             company: form.querySelector('#registerCompany').value.trim()
         };
         
-        if (!this.validateForm(form)) {
+        this.hideError();
+
+        if (!userData.email || !userData.password || !userData.firstName || !userData.lastName) {
+            this.showError('Vul alle verplichte velden in');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(userData.email)) {
+            this.showError('Voer een geldig e-mailadres in');
+            return;
+        }
+
+        if (userData.password.length < 8) {
+            this.showError('Wachtwoord moet minimaal 8 tekens bevatten');
+            return;
+        }
+        if (!/[A-Z]/.test(userData.password)) {
+            this.showError('Wachtwoord moet minimaal 1 hoofdletter bevatten');
+            return;
+        }
+        if (!/[0-9]/.test(userData.password)) {
+            this.showError('Wachtwoord moet minimaal 1 cijfer bevatten');
             return;
         }
         
         this.setLoading(true);
-        this.hideError();
         
-        const result = await this.authService.register(userData);
-        
-        this.setLoading(false);
-        
-        if (result.success) {
-            this.hide();
-            this.onAuthSuccess(result.user);
-        } else {
-            this.showError(result.error);
+        try {
+            const result = await this.authService.register(userData);
+            
+            this.setLoading(false);
+            
+            if (result.success) {
+                this.hide();
+                this.onAuthSuccess(result.user);
+            } else {
+                this.showError(result.error);
+            }
+        } catch (error) {
+            this.setLoading(false);
+            this.showError('Er is een onverwachte fout opgetreden. Probeer het opnieuw.');
         }
     }
     
@@ -298,6 +331,7 @@ export class AuthModal {
         const errorEl = this.modal.querySelector('.auth-error');
         errorEl.textContent = message;
         errorEl.style.display = 'block';
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     
     hideError() {
