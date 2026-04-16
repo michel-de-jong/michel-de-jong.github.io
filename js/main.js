@@ -176,13 +176,16 @@ async initializeFeatures() {
             this.handleTabChange(tabName);
         });
         
-        // Form change handler with debouncing
         let formChangeTimeout;
+        let pendingInputs = {};
         this.formManager.onChange((inputs) => {
+            Object.assign(pendingInputs, inputs);
             clearTimeout(formChangeTimeout);
             formChangeTimeout = setTimeout(() => {
-                this.state.update({ inputs });
-            }, 300);
+                const batch = pendingInputs;
+                pendingInputs = {};
+                this.state.update({ inputs: batch });
+            }, 150);
         });
         
         // Setup feature listeners
@@ -234,14 +237,13 @@ async initializeFeatures() {
     }
     
     updateDisplays(results) {
-        // Update KPI displays
-        this.kpiDisplay.update(results);
-        
-        // Update main chart - gebruik calculator.getChartData() voor de juiste data structuur
-        const chartData = this.calculator.getChartData();
-        this.chartManager.updateMainChart(chartData);
-        
-        // Update active tab specific displays
+        const showRealValues = !!this.state.getUIState().showRealValues;
+
+        this.kpiDisplay.update(results, showRealValues);
+
+        const chartData = this.calculator.getChartData(showRealValues);
+        this.chartManager.updateMainChart(chartData, showRealValues);
+
         const activeTab = this.tabManager.getCurrentTab();
         this.updateTabDisplay(activeTab, results);
     }
