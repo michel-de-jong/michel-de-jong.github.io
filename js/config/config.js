@@ -23,7 +23,7 @@ export const Config = {
         renteLening: 10,
         looptijd: 10,
         leningLooptijd: 10,
-        rendementType: 'vast',
+        rendementType: 'maandelijks',
         rendement: 3,
         aflossingsType: 'lineair',
         herinvestering: 70,
