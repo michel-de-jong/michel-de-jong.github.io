@@ -79,45 +79,38 @@ export class FormManager {
     }
     
     attachEventListeners() {
-        
         this.formElements.forEach((element, id) => {
-            // Remove any existing listeners first
-            const newElement = element.cloneNode(true);
-            element.parentNode.replaceChild(newElement, element);
-            this.formElements.set(id, newElement);
-            
-            // Attach new listeners
-            if (newElement.type === 'checkbox') {
-                newElement.addEventListener('change', (e) => {
+            if (element.type === 'checkbox') {
+                element.addEventListener('change', (e) => {
+                    this.handleChange(id, e);
+                });
+            } else if (element.tagName === 'SELECT') {
+                element.addEventListener('change', (e) => {
                     this.handleChange(id, e);
                 });
             } else {
-                // For text/number inputs, use both change and input events
-                newElement.addEventListener('change', (e) => {
+                element.addEventListener('change', (e) => {
                     this.handleChange(id, e);
                 });
-                
-                newElement.addEventListener('input', (e) => {
+                element.addEventListener('input', (e) => {
                     this.handleInput(id, e);
                 });
             }
         });
-        
-        // Special handling for tax type changes
+
         const belastingType = this.formElements.get('belastingType');
         if (belastingType) {
             belastingType.addEventListener('change', () => {
                 this.updateTaxOptionsVisibility();
             });
         }
-        
+
         const priveSubType = this.formElements.get('priveSubType');
         if (priveSubType) {
             priveSubType.addEventListener('change', () => {
                 this.updatePrivateSubTypeVisibility();
             });
         }
-        
     }
     
     handleChange(id, event) {
@@ -194,38 +187,53 @@ export class FormManager {
     updateTaxOptionsVisibility() {
         const belastingType = this.formElements.get('belastingType');
         if (!belastingType) return;
-        
+
         const taxType = belastingType.value;
-        
-        // Hide all tax options first
-        document.querySelectorAll('.tax-options').forEach(el => {
-            el.style.display = 'none';
-        });
-        
-        // Show relevant tax options
+
+        const priveOptions = document.getElementById('priveOptions');
+        if (priveOptions) {
+            priveOptions.style.display = taxType === 'prive' ? 'grid' : 'none';
+        }
+
+        if (taxType === 'prive') {
+            this.updatePrivateSubTypeVisibility();
+        }
+
         const taxOptionsId = `${taxType}Options`;
         const taxOptions = document.getElementById(taxOptionsId);
-        if (taxOptions) {
+        if (taxOptions && taxOptions.classList.contains('tax-options')) {
+            document.querySelectorAll('.tax-options').forEach(el => {
+                el.style.display = 'none';
+            });
             taxOptions.style.display = 'block';
         }
     }
-    
+
     updatePrivateSubTypeVisibility() {
         const priveSubType = this.formElements.get('priveSubType');
         if (!priveSubType) return;
-        
+
         const subType = priveSubType.value;
-        
-        // Toggle visibility of Box 1 and Box 3 options
+
         const box1Options = document.getElementById('box1Options');
         const box3Options = document.getElementById('box3Options');
-        
+        const box3TariefGroup = document.getElementById('box3TariefGroup');
+        const box3VrijstellingGroup = document.getElementById('box3VrijstellingGroup');
+
         if (box1Options) {
             box1Options.style.display = subType === 'box1' ? 'block' : 'none';
         }
-        
+
         if (box3Options) {
             box3Options.style.display = subType === 'box3' ? 'block' : 'none';
+        }
+
+        if (box3TariefGroup) {
+            box3TariefGroup.style.display = subType === 'box3' ? 'block' : 'none';
+        }
+
+        if (box3VrijstellingGroup) {
+            box3VrijstellingGroup.style.display = subType === 'box3' ? 'block' : 'none';
         }
     }
     
@@ -234,16 +242,10 @@ export class FormManager {
     }
     
     notifyListeners(changes) {
-        
-        // Handle special cases
-        if (changes.inflatieToggle !== undefined) {
-            changes.showRealValues = changes.inflatieToggle;
-            // Update state to handle UI changes
-            if (this.stateManager) {
-                this.stateManager.update({ ui: { showRealValues: changes.inflatieToggle } });
-            }
+        if (changes.inflatieToggle !== undefined && this.stateManager) {
+            this.stateManager.update({ ui: { showRealValues: changes.inflatieToggle } });
         }
-        
+
         this.listeners.forEach(listener => {
             try {
                 listener(changes);
