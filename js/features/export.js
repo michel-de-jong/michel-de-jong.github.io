@@ -9,31 +9,36 @@ export class ExportFeature {
     
     setupListeners(stateManager) {
         this.stateManager = stateManager;
-        
-        // Wait for DOM to be ready
-        setTimeout(() => {
-            this.attachEventListeners();
-        }, 100);
+        this.attachEventListeners();
     }
     
     attachEventListeners() {
-        // Export buttons
+        // Buttons live inside the export tab template, which is loaded
+        // asynchronously. Attach directly when present, and idempotently mark
+        // the button so we never bind the same handler twice. activate() will
+        // re-run this once the tab becomes visible, guaranteeing the buttons
+        // are wired up regardless of load order.
         const exportButtons = {
-            'exportExcelBtn': () => this.exportToExcel(),
-            'exportPDFBtn': () => this.exportToPDF(),
-            'exportChartsBtn': () => this.exportCharts()
+            exportExcelBtn: () => this.exportToExcel(),
+            exportPDFBtn: () => this.exportToPDF(),
+            exportChartsBtn: () => this.exportCharts()
         };
         
         Object.entries(exportButtons).forEach(([id, handler]) => {
             const button = document.getElementById(id);
-            if (button) {
+            if (button && button.dataset.exportBound !== 'true') {
                 button.addEventListener('click', handler);
+                button.dataset.exportBound = 'true';
             }
         });
     }
     
     activate() {
-        // No special activation needed for export
+        // Re-attach listeners when the tab is activated. This is a safety net
+        // for cases where the template was not yet in the DOM during the
+        // initial setupListeners() call (e.g. slow networks, template
+        // hot-reload).
+        this.attachEventListeners();
     }
     
     // Export to Excel

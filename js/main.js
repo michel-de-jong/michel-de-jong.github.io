@@ -48,8 +48,9 @@ class ROICalculatorApp {
             // Initialize core components
             this.initializeCore();
             
-            // Initialize UI
-            this.initializeUI();
+            // Initialize UI (awaited so tab templates are in the DOM
+            // before feature modules try to attach listeners to them)
+            await this.initializeUI();
             
             // Initialize feature modules
             await this.initializeFeatures();
@@ -99,7 +100,7 @@ class ROICalculatorApp {
         this.state.loadDefaults(this.config.defaults);
     }
     
-    initializeUI() {
+    async initializeUI() {
         
         // UI Managers
         this.tabManager = new TabManager();
@@ -107,8 +108,11 @@ class ROICalculatorApp {
         this.formManager = new FormManager(this.validationService);
         this.kpiDisplay = new KPIDisplay();
         
-        // Initialize UI components with state
-        this.tabManager.initialize();
+        // Load tab templates into the DOM first. This is async (templates are
+        // fetched over the network) and *must* complete before features try to
+        // bind event listeners to elements inside those templates.
+        await this.tabManager.initialize();
+        
         this.chartManager.initialize();
         this.formManager.initialize(this.state);
         this.kpiDisplay.initialize();
