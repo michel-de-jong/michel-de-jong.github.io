@@ -4,7 +4,7 @@ export class WaterfallFeature {
         this.calculator = calculator;
         this.chartManager = chartManager;
         this.currentPeriod = 'totaal';
-        this.showAsPercentage = false;
+        this.currentAnalysis = 'components';
         this.waterfallChart = null;
         this.trendChart = null;
     }
@@ -54,15 +54,6 @@ export class WaterfallFeature {
             periodSelect.addEventListener('change', (e) => {
                 console.log('Period changed from', this.currentPeriod, 'to', e.target.value);
                 this.currentPeriod = e.target.value;
-                this.update();
-            });
-        }
-        
-        const viewToggle = document.getElementById('waterfallViewToggle');
-        if (viewToggle) {
-            viewToggle.addEventListener('change', (e) => {
-                console.log('Percentage toggle changed to:', e.target.checked);
-                this.showAsPercentage = e.target.checked;
                 this.update();
             });
         }
@@ -314,15 +305,11 @@ export class WaterfallFeature {
                 </div>
             `;
             
-            const valueDisplay = this.showAsPercentage ? 
-                `${percentageOfBruto.toFixed(1)}%` : 
-                this.formatCurrency(item.value);
-            
             html += `
                 <tr>
                     <td>${item.label}</td>
                     <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">
-                        ${valueDisplay}
+                        ${this.formatCurrency(item.value)}
                     </td>
                     <td>${percentageOfBruto.toFixed(1)}%</td>
                     <td>${percentageOfFinal.toFixed(1)}%</td>
@@ -404,33 +391,39 @@ export class WaterfallFeature {
     }
     
     switchAnalysisTab(tabElement) {
-        // Update active state
-        document.querySelectorAll('.analysis-tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        tabElement.classList.add('active');
-        
-        // Update content
         const analysisType = tabElement.dataset.analysis;
-        const container = document.getElementById('analysisContent');
+        if (!analysisType) return;
         
-        if (container) {
-            switch(analysisType) {
-                case 'trends':
-                    this.showTrendsAnalysis(container);
-                    break;
-                case 'ratios':
-                    this.showRatiosAnalysis(container);
-                    break;
-                default:
-                    // Components view is default
-                    this.update();
-                    break;
-            }
+        // Update active tab button
+        document.querySelectorAll('.analysis-tab').forEach(tab => {
+            tab.classList.toggle('active', tab === tabElement);
+        });
+        
+        // Show the matching panel and hide the others. Each panel keeps its
+        // own DOM so switching back to the Components view does not lose the
+        // table/chart targets rendered by update().
+        document.querySelectorAll('.analysis-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.dataset.analysisPanel === analysisType);
+        });
+        
+        this.currentAnalysis = analysisType;
+        
+        switch (analysisType) {
+            case 'trends':
+                this.showTrendsAnalysis(document.getElementById('trendsPanel'));
+                break;
+            case 'ratios':
+                this.showRatiosAnalysis(document.getElementById('ratiosPanel'));
+                break;
+            case 'components':
+            default:
+                this.update();
+                break;
         }
     }
     
     showTrendsAnalysis(container) {
+        if (!container) return;
         // Get real quarterly data from calculator
         let quarters = [];
         
@@ -489,6 +482,7 @@ export class WaterfallFeature {
     }
     
     showRatiosAnalysis(container) {
+        if (!container) return;
         const waterfallData = this.getWaterfallData('totaal');
         const totals = waterfallData.totals;
         

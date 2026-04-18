@@ -77,33 +77,35 @@
             <button class="analysis-tab" data-analysis="ratios">Ratio's</button>
         </div>
         
-        <div class="table-controls">
-            <div class="view-toggle">
-                <label class="toggle-switch">
-                    <input type="checkbox" id="waterfallViewToggle" aria-label="Toon percentages">
-                    <span class="toggle-slider"></span>
-                </label>
-                <span>Toon als percentages</span>
-            </div>
-        </div>
-        
         <div class="analysis-content" id="analysisContent">
             <!-- Components Table (default view) -->
-            <div class="table-wrapper">
-                <table class="cashflow-table">
-                    <thead>
-                        <tr>
-                            <th>Component</th>
-                            <th>Bedrag</th>
-                            <th>% van Bruto</th>
-                            <th>% van Totaal</th>
-                            <th>Impact</th>
-                        </tr>
-                    </thead>
-                    <tbody id="waterfallTableBody">
-                        <!-- Dynamically populated -->
-                    </tbody>
-                </table>
+            <div class="analysis-panel active" data-analysis-panel="components">
+                <div class="table-wrapper">
+                    <table class="cashflow-table">
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Bedrag</th>
+                                <th>% van Bruto</th>
+                                <th>% van Totaal</th>
+                                <th>Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody id="waterfallTableBody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Trends Panel -->
+            <div class="analysis-panel" data-analysis-panel="trends" id="trendsPanel">
+                <!-- Dynamically populated on first activation -->
+            </div>
+            
+            <!-- Ratios Panel -->
+            <div class="analysis-panel" data-analysis-panel="ratios" id="ratiosPanel">
+                <!-- Dynamically populated on first activation -->
             </div>
         </div>
     </div>
