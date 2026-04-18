@@ -451,6 +451,43 @@ input:checked + .toggle-slider:before {
     line-height: 1.4;
 }
 
+/* Ratio status colouring */
+.ratio-value--good {
+    color: #28a745;
+}
+
+.ratio-value--warn {
+    color: #ffc107;
+}
+
+.ratio-value--bad {
+    color: #dc3545;
+}
+
+.ratio-indicator {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.ratio-indicator--good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.ratio-indicator--warn {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.ratio-indicator--bad {
+    background: #f8d7da;
+    color: #721c24;
+}
+
 /* Insights Section */
 .waterfall-insights {
     background: white;
