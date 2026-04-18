@@ -132,6 +132,66 @@ export class AuthService {
         this.clearAuth();
     }
 
+    async updateProfile(updates) {
+        try {
+            if (!this.isAuthenticated()) {
+                return { success: false, error: 'U bent niet ingelogd' };
+            }
+
+            const sanitized = this._sanitizeProfileUpdates(updates || {});
+            const validation = this._validateProfileUpdates(sanitized);
+            if (!validation.valid) {
+                return { success: false, error: validation.error };
+            }
+
+            const users = this._getUsers();
+            const idx = users.findIndex(u => u._id === this.currentUser._id);
+            if (idx === -1) {
+                return { success: false, error: 'Gebruiker niet gevonden' };
+            }
+
+            const record = users[idx];
+            record.profile = {
+                ...record.profile,
+                ...sanitized
+            };
+            users[idx] = record;
+            this._saveUsers(users);
+
+            const user = this._publicUser(record);
+            this.currentUser = user;
+            this._saveSession(user, this.token);
+
+            return { success: true, user };
+        } catch (error) {
+            console.error('Profile update error:', error);
+            return { success: false, error: 'Er is een fout opgetreden bij het bijwerken van het profiel' };
+        }
+    }
+
+    _sanitizeProfileUpdates(updates) {
+        const clean = (value, maxLength) => {
+            if (value === undefined || value === null) return undefined;
+            return String(value).trim().slice(0, maxLength);
+        };
+
+        const result = {};
+        if (updates.firstName !== undefined) result.firstName = clean(updates.firstName, 50);
+        if (updates.lastName !== undefined) result.lastName = clean(updates.lastName, 50);
+        if (updates.company !== undefined) result.company = clean(updates.company, 100);
+        return result;
+    }
+
+    _validateProfileUpdates(updates) {
+        if ('firstName' in updates && !updates.firstName) {
+            return { valid: false, error: 'Voornaam is verplicht' };
+        }
+        if ('lastName' in updates && !updates.lastName) {
+            return { valid: false, error: 'Achternaam is verplicht' };
+        }
+        return { valid: true };
+    }
+
     async verifyToken() {
         return this.isAuthenticated();
     }

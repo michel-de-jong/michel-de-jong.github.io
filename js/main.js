@@ -13,6 +13,7 @@ import { CurrencyService } from './services/currency-service.js';
 import { FXRiskAnalysis } from './services/fx-risk-analysis.js';
 import { AuthService } from './services/auth-service.js';
 import { AuthModal } from './components/auth-modal.js';
+import { ProfileModal } from './components/profile-modal.js';
 
 // Feature Modules
 import { ScenariosFeature } from './features/scenarios.js';
@@ -415,43 +416,10 @@ async initializeFeatures() {
         }
     }
     showProfileInfo(user) {
-        const email = user.email || '';
-        const firstName = user.profile?.firstName || '';
-        const lastName = user.profile?.lastName || '';
-        const licenseType = user.license?.type || 'free';
-        
-        const profileModal = document.createElement('div');
-        profileModal.className = 'modal-backdrop active';
-        profileModal.style.zIndex = '1002';
-        profileModal.addEventListener('click', (e) => {
-            if (e.target === profileModal) {
-                profileModal.remove();
-                profileContent.remove();
-            }
-        });
-        
-        const profileContent = document.createElement('div');
-        profileContent.className = 'modal active';
-        profileContent.style.zIndex = '1003';
-        profileContent.innerHTML = `
-            <div class="modal-header">
-                <h2 class="modal-title">Profiel</h2>
-                <button class="modal-close" aria-label="Sluiten">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div style="margin-bottom: 12px;"><strong>Naam:</strong> ${firstName} ${lastName}</div>
-                <div style="margin-bottom: 12px;"><strong>E-mail:</strong> ${email}</div>
-                <div style="margin-bottom: 12px;"><strong>Licentie:</strong> ${licenseType}</div>
-            </div>
-        `;
-        
-        document.body.appendChild(profileModal);
-        document.body.appendChild(profileContent);
-        
-        profileContent.querySelector('.modal-close').addEventListener('click', () => {
-            profileModal.remove();
-            profileContent.remove();
-        });
+        if (!this.profileModal) {
+            return;
+        }
+        this.profileModal.show(user);
     }
 
     // Additional method to verify feature initialization
@@ -477,6 +445,11 @@ async initializeFeatures() {
         this.authModal = new AuthModal(this.authService, this.validationService);
         
         this.authModal.setAuthSuccessCallback((user) => {
+            this.updateAuthStatus(user);
+        });
+        
+        this.profileModal = new ProfileModal(this.authService);
+        this.profileModal.setUpdateCallback((user) => {
             this.updateAuthStatus(user);
         });
         
@@ -506,19 +479,28 @@ async initializeFeatures() {
         
         authStatus.textContent = '';
         
+        if (this._userMenuOutsideClickHandler) {
+            document.removeEventListener('click', this._userMenuOutsideClickHandler);
+            this._userMenuOutsideClickHandler = null;
+        }
+        
         if (user) {
             const menu = document.createElement('div');
             menu.className = 'user-menu';
             
-            const userInfo = document.createElement('div');
+            const userInfo = document.createElement('button');
+            userInfo.type = 'button';
             userInfo.className = 'user-info';
             userInfo.id = 'userInfo';
+            userInfo.setAttribute('aria-haspopup', 'menu');
+            userInfo.setAttribute('aria-expanded', 'false');
             
             const nameSpan = document.createElement('span');
             const displayName = (user.profile && user.profile.firstName) ? String(user.profile.firstName) : '';
             nameSpan.textContent = `Welkom, ${displayName}`;
             
             const arrow = document.createElement('span');
+            arrow.setAttribute('aria-hidden', 'true');
             arrow.textContent = '\u25BC';
             
             userInfo.appendChild(nameSpan);
@@ -527,15 +509,20 @@ async initializeFeatures() {
             const dropdown = document.createElement('div');
             dropdown.className = 'user-dropdown';
             dropdown.id = 'userDropdown';
+            dropdown.setAttribute('role', 'menu');
             
             const profileBtn = document.createElement('button');
+            profileBtn.type = 'button';
             profileBtn.className = 'user-dropdown-item';
             profileBtn.id = 'profileBtn';
-            profileBtn.textContent = 'Profiel';
+            profileBtn.setAttribute('role', 'menuitem');
+            profileBtn.textContent = 'Profiel bewerken';
             
             const logoutBtn = document.createElement('button');
+            logoutBtn.type = 'button';
             logoutBtn.className = 'user-dropdown-item';
             logoutBtn.id = 'logoutBtn';
+            logoutBtn.setAttribute('role', 'menuitem');
             logoutBtn.textContent = 'Uitloggen';
             
             dropdown.appendChild(profileBtn);
@@ -544,29 +531,39 @@ async initializeFeatures() {
             menu.appendChild(dropdown);
             authStatus.appendChild(menu);
             
-            userInfo.addEventListener('click', () => {
-                dropdown.classList.toggle('active');
+            const closeDropdown = () => {
+                dropdown.classList.remove('active');
+                userInfo.setAttribute('aria-expanded', 'false');
+            };
+            
+            userInfo.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isActive = dropdown.classList.toggle('active');
+                userInfo.setAttribute('aria-expanded', isActive ? 'true' : 'false');
             });
             
-            document.addEventListener('click', (e) => {
-                if (!userInfo.contains(e.target)) {
-                    dropdown.classList.remove('active');
+            this._userMenuOutsideClickHandler = (e) => {
+                if (!menu.contains(e.target)) {
+                    closeDropdown();
                 }
-            });
+            };
+            document.addEventListener('click', this._userMenuOutsideClickHandler);
             
             profileBtn.addEventListener('click', () => {
-                dropdown.classList.remove('active');
-                this.showProfileInfo(user);
+                closeDropdown();
+                const current = this.authService.getCurrentUser() || user;
+                this.showProfileInfo(current);
             });
             
             logoutBtn.addEventListener('click', async () => {
-                dropdown.classList.remove('active');
+                closeDropdown();
                 await this.authService.logout();
                 this.updateAuthStatus(null);
             });
             
         } else {
             const loginBtn = document.createElement('button');
+            loginBtn.type = 'button';
             loginBtn.className = 'btn btn-primary';
             loginBtn.id = 'loginBtn';
             loginBtn.textContent = 'Inloggen';
