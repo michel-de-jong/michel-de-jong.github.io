@@ -7,25 +7,23 @@ export class WaterfallFeature {
         this.currentAnalysis = 'components';
         this.waterfallChart = null;
         this.trendChart = null;
+        this.handlersAttached = false;
+        this.activeModal = null;
     }
-    
+
     async initialize() {
-        console.log('Initializing waterfall feature...');
         try {
             this.setupStateListener();
-            console.log('Waterfall feature initialized successfully');
         } catch (error) {
             console.error('Error initializing waterfall feature:', error);
         }
     }
 
     activate() {
-        console.log('Activating waterfall feature for tab access...');
         try {
             this.setupEventHandlers();
             this.populatePeriodSelector();
             this.update();
-            console.log('Waterfall feature activated successfully');
         } catch (error) {
             console.error('Error activating waterfall feature:', error);
         }
@@ -36,32 +34,51 @@ export class WaterfallFeature {
     }
 
     setupStateListener() {
-        console.log('Setting up state listener...');
         if (this.calculator && this.calculator.stateManager) {
             this.calculator.stateManager.onChange(() => {
-                console.log('State changed, updating period selector...');
+                // Keep the period selector aligned with the latest looptijd
+                // regardless of whether the waterfall tab is currently visible.
                 this.populatePeriodSelector();
+
+                // When visible, also refresh the active analysis panel so
+                // trends/ratios reflect the latest calculation results.
+                if (this.isWaterfallVisible()) {
+                    this.refreshCurrentAnalysis();
+                }
             });
-            console.log('State listener setup successfully');
         } else {
             console.error('Cannot setup state listener - calculator or stateManager not available');
         }
     }
 
+    isWaterfallVisible() {
+        const pane = document.getElementById('waterfall');
+        return !!pane && pane.classList.contains('active');
+    }
+
+    /**
+     * Attach DOM handlers exactly once. activate() may fire multiple times as
+     * the user navigates between tabs; re-adding listeners would cause each
+     * click to run N times (period change, compare, analysis tab switches).
+     */
     setupEventHandlers() {
+        if (this.handlersAttached) return;
+
         const periodSelect = document.getElementById('waterfallPeriod');
         if (periodSelect) {
             periodSelect.addEventListener('change', (e) => {
-                console.log('Period changed from', this.currentPeriod, 'to', e.target.value);
                 this.currentPeriod = e.target.value;
                 this.update();
+                // Keep the non-default analysis panels in sync too.
+                if (this.currentAnalysis !== 'components') {
+                    this.refreshCurrentAnalysis();
+                }
             });
         }
-        
+
         const compareBtn = document.getElementById('comparePeriodsBtn');
         if (compareBtn) {
             compareBtn.addEventListener('click', () => {
-                console.log('Compare periods button clicked');
                 try {
                     this.comparePeriods();
                 } catch (error) {
@@ -69,40 +86,50 @@ export class WaterfallFeature {
                 }
             });
         }
-        
-        // Analysis tab handlers
+
         document.querySelectorAll('.analysis-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => this.switchAnalysisTab(e.target));
+            tab.addEventListener('click', (e) => this.switchAnalysisTab(e.currentTarget));
         });
+
+        this.handlersAttached = true;
     }
-    
+
     populatePeriodSelector() {
-        console.log('Populating period selector...');
         const select = document.getElementById('waterfallPeriod');
-        if (!select) {
-            console.error('Period selector element not found');
-            return;
-        }
-        
-        // Get investment duration from calculator
-        const years = this.calculator.stateManager.getInputs().jaren || 5;
-        console.log('Populating selector with', years, 'years');
-        
-        select.innerHTML = '<option value="totaal">Totale Periode</option>';
-        
+        if (!select) return;
+
+        // Prefer looptijd (actual investment duration) and fall back to jaren
+        // to stay compatible with older state snapshots.
+        const inputs = this.calculator.stateManager.getInputs();
+        const years = Number(inputs.looptijd) || Number(inputs.jaren) || 5;
+
+        // Preserve the current selection if it still fits the new range.
+        const previous = this.currentPeriod;
+        const options = ['<option value="totaal">Totale Periode</option>'];
         for (let i = 1; i <= years; i++) {
-            select.innerHTML += `<option value="jaar${i}">Jaar ${i}</option>`;
+            options.push(`<option value="jaar${i}">Jaar ${i}</option>`);
         }
-        console.log('Period selector populated successfully');
+        select.innerHTML = options.join('');
+
+        const yearIndex = previous && previous.startsWith('jaar')
+            ? parseInt(previous.replace('jaar', ''), 10)
+            : null;
+        const stillValid = previous === 'totaal' || (yearIndex && yearIndex <= years);
+        select.value = stillValid ? previous : 'totaal';
+        this.currentPeriod = select.value;
     }
-    
+
     updateWithResults(results) {
         this.update();
+        // Keep trends/ratios in sync with the latest results too.
+        if (this.currentAnalysis !== 'components') {
+            this.refreshCurrentAnalysis();
+        }
     }
-    
+
     update() {
         const waterfallData = this.getWaterfallData(this.currentPeriod);
-        
+
         if (waterfallData && waterfallData.totals) {
             this.updateSummaryCards(waterfallData.totals);
             this.updateWaterfallChart(waterfallData);
@@ -110,7 +137,22 @@ export class WaterfallFeature {
             this.generateInsights(waterfallData);
         }
     }
-    
+
+    refreshCurrentAnalysis() {
+        switch (this.currentAnalysis) {
+            case 'trends':
+                this.showTrendsAnalysis(document.querySelector('[data-analysis-panel="trends"]'));
+                break;
+            case 'ratios':
+                this.showRatiosAnalysis(document.querySelector('[data-analysis-panel="ratios"]'));
+                break;
+            case 'components':
+            default:
+                // Components is refreshed as part of update()
+                break;
+        }
+    }
+
     getWaterfallData(period) {
         // Get real data from calculator if available
         if (this.calculator && typeof this.calculator.getWaterfallData === 'function') {
@@ -123,7 +165,7 @@ export class WaterfallFeature {
                 };
             }
         }
-        
+
         const mockData = {
             data: [
                 { label: 'Start Kapitaal', value: 100000, type: 'start' },
@@ -144,10 +186,10 @@ export class WaterfallFeature {
             },
             period: period
         };
-        
+
         return mockData;
     }
-    
+
     updateSummaryCards(totals) {
         const bruttoInkomsten = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
@@ -156,35 +198,33 @@ export class WaterfallFeature {
         const netto = nettoInkomsten - uitgaven;
         const cashflowRatio = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
         const belastingTarief = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
-        
-        // Update DOM elements
+
         this.updateElement('wfTotaleInkomsten', this.formatCurrency(nettoInkomsten));
         this.updateElement('wfInkomstenDetail', `Bruto: ${this.formatCurrency(bruttoInkomsten)} | Belasting: ${this.formatCurrency(belasting)}`);
-        
+
         this.updateElement('wfTotaleUitgaven', this.formatCurrency(uitgaven));
         this.updateElement('wfUitgavenDetail', `Rente: ${this.formatCurrency(totals.rente || 0)} | Aflossing: ${this.formatCurrency(totals.aflossing || 0)} | Kosten: ${this.formatCurrency(totals.kosten || 0)}`);
-        
+
         this.updateElement('wfNettoCashflow', this.formatCurrency(netto));
         this.updateElement('wfCashflowDetail', `${cashflowRatio.toFixed(1)}% van bruto inkomsten`);
-        
+
         this.updateElement('wfBelastingTarief', `${belastingTarief.toFixed(1)}%`);
         this.updateElement('wfBelastingDetail', 'Op bruto rendement');
     }
-    
+
     updateWaterfallChart(waterfallData) {
         const ctx = document.getElementById('waterfallChart');
         if (!ctx) return;
-        
-        // Prepare data for Chart.js waterfall visualization
+
         const labels = [];
         const data = [];
         const backgroundColors = [];
         const borderColors = [];
         let cumulative = 0;
-        
-        waterfallData.data.forEach((item, index) => {
+
+        waterfallData.data.forEach((item) => {
             labels.push(item.label);
-            
+
             if (item.type === 'start') {
                 data.push([0, item.value]);
                 cumulative = item.value;
@@ -206,7 +246,7 @@ export class WaterfallFeature {
                 borderColors.push('#dc3545');
             }
         });
-        
+
         // ChartManager may have pre-created a generic bar chart on this
         // canvas during app init. Our waterfall uses a custom floating-bar
         // configuration, so we must destroy any foreign chart instance first
@@ -217,8 +257,7 @@ export class WaterfallFeature {
         if (existingChart && existingChart !== this.waterfallChart) {
             existingChart.destroy();
         }
-        
-        // Create or update chart
+
         if (this.waterfallChart) {
             this.waterfallChart.data.labels = labels;
             this.waterfallChart.data.datasets[0].data = data;
@@ -279,32 +318,32 @@ export class WaterfallFeature {
             });
         }
     }
-    
+
     updateTable(waterfallData) {
         const tbody = document.getElementById('waterfallTableBody');
         if (!tbody) return;
-        
+
         const totals = waterfallData.totals;
         const bruttoInkomsten = totals.bruttoOpbrengst || 1;
-        const finalValue = waterfallData.data[waterfallData.data.length - 1].value;
-        
+        const finalValue = waterfallData.data[waterfallData.data.length - 1].value || 1;
+
         let html = '';
-        
+
         waterfallData.data.forEach(item => {
             if (item.type === 'start' || item.type === 'total') return;
-            
+
             const absValue = Math.abs(item.value);
             const percentageOfBruto = (absValue / bruttoInkomsten) * 100;
             const percentageOfFinal = (absValue / finalValue) * 100;
-            
+
             const impactWidth = Math.min(percentageOfBruto, 100);
             const impactBar = `
-                <div class="impact-bar">
-                    <div class="impact-bar-fill ${item.value >= 0 ? 'positive' : 'negative'}" 
+                <div class="impact-bar" role="progressbar" aria-valuenow="${impactWidth.toFixed(0)}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="impact-bar-fill ${item.value >= 0 ? 'positive' : 'negative'}"
                          style="width: ${impactWidth}%"></div>
                 </div>
             `;
-            
+
             html += `
                 <tr>
                     <td>${item.label}</td>
@@ -317,38 +356,36 @@ export class WaterfallFeature {
                 </tr>
             `;
         });
-        
+
         tbody.innerHTML = html;
     }
-    
+
     generateInsights(waterfallData) {
         const insights = [];
         const totals = waterfallData.totals;
-        
+
         if (!totals) return;
-        
+
         const bruttoInkomsten = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
         const rente = totals.rente || 0;
         const aflossing = totals.aflossing || 0;
         const kosten = totals.kosten || 0;
         const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
-        
-        // Cashflow efficiency
+
         const efficiency = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
         if (efficiency > 50) {
             insights.push({
                 type: 'success',
                 text: `Uitstekende cashflow efficiëntie: ${efficiency.toFixed(1)}% van bruto rendement blijft over als netto cashflow.`
             });
-        } else if (efficiency < 20) {
+        } else if (efficiency < 20 && bruttoInkomsten > 0) {
             insights.push({
                 type: 'warning',
                 text: `Lage cashflow efficiëntie: slechts ${efficiency.toFixed(1)}% van bruto rendement blijft over. Overweeg kostenoptimalisatie.`
             });
         }
-        
-        // Tax burden
+
         const taxRate = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
         if (taxRate > 30) {
             insights.push({
@@ -356,8 +393,7 @@ export class WaterfallFeature {
                 text: `Hoge belastingdruk: ${taxRate.toFixed(1)}% van bruto rendement. Onderzoek mogelijke fiscale optimalisatie.`
             });
         }
-        
-        // Interest vs returns
+
         if (rente > 0 && bruttoInkomsten > 0) {
             const interestRatio = (rente / bruttoInkomsten) * 100;
             if (interestRatio > 40) {
@@ -367,8 +403,7 @@ export class WaterfallFeature {
                 });
             }
         }
-        
-        // Fixed costs analysis
+
         if (kosten > 0 && bruttoInkomsten > 0) {
             const kostenRatio = (kosten / bruttoInkomsten) * 100;
             if (kostenRatio > 25) {
@@ -378,8 +413,14 @@ export class WaterfallFeature {
                 });
             }
         }
-        
-        // Display insights
+
+        if (insights.length === 0) {
+            insights.push({
+                type: 'info',
+                text: 'Geen bijzonderheden in deze periode. De cashflow is in balans.'
+            });
+        }
+
         const container = document.getElementById('waterfallInsights');
         if (container) {
             container.innerHTML = insights.map(insight => `
@@ -389,64 +430,87 @@ export class WaterfallFeature {
             `).join('');
         }
     }
-    
+
     switchAnalysisTab(tabElement) {
-        const analysisType = tabElement.dataset.analysis;
+        const analysisType = tabElement && tabElement.dataset ? tabElement.dataset.analysis : null;
         if (!analysisType) return;
-        
-        // Update active tab button
+
         document.querySelectorAll('.analysis-tab').forEach(tab => {
-            tab.classList.toggle('active', tab === tabElement);
+            const active = tab === tabElement;
+            tab.classList.toggle('active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
         });
-        
+
         // Show the matching panel and hide the others. Each panel keeps its
         // own DOM so switching back to the Components view does not lose the
         // table/chart targets rendered by update().
         document.querySelectorAll('.analysis-panel').forEach(panel => {
             panel.classList.toggle('active', panel.dataset.analysisPanel === analysisType);
         });
-        
+
         this.currentAnalysis = analysisType;
-        
+
         switch (analysisType) {
             case 'trends':
-                this.showTrendsAnalysis(document.getElementById('trendsPanel'));
+                this.showTrendsAnalysis(document.querySelector('[data-analysis-panel="trends"]'));
                 break;
             case 'ratios':
-                this.showRatiosAnalysis(document.getElementById('ratiosPanel'));
+                this.showRatiosAnalysis(document.querySelector('[data-analysis-panel="ratios"]'));
                 break;
             case 'components':
+                // Components panel is always kept up to date via update().
+                break;
             default:
-                this.update();
                 break;
         }
     }
-    
-    showTrendsAnalysis(container) {
-        if (!container) return;
-        // Get real quarterly data from calculator
-        let quarters = [];
-        
-        if (this.calculator && this.calculator.data && this.calculator.data.monthlyData) {
-            const monthlyData = this.calculator.data.monthlyData;
-            
-            for (let q = 1; q <= 4; q++) {
-                const quarterMonths = monthlyData.filter(month => {
-                    const quarterStart = (q - 1) * 3 + 1;
-                    const quarterEnd = q * 3;
-                    const monthInYear = ((month.month - 1) % 12) + 1;
-                    return monthInYear >= quarterStart && monthInYear <= quarterEnd;
-                });
-                
-                if (quarterMonths.length > 0) {
-                    const bruto = quarterMonths.reduce((sum, month) => sum + month.bruttoOpbrengst, 0);
-                    const netto = quarterMonths.reduce((sum, month) => sum + month.netto, 0);
-                    quarters.push({ quarter: q, bruto, netto });
-                }
+
+    getQuartersForPeriod(period) {
+        const monthlyData = (this.calculator && this.calculator.data)
+            ? this.calculator.data.monthlyData || []
+            : [];
+
+        if (monthlyData.length === 0) return [];
+
+        // Determine which calendar months to consider based on the active
+        // period selector. For "totaal" aggregate all months into Q1..Q4;
+        // for a single year restrict to that year's 12 months.
+        let relevant = monthlyData;
+        if (period && period.startsWith('jaar')) {
+            const year = parseInt(period.replace('jaar', ''), 10);
+            if (Number.isFinite(year) && year > 0) {
+                const start = (year - 1) * 12;
+                const end = Math.min(year * 12, monthlyData.length);
+                relevant = monthlyData.slice(start, end);
             }
         }
-        
-        // Fallback to mock data if no real data available
+
+        const quarters = [];
+        for (let q = 1; q <= 4; q++) {
+            const quarterStart = (q - 1) * 3 + 1;
+            const quarterEnd = q * 3;
+            const quarterMonths = relevant.filter(m => {
+                const monthInYear = ((m.month - 1) % 12) + 1;
+                return monthInYear >= quarterStart && monthInYear <= quarterEnd;
+            });
+
+            if (quarterMonths.length > 0) {
+                const bruto = quarterMonths.reduce((s, m) => s + (m.bruttoOpbrengst || 0), 0);
+                const netto = quarterMonths.reduce((s, m) => s + (m.netto || 0), 0);
+                quarters.push({ quarter: q, bruto, netto });
+            }
+        }
+
+        return quarters;
+    }
+
+    showTrendsAnalysis(container) {
+        if (!container) return;
+
+        let quarters = this.getQuartersForPeriod(this.currentPeriod);
+
+        // Fallback to mock data if no real data is available yet so the
+        // panel still renders something meaningful on first load.
         if (quarters.length === 0) {
             quarters = [
                 { quarter: 1, bruto: 3750, netto: 2100 },
@@ -455,13 +519,17 @@ export class WaterfallFeature {
                 { quarter: 4, bruto: 3750, netto: 2400 }
             ];
         }
-        
+
+        const periodLabel = this.getPeriodName(this.currentPeriod);
+
         container.innerHTML = `
             <div class="trends-grid">
                 <div class="trend-card">
                     <h4>📈 Rendement Trend</h4>
-                    <p>Kwartaal gemiddelden van bruto rendement</p>
-                    <canvas id="trendChart" height="200"></canvas>
+                    <p>Kwartaal gemiddelden voor ${periodLabel}</p>
+                    <div class="trend-chart-wrapper">
+                        <canvas id="trendChart"></canvas>
+                    </div>
                 </div>
                 <div class="trend-card">
                     <h4>📊 Cashflow Ontwikkeling</h4>
@@ -476,26 +544,27 @@ export class WaterfallFeature {
                 </div>
             </div>
         `;
-        
-        // Create trend chart
+
         this.createTrendChart(quarters);
     }
-    
+
     showRatiosAnalysis(container) {
         if (!container) return;
-        const waterfallData = this.getWaterfallData('totaal');
+
+        const waterfallData = this.getWaterfallData(this.currentPeriod);
         const totals = waterfallData.totals;
-        
-        if (!totals) {
-            container.innerHTML = '<p>Geen ratio data beschikbaar.</p>';
+
+        if (!totals || !(totals.bruttoOpbrengst > 0)) {
+            container.innerHTML = '<p class="empty-state">Geen ratio data beschikbaar voor deze periode.</p>';
             return;
         }
-        
+
         const ratios = this.calculateRatios(totals);
-        
+        const periodLabel = this.getPeriodName(this.currentPeriod);
+
         container.innerHTML = `
             <div class="ratios-analysis">
-                <h4>Financiële Ratio's</h4>
+                <h4>Financiële Ratio's - ${periodLabel}</h4>
                 <div class="ratios-grid">
                     ${ratios.map(ratio => `
                         <div class="ratio-card">
@@ -508,12 +577,12 @@ export class WaterfallFeature {
             </div>
         `;
     }
-    
+
     calculateRatios(totals) {
         const bruttoInkomsten = totals.bruttoOpbrengst || 1;
         const nettoInkomsten = bruttoInkomsten - (totals.belasting || 0);
         const totaleKosten = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
-        
+
         return [
             {
                 label: 'Cashflow Conversie',
@@ -547,15 +616,23 @@ export class WaterfallFeature {
             }
         ];
     }
-    
+
     createTrendChart(quarters) {
         const ctx = document.getElementById('trendChart');
         if (!ctx) return;
-        
+
+        // The canvas is destroyed and recreated every time showTrendsAnalysis
+        // rebuilds the panel, so make sure we release Chart.js' reference to
+        // the old canvas before instantiating a new chart on the new one.
         if (this.trendChart) {
             this.trendChart.destroy();
+            this.trendChart = null;
         }
-        
+        const existing = typeof Chart !== 'undefined' && Chart.getChart
+            ? Chart.getChart(ctx)
+            : null;
+        if (existing) existing.destroy();
+
         this.trendChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -582,6 +659,14 @@ export class WaterfallFeature {
                 plugins: {
                     legend: {
                         position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const label = context.dataset.label || '';
+                                return `${label}: ${this.formatCurrency(context.parsed.y)}`;
+                            }
+                        }
                     }
                 },
                 scales: {
@@ -595,48 +680,52 @@ export class WaterfallFeature {
             }
         });
     }
-    
+
     comparePeriods() {
-        console.log('Starting period comparison...');
         try {
-            // Get data for all available periods
             const periods = ['totaal'];
-            const years = this.calculator.stateManager.getInputs().jaren || 5;
-            console.log('Comparing', years + 1, 'periods');
-            
+            const inputs = this.calculator.stateManager.getInputs();
+            const years = Number(inputs.looptijd) || Number(inputs.jaren) || 5;
+
             for (let i = 1; i <= years; i++) {
                 periods.push(`jaar${i}`);
             }
-            
-            // Create comparison data
+
             const comparisonData = periods.map(period => {
                 const data = this.getWaterfallData(period);
+                const totals = data.totals || {};
+                const bruto = totals.bruttoOpbrengst || 0;
+                const efficiency = bruto > 0
+                    ? ((bruto - (totals.belasting || 0) - (totals.rente || 0) - (totals.aflossing || 0) - (totals.kosten || 0)) / bruto) * 100
+                    : 0;
                 return {
                     period: this.getPeriodName(period),
-                    totals: data.totals || {},
-                    efficiency: data.totals ? 
-                        ((data.totals.bruttoOpbrengst - data.totals.belasting - data.totals.rente - data.totals.aflossing - data.totals.kosten) / data.totals.bruttoOpbrengst * 100) : 0
+                    totals,
+                    efficiency
                 };
             });
-            
-            console.log('Comparison data prepared:', comparisonData);
-            // Create modal or overlay to show comparison
+
             this.showPeriodComparison(comparisonData);
-            console.log('Period comparison modal displayed');
         } catch (error) {
             console.error('Error in comparePeriods:', error);
         }
     }
-    
+
     showPeriodComparison(comparisonData) {
-        // Create a modal overlay for period comparison
+        // Avoid stacking multiple modals if the user clicks the compare
+        // button repeatedly.
+        this.closeComparisonModal();
+
         const modal = document.createElement('div');
         modal.className = 'period-comparison-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', 'Periode vergelijking');
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>📊 Periode Vergelijking</h3>
-                    <button class="modal-close" onclick="this.closest('.period-comparison-modal').remove()">×</button>
+                    <button type="button" class="modal-close" aria-label="Sluiten">×</button>
                 </div>
                 <div class="modal-body">
                     <div class="comparison-table-wrapper">
@@ -670,121 +759,67 @@ export class WaterfallFeature {
                 </div>
             </div>
         `;
-        
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        `;
-        
-        const modalContent = modal.querySelector('.modal-content');
-        modalContent.style.cssText = `
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            max-width: 90vw;
-            max-height: 90vh;
-            overflow: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        `;
-        
-        const modalHeader = modal.querySelector('.modal-header');
-        modalHeader.style.cssText = `
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        `;
-        
-        const closeButton = modal.querySelector('.modal-close');
-        closeButton.style.cssText = `
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
-        
-        const table = modal.querySelector('.comparison-table');
-        table.style.cssText = `
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        `;
-        
-        const tableHeaders = modal.querySelectorAll('.comparison-table th');
-        tableHeaders.forEach(th => {
-            th.style.cssText = `
-                background: #f8f9fa;
-                padding: 12px 8px;
-                text-align: left;
-                border: 1px solid #dee2e6;
-                font-weight: 600;
-            `;
-        });
-        
-        const tableCells = modal.querySelectorAll('.comparison-table td');
-        tableCells.forEach(td => {
-            td.style.cssText = `
-                padding: 10px 8px;
-                border: 1px solid #dee2e6;
-            `;
-            
-            if (td.classList.contains('negative')) {
-                td.style.color = '#dc3545';
-            } else if (td.classList.contains('positive')) {
-                td.style.color = '#28a745';
-            }
-        });
-        
-        document.body.appendChild(modal);
-        
+
+        const close = () => this.closeComparisonModal();
+
+        modal.querySelector('.modal-close').addEventListener('click', close);
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
+            if (e.target === modal) close();
+        });
+
+        const keyHandler = (e) => {
+            if (e.key === 'Escape') close();
+        };
+        document.addEventListener('keydown', keyHandler);
+
+        this.activeModal = { element: modal, keyHandler };
+        document.body.appendChild(modal);
+
+        // Move focus to the close button for accessible keyboard handling.
+        requestAnimationFrame(() => {
+            const btn = modal.querySelector('.modal-close');
+            if (btn) btn.focus();
         });
     }
-    
+
+    closeComparisonModal() {
+        if (!this.activeModal) {
+            // Also clean up any stray modal that might have been added by a
+            // previous (pre-fix) run of the page.
+            document.querySelectorAll('.period-comparison-modal').forEach(m => m.remove());
+            return;
+        }
+        const { element, keyHandler } = this.activeModal;
+        if (element && element.parentNode) element.parentNode.removeChild(element);
+        if (keyHandler) document.removeEventListener('keydown', keyHandler);
+        this.activeModal = null;
+    }
+
     getPeriodName(period) {
-        if (period === 'totaal') return 'Totale Periode';
+        if (!period || period === 'totaal') return 'Totale Periode';
         return period.replace('jaar', 'Jaar ');
     }
-    
+
     formatCurrency(value) {
+        const safe = Number.isFinite(value) ? value : 0;
         return new Intl.NumberFormat('nl-NL', {
             style: 'currency',
             currency: 'EUR',
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
-        }).format(value);
+        }).format(safe);
     }
-    
+
     updateElement(id, value) {
         const element = document.getElementById(id);
         if (element) {
             element.textContent = value;
         }
     }
-    
+
     exportWaterfallData() {
         const data = this.getWaterfallData(this.currentPeriod);
-        
+
         return {
             period: this.currentPeriod,
             totals: data.totals,
@@ -792,18 +827,18 @@ export class WaterfallFeature {
             insights: this.generateInsightsForExport(data)
         };
     }
-    
+
     generateInsightsForExport(waterfallData) {
         const totals = waterfallData.totals;
         if (!totals) return [];
-        
+
         const bruttoInkomsten = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
         const rente = totals.rente || 0;
         const aflossing = totals.aflossing || 0;
         const kosten = totals.kosten || 0;
         const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
-        
+
         return {
             efficiency: bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0,
             taxRate: bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0,

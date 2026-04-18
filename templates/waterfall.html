@@ -71,10 +71,10 @@
     <!-- Analysis Section -->
     <div class="waterfall-analysis mt-4">
         <h3>📊 Cashflow Breakdown</h3>
-        <div class="analysis-tabs">
-            <button class="analysis-tab active" data-analysis="components">Componenten</button>
-            <button class="analysis-tab" data-analysis="trends">Trends</button>
-            <button class="analysis-tab" data-analysis="ratios">Ratio's</button>
+        <div class="analysis-tabs" role="tablist">
+            <button type="button" class="analysis-tab active" data-analysis="components" role="tab" aria-selected="true">Componenten</button>
+            <button type="button" class="analysis-tab" data-analysis="trends" role="tab" aria-selected="false">Trends</button>
+            <button type="button" class="analysis-tab" data-analysis="ratios" role="tab" aria-selected="false">Ratio's</button>
         </div>
         
         <div class="analysis-content" id="analysisContent">
