@@ -216,12 +216,25 @@ export class WaterfallFeature {
             }
         });
         
+        // ChartManager may have pre-created a generic bar chart on this
+        // canvas during app init. Our waterfall uses a custom floating-bar
+        // configuration, so we must destroy any foreign chart instance first
+        // to avoid Chart.js' "Canvas is already in use" error.
+        const existingChart = typeof Chart !== 'undefined' && Chart.getChart
+            ? Chart.getChart(ctx)
+            : null;
+        if (existingChart && existingChart !== this.waterfallChart) {
+            existingChart.destroy();
+        }
+        
         // Create or update chart
         if (this.waterfallChart) {
             this.waterfallChart.data.labels = labels;
             this.waterfallChart.data.datasets[0].data = data;
             this.waterfallChart.data.datasets[0].backgroundColor = backgroundColors;
             this.waterfallChart.data.datasets[0].borderColor = borderColors;
+            this.waterfallChart.options.plugins.title.text =
+                `Cashflow Waterfall - ${this.getPeriodName(waterfallData.period)}`;
             this.waterfallChart.update();
         } else {
             this.waterfallChart = new Chart(ctx, {
