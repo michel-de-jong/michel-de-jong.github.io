@@ -293,14 +293,25 @@ export class CurrencyPortfolioFeature {
             
             let analysisResults;
             
-            // Check if FX Risk Analysis service is available
-            if (this.fxRiskAnalysis) {
-                analysisResults = await this.fxRiskAnalysis.analyzeCurrencyExposure(
-                    assets,
+            // The FXRiskAnalysis service exposes `analyzePortfolioExposure` and
+            // expects assets to have a `value` property (not `amount`). Only
+            // use it when both the method and historical-rate support exist;
+            // otherwise fall back to the lightweight in-feature calculation.
+            const canUseService = this.fxRiskAnalysis
+                && typeof this.fxRiskAnalysis.analyzePortfolioExposure === 'function'
+                && this.currencyService
+                && typeof this.currencyService.getHistoricalRates === 'function';
+            
+            if (canUseService) {
+                const portfolioForService = assets.map(asset => ({
+                    ...asset,
+                    value: asset.amount
+                }));
+                analysisResults = await this.fxRiskAnalysis.analyzePortfolioExposure(
+                    portfolioForService,
                     this.currencyPortfolio.baseCurrency
                 );
             } else {
-                // Fallback: Simple FX exposure calculation
                 analysisResults = await this.calculateSimpleFXExposure(assets);
             }
             
@@ -402,7 +413,7 @@ export class CurrencyPortfolioFeature {
                     </div>
                     <div class="exposure-details">
                         <span class="value">${this.formatCurrency(exposure.value, analysis.baseCurrency)}</span>
-                        <span class="assets">${exposure.assets.join(', ')}</span>
+                        <span class="assets">${this.formatExposureAssets(exposure.assets)}</span>
                     </div>
                 </div>
             `;
@@ -594,6 +605,14 @@ export class CurrencyPortfolioFeature {
         // Append to existing results
         const existingContent = resultsDiv.innerHTML;
         resultsDiv.innerHTML = existingContent + html;
+    }
+    
+    formatExposureAssets(assets) {
+        if (!Array.isArray(assets)) return '';
+        return assets
+            .map(a => (typeof a === 'string' ? a : (a && a.name) ? a.name : ''))
+            .filter(Boolean)
+            .join(', ');
     }
     
     formatCurrency(amount, currency) {
