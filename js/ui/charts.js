@@ -66,7 +66,7 @@ export class ChartManager {
     // Initialize main chart
     initMainChart() {
         const canvas = document.getElementById('mainChart');
-        if (!canvas) {
+        if (!canvas || typeof canvas.getContext !== 'function') {
             return;
         }
         
@@ -218,7 +218,7 @@ export class ChartManager {
     // Initialize scenario chart
     initScenarioChart() {
         const canvas = document.getElementById('scenarioChart');
-        if (!canvas) return false;
+        if (!canvas || typeof canvas.getContext !== 'function') return false;
         
         // Destroy existing chart if it exists
         if (this.charts.scenario) {
@@ -284,7 +284,7 @@ export class ChartManager {
     // Initialize portfolio chart
     initPortfolioChart() {
         const canvas = document.getElementById('portfolioChart');
-        if (!canvas) return;
+        if (!canvas || typeof canvas.getContext !== 'function') return;
         
         // Destroy existing chart if it exists
         if (this.charts.portfolio) {
@@ -337,7 +337,7 @@ export class ChartManager {
     // Initialize Monte Carlo charts
     initMonteCarloCharts() {
         const pathsCanvas = document.getElementById('monteCarloChart');
-        if (pathsCanvas) {
+        if (pathsCanvas && typeof pathsCanvas.getContext === 'function') {
             const existingChart = Chart.getChart(pathsCanvas);
             if (existingChart) {
                 existingChart.destroy();
@@ -385,7 +385,7 @@ export class ChartManager {
         }
         
         const distributionCanvas = document.getElementById('distributionChart');
-        if (distributionCanvas) {
+        if (distributionCanvas && typeof distributionCanvas.getContext === 'function') {
             const existingChart = Chart.getChart(distributionCanvas);
             if (existingChart) {
                 existingChart.destroy();
@@ -441,7 +441,7 @@ export class ChartManager {
     // Initialize waterfall chart
     initWaterfallChart() {
         const canvas = document.getElementById('waterfallChart');
-        if (!canvas) return;
+        if (!canvas || typeof canvas.getContext !== 'function') return;
         
         // Destroy existing chart if it exists
         if (this.charts.waterfall) {
