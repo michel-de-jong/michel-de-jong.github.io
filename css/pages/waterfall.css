@@ -505,6 +505,123 @@ input:checked + .toggle-slider:before {
     color: #0c5460;
 }
 
+/* Period Comparison Modal */
+.period-comparison-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.period-comparison-modal .modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    width: 100%;
+}
+
+.period-comparison-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.period-comparison-modal .modal-header h3 {
+    margin: 0;
+    color: #1e3c72;
+}
+
+.period-comparison-modal .modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.period-comparison-modal .modal-close:hover,
+.period-comparison-modal .modal-close:focus-visible {
+    background: #f1f3f5;
+    color: #1e3c72;
+    outline: none;
+}
+
+.period-comparison-modal .comparison-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.period-comparison-modal .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.period-comparison-modal .comparison-table th,
+.period-comparison-modal .comparison-table td {
+    padding: 10px 8px;
+    border: 1px solid #dee2e6;
+    text-align: right;
+}
+
+.period-comparison-modal .comparison-table th {
+    background: #f8f9fa;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+}
+
+.period-comparison-modal .comparison-table td:first-child {
+    text-align: left;
+}
+
+.period-comparison-modal .comparison-table td.negative {
+    color: #dc3545;
+}
+
+.period-comparison-modal .comparison-table td.positive {
+    color: #28a745;
+}
+
+/* Trend chart wrapper to give the line chart a predictable height */
+.trend-chart-wrapper {
+    position: relative;
+    height: 220px;
+}
+
+.trend-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.empty-state {
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
 /* Mobile Table Hint */
 .mobile-table-hint {
     display: none;
