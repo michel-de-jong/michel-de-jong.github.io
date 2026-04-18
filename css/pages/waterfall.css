@@ -267,6 +267,15 @@ input:checked + .toggle-slider:before {
     border-bottom-color: #1e3c72;
 }
 
+/* Analysis Panels - only the active panel is shown */
+.analysis-panel {
+    display: none;
+}
+
+.analysis-panel.active {
+    display: block;
+}
+
 /* Table Wrapper */
 .table-wrapper {
     overflow-x: auto;
