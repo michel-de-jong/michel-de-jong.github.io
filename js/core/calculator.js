@@ -400,34 +400,73 @@ export class Calculator {
             acc.kosten += month.kosten;
             return acc;
         }, { bruttoOpbrengst: 0, belasting: 0, rente: 0, aflossing: 0, kosten: 0 });
-        
+
         const finalValue = this.data.totaalVermogen[this.data.totaalVermogen.length - 1];
-        
+
+        // The waterfall visualises the change of the investor's OWN equity
+        // over the period. Lening (loan proceeds) and aflossingen (principal
+        // repayments) cancel out on net worth - they only shift value between
+        // portfolio/cash and the outstanding debt. We therefore keep them in
+        // `totals` for informational use but deliberately leave them OUT of
+        // the flow so the bars add up to Eindvermogen.
         return {
             data: [
-                { label: 'Start Kapitaal', value: inputs.startKapitaal, type: 'start' },
-                { label: 'Lening', value: inputs.lening, type: 'positive' },
-                { label: 'Bruto Rendement', value: totals.bruttoOpbrengst, type: 'positive' },
-                { label: 'Belasting', value: -totals.belasting, type: 'negative' },
-                { label: 'Rente Kosten', value: -totals.rente, type: 'negative' },
-                { label: 'Aflossingen', value: -totals.aflossing, type: 'negative' },
-                { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' },
-                { label: 'Eindwaarde', value: finalValue, type: 'total' }
+                {
+                    label: 'Start Kapitaal',
+                    value: inputs.startKapitaal,
+                    type: 'start',
+                    description: 'Eigen inbreng aan het begin van de periode.'
+                },
+                {
+                    label: 'Bruto Rendement',
+                    value: totals.bruttoOpbrengst,
+                    type: 'positive',
+                    description: 'Rendement op de totale portefeuille (incl. eventuele lening), vóór belasting en kosten.'
+                },
+                {
+                    label: 'Belasting',
+                    value: -totals.belasting,
+                    type: 'negative',
+                    description: 'Belasting over het rendement (afhankelijk van het gekozen belastingregime).'
+                },
+                {
+                    label: 'Rentelasten',
+                    value: -totals.rente,
+                    type: 'negative',
+                    description: 'Rente betaald op de lening gedurende de periode.'
+                },
+                {
+                    label: 'Vaste Kosten',
+                    value: -totals.kosten,
+                    type: 'negative',
+                    description: 'Doorlopende vaste kosten gedurende de periode.'
+                },
+                {
+                    label: 'Eindvermogen',
+                    value: finalValue,
+                    type: 'total',
+                    description: 'Eigen vermogen aan het einde: portefeuille + cash − restschuld lening.'
+                }
             ],
             totals,
-            finalValue
+            finalValue,
+            startValue: inputs.startKapitaal,
+            loanInfo: {
+                lening: inputs.lening,
+                aflossingTotaal: totals.aflossing
+            }
         };
     }
-    
+
     getWaterfallYearPeriod(period, inputs) {
         const year = parseInt(period.replace('jaar', ''));
         const startMonth = (year - 1) * 12;
         const endMonth = Math.min(year * 12, this.data.monthlyData.length);
-        
+
         if (startMonth >= this.data.monthlyData.length) {
             return { data: [], totals: {} };
         }
-        
+
         const yearData = this.data.monthlyData.slice(startMonth, endMonth);
         const yearTotals = yearData.reduce((acc, month) => {
             acc.bruttoOpbrengst += month.bruttoOpbrengst;
@@ -437,25 +476,58 @@ export class Calculator {
             acc.kosten += month.kosten;
             return acc;
         }, { bruttoOpbrengst: 0, belasting: 0, rente: 0, aflossing: 0, kosten: 0 });
-        
+
         const startValue = year > 0 && this.data.totaalVermogen[year - 1] !== undefined
             ? this.data.totaalVermogen[year - 1]
             : inputs.startKapitaal;
-        
+
         const endValue = this.data.totaalVermogen[year] || startValue;
-        
+
         return {
             data: [
-                { label: 'Begin Saldo', value: startValue, type: 'start' },
-                { label: 'Bruto Rendement', value: yearTotals.bruttoOpbrengst, type: 'positive' },
-                { label: 'Belasting', value: -yearTotals.belasting, type: 'negative' },
-                { label: 'Rente Kosten', value: -yearTotals.rente, type: 'negative' },
-                { label: 'Aflossingen', value: -yearTotals.aflossing, type: 'negative' },
-                { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' },
-                { label: 'Eind Saldo', value: endValue, type: 'total' }
+                {
+                    label: 'Beginvermogen',
+                    value: startValue,
+                    type: 'start',
+                    description: 'Eigen vermogen aan het begin van dit jaar (portefeuille + cash − restschuld lening).'
+                },
+                {
+                    label: 'Bruto Rendement',
+                    value: yearTotals.bruttoOpbrengst,
+                    type: 'positive',
+                    description: 'Rendement op de portefeuille in dit jaar, vóór belasting en kosten.'
+                },
+                {
+                    label: 'Belasting',
+                    value: -yearTotals.belasting,
+                    type: 'negative',
+                    description: 'Belasting over het rendement in dit jaar.'
+                },
+                {
+                    label: 'Rentelasten',
+                    value: -yearTotals.rente,
+                    type: 'negative',
+                    description: 'Rente betaald op de lening in dit jaar.'
+                },
+                {
+                    label: 'Vaste Kosten',
+                    value: -yearTotals.kosten,
+                    type: 'negative',
+                    description: 'Doorlopende vaste kosten in dit jaar.'
+                },
+                {
+                    label: 'Eindvermogen',
+                    value: endValue,
+                    type: 'total',
+                    description: 'Eigen vermogen aan het einde van dit jaar (portefeuille + cash − restschuld lening).'
+                }
             ],
             totals: yearTotals,
-            finalValue: endValue
+            finalValue: endValue,
+            startValue,
+            loanInfo: {
+                aflossingTotaal: yearTotals.aflossing
+            }
         };
     }
     

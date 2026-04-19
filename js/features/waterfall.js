@@ -161,6 +161,9 @@ export class WaterfallFeature {
                 return {
                     data: data.data,
                     totals: data.totals,
+                    startValue: data.startValue,
+                    finalValue: data.finalValue,
+                    loanInfo: data.loanInfo,
                     period: period
                 };
             }
@@ -168,14 +171,12 @@ export class WaterfallFeature {
 
         const mockData = {
             data: [
-                { label: 'Start Kapitaal', value: 100000, type: 'start' },
-                { label: 'Lening', value: 50000, type: 'positive' },
-                { label: 'Bruto Rendement', value: 15000, type: 'positive' },
-                { label: 'Belasting', value: -3750, type: 'negative' },
-                { label: 'Rente Kosten', value: -2500, type: 'negative' },
-                { label: 'Aflossingen', value: -10000, type: 'negative' },
-                { label: 'Vaste Kosten', value: -1200, type: 'negative' },
-                { label: 'Eindwaarde', value: 147550, type: 'total' }
+                { label: 'Start Kapitaal', value: 100000, type: 'start', description: 'Eigen inbreng aan het begin van de periode.' },
+                { label: 'Bruto Rendement', value: 15000, type: 'positive', description: 'Rendement op de totale portefeuille, vóór belasting en kosten.' },
+                { label: 'Belasting', value: -3750, type: 'negative', description: 'Belasting over het rendement.' },
+                { label: 'Rentelasten', value: -2500, type: 'negative', description: 'Rente betaald op de lening.' },
+                { label: 'Vaste Kosten', value: -1200, type: 'negative', description: 'Doorlopende vaste kosten.' },
+                { label: 'Eindvermogen', value: 107550, type: 'total', description: 'Eigen vermogen aan het einde van de periode.' }
             ],
             totals: {
                 bruttoOpbrengst: 15000,
@@ -184,37 +185,55 @@ export class WaterfallFeature {
                 aflossing: 10000,
                 kosten: 1200
             },
+            startValue: 100000,
+            finalValue: 107550,
+            loanInfo: { lening: 50000, aflossingTotaal: 10000 },
             period: period
         };
 
         return mockData;
     }
 
+    /**
+     * Summary metrics are derived directly from the equity-waterfall identity:
+     *   ΔEigen Vermogen = Bruto Rendement − Belasting − Rente − Vaste Kosten
+     * Aflossingen (principal repayments) are deliberately excluded - they
+     * shift value between cash and debt but do not change equity, so mixing
+     * them into "uitgaven" makes the cards inconsistent with the chart.
+     */
     updateSummaryCards(totals) {
-        const bruttoInkomsten = totals.bruttoOpbrengst || 0;
+        const bruto = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
-        const uitgaven = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
-        const nettoInkomsten = bruttoInkomsten - belasting;
-        const netto = nettoInkomsten - uitgaven;
-        const cashflowRatio = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
-        const belastingTarief = bruttoInkomsten > 0 ? (belasting / bruttoInkomsten) * 100 : 0;
+        const rente = totals.rente || 0;
+        const kosten = totals.kosten || 0;
 
-        this.updateElement('wfTotaleInkomsten', this.formatCurrency(nettoInkomsten));
-        this.updateElement('wfInkomstenDetail', `Bruto: ${this.formatCurrency(bruttoInkomsten)} | Belasting: ${this.formatCurrency(belasting)}`);
+        const kostenTotaal = rente + kosten;
+        const nettoResultaat = bruto - belasting - kostenTotaal;
+        const efficientie = bruto > 0 ? (nettoResultaat / bruto) * 100 : 0;
+        const belastingTarief = bruto > 0 ? (belasting / bruto) * 100 : 0;
 
-        this.updateElement('wfTotaleUitgaven', this.formatCurrency(uitgaven));
-        this.updateElement('wfUitgavenDetail', `Rente: ${this.formatCurrency(totals.rente || 0)} | Aflossing: ${this.formatCurrency(totals.aflossing || 0)} | Kosten: ${this.formatCurrency(totals.kosten || 0)}`);
+        this.updateElement('wfBrutoRendement', this.formatCurrency(bruto));
+        this.updateElement('wfBrutoRendementDetail', 'Vóór belasting, rente en kosten');
 
-        this.updateElement('wfNettoCashflow', this.formatCurrency(netto));
-        this.updateElement('wfCashflowDetail', `${cashflowRatio.toFixed(1)}% van bruto inkomsten`);
+        this.updateElement('wfKostenTotaal', this.formatCurrency(kostenTotaal));
+        this.updateElement('wfKostenDetail', `Rente: ${this.formatCurrency(rente)} | Vaste kosten: ${this.formatCurrency(kosten)}`);
+
+        this.updateElement('wfNettoResultaat', this.formatCurrency(nettoResultaat));
+        this.updateElement('wfNettoResultaatDetail',
+            `${efficientie.toFixed(1)}% van bruto · verandert het eigen vermogen`);
 
         this.updateElement('wfBelastingTarief', `${belastingTarief.toFixed(1)}%`);
-        this.updateElement('wfBelastingDetail', 'Op bruto rendement');
+        this.updateElement('wfBelastingDetail', `Belasting ${this.formatCurrency(belasting)} op bruto rendement`);
     }
 
     updateWaterfallChart(waterfallData) {
         const ctx = document.getElementById('waterfallChart');
         if (!ctx) return;
+
+        // Keep the latest waterfall data available to the tooltip callbacks,
+        // which are bound once at chart creation and otherwise would hold on
+        // to a stale closure when only the dataset is updated.
+        this.currentWaterfallData = waterfallData;
 
         const labels = [];
         const data = [];
@@ -297,11 +316,30 @@ export class WaterfallFeature {
                         },
                         tooltip: {
                             callbacks: {
+                                title: (items) => {
+                                    if (!items || !items.length) return '';
+                                    return items[0].label || '';
+                                },
                                 label: (context) => {
-                                    const value = context.parsed.y;
-                                    const start = context.parsed.x || 0;
-                                    const diff = value - start;
-                                    return `${this.formatCurrency(Math.abs(diff))}`;
+                                    const current = this.currentWaterfallData;
+                                    const item = current && current.data
+                                        ? current.data[context.dataIndex]
+                                        : null;
+                                    if (!item) return this.formatCurrency(0);
+
+                                    if (item.type === 'start' || item.type === 'total') {
+                                        return this.formatCurrency(item.value);
+                                    }
+
+                                    const sign = item.value >= 0 ? '+' : '−';
+                                    return `${sign} ${this.formatCurrency(Math.abs(item.value))}`;
+                                },
+                                afterLabel: (context) => {
+                                    const current = this.currentWaterfallData;
+                                    const item = current && current.data
+                                        ? current.data[context.dataIndex]
+                                        : null;
+                                    return item && item.description ? item.description : '';
                                 }
                             }
                         }
@@ -323,9 +361,13 @@ export class WaterfallFeature {
         const tbody = document.getElementById('waterfallTableBody');
         if (!tbody) return;
 
-        const totals = waterfallData.totals;
-        const bruttoInkomsten = totals.bruttoOpbrengst || 1;
-        const finalValue = waterfallData.data[waterfallData.data.length - 1].value || 1;
+        const totals = waterfallData.totals || {};
+        const bruto = Math.max(totals.bruttoOpbrengst || 0, 0);
+
+        // Use bruto rendement as the reference for share-of calculations. It
+        // represents the income that is being divided over tax, interest,
+        // costs and what is left as net equity growth.
+        const referenceValue = bruto > 0 ? bruto : 1;
 
         let html = '';
 
@@ -333,10 +375,9 @@ export class WaterfallFeature {
             if (item.type === 'start' || item.type === 'total') return;
 
             const absValue = Math.abs(item.value);
-            const percentageOfBruto = (absValue / bruttoInkomsten) * 100;
-            const percentageOfFinal = (absValue / finalValue) * 100;
-
+            const percentageOfBruto = bruto > 0 ? (absValue / referenceValue) * 100 : 0;
             const impactWidth = Math.min(percentageOfBruto, 100);
+
             const impactBar = `
                 <div class="impact-bar" role="progressbar" aria-valuenow="${impactWidth.toFixed(0)}" aria-valuemin="0" aria-valuemax="100">
                     <div class="impact-bar-fill ${item.value >= 0 ? 'positive' : 'negative'}"
@@ -344,18 +385,45 @@ export class WaterfallFeature {
                 </div>
             `;
 
+            const description = item.description
+                ? `<div class="component-description">${item.description}</div>`
+                : '';
+
             html += `
                 <tr>
-                    <td>${item.label}</td>
+                    <td>
+                        <div class="component-label">${item.label}</div>
+                        ${description}
+                    </td>
                     <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">
                         ${this.formatCurrency(item.value)}
                     </td>
-                    <td>${percentageOfBruto.toFixed(1)}%</td>
-                    <td>${percentageOfFinal.toFixed(1)}%</td>
+                    <td>${bruto > 0 ? percentageOfBruto.toFixed(1) + '%' : '—'}</td>
                     <td>${impactBar}</td>
                 </tr>
             `;
         });
+
+        // Append a summary row that makes the equity identity explicit so
+        // readers can verify that the components balance to the change in
+        // eigen vermogen for the selected period.
+        const startValue = waterfallData.startValue;
+        const finalValue = waterfallData.finalValue;
+        if (typeof startValue === 'number' && typeof finalValue === 'number') {
+            const delta = finalValue - startValue;
+            const deltaClass = delta >= 0 ? 'positive' : 'negative';
+            html += `
+                <tr class="summary-row">
+                    <td>
+                        <div class="component-label">Δ Eigen Vermogen</div>
+                        <div class="component-description">Eindvermogen − Beginvermogen (moet gelijk zijn aan bruto − belasting − rente − kosten).</div>
+                    </td>
+                    <td class="${deltaClass}">${this.formatCurrency(delta)}</td>
+                    <td>—</td>
+                    <td></td>
+                </tr>
+            `;
+        }
 
         tbody.innerHTML = html;
     }
@@ -369,20 +437,22 @@ export class WaterfallFeature {
         const bruttoInkomsten = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
         const rente = totals.rente || 0;
-        const aflossing = totals.aflossing || 0;
         const kosten = totals.kosten || 0;
-        const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
+        // Netto hier = verandering in eigen vermogen door de flow componenten.
+        // Aflossingen veranderen eigen vermogen niet en worden daarom niet
+        // afgetrokken (zie waterfall data model).
+        const netto = bruttoInkomsten - belasting - rente - kosten;
 
         const efficiency = bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0;
         if (efficiency > 50) {
             insights.push({
                 type: 'success',
-                text: `Uitstekende cashflow efficiëntie: ${efficiency.toFixed(1)}% van bruto rendement blijft over als netto cashflow.`
+                text: `Sterke netto marge: ${efficiency.toFixed(1)}% van het bruto rendement groeit door naar het eigen vermogen (na belasting, rente en vaste kosten).`
             });
         } else if (efficiency < 20 && bruttoInkomsten > 0) {
             insights.push({
                 type: 'warning',
-                text: `Lage cashflow efficiëntie: slechts ${efficiency.toFixed(1)}% van bruto rendement blijft over. Overweeg kostenoptimalisatie.`
+                text: `Lage netto marge: slechts ${efficiency.toFixed(1)}% van het bruto rendement blijft over na belasting, rente en kosten. Overweeg kostenoptimalisatie.`
             });
         }
 
@@ -579,40 +649,43 @@ export class WaterfallFeature {
     }
 
     calculateRatios(totals) {
-        const bruttoInkomsten = totals.bruttoOpbrengst || 1;
-        const nettoInkomsten = bruttoInkomsten - (totals.belasting || 0);
-        const totaleKosten = (totals.rente || 0) + (totals.aflossing || 0) + (totals.kosten || 0);
+        const bruto = totals.bruttoOpbrengst || 1;
+        const belasting = totals.belasting || 0;
+        const rente = totals.rente || 0;
+        const kosten = totals.kosten || 0;
+        const nettoNaBelasting = bruto - belasting;
+        const nettoResultaat = nettoNaBelasting - rente - kosten;
 
         return [
             {
-                label: 'Cashflow Conversie',
-                value: ((nettoInkomsten - totaleKosten) / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Netto cashflow als % van bruto'
+                label: 'Netto Marge',
+                value: (nettoResultaat / bruto * 100).toFixed(1) + '%',
+                description: 'Eigen vermogensgroei (bruto − belasting − rente − kosten) als % van bruto rendement'
             },
             {
                 label: 'Belastingdruk',
-                value: ((totals.belasting || 0) / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Belasting als % van bruto'
+                value: (belasting / bruto * 100).toFixed(1) + '%',
+                description: 'Belasting als % van bruto rendement'
             },
             {
                 label: 'Rentelast',
-                value: ((totals.rente || 0) / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Rente als % van bruto'
+                value: (rente / bruto * 100).toFixed(1) + '%',
+                description: 'Rente op lening als % van bruto rendement'
             },
             {
                 label: 'Kostenratio',
-                value: ((totals.kosten || 0) / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Vaste kosten als % van bruto'
+                value: (kosten / bruto * 100).toFixed(1) + '%',
+                description: 'Vaste kosten als % van bruto rendement'
             },
             {
-                label: 'Operationele Efficiëntie',
-                value: (nettoInkomsten / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Netto na belasting als % van bruto'
+                label: 'Netto na Belasting',
+                value: (nettoNaBelasting / bruto * 100).toFixed(1) + '%',
+                description: 'Rendement na belasting als % van bruto'
             },
             {
-                label: 'Financieringsdruk',
-                value: (((totals.rente || 0) + (totals.aflossing || 0)) / bruttoInkomsten * 100).toFixed(1) + '%',
-                description: 'Totale financiering als % van bruto'
+                label: 'Totale Kostenratio',
+                value: ((belasting + rente + kosten) / bruto * 100).toFixed(1) + '%',
+                description: 'Belasting + rente + kosten als % van bruto rendement'
             }
         ];
     }
@@ -695,8 +768,12 @@ export class WaterfallFeature {
                 const data = this.getWaterfallData(period);
                 const totals = data.totals || {};
                 const bruto = totals.bruttoOpbrengst || 0;
+                // Efficiency here reflects how much of the bruto rendement
+                // actually ends up as growth in eigen vermogen. Aflossingen
+                // do not belong in this ratio (they shift value between cash
+                // and debt without changing equity).
                 const efficiency = bruto > 0
-                    ? ((bruto - (totals.belasting || 0) - (totals.rente || 0) - (totals.aflossing || 0) - (totals.kosten || 0)) / bruto) * 100
+                    ? ((bruto - (totals.belasting || 0) - (totals.rente || 0) - (totals.kosten || 0)) / bruto) * 100
                     : 0;
                 return {
                     period: this.getPeriodName(period),
@@ -733,12 +810,11 @@ export class WaterfallFeature {
                             <thead>
                                 <tr>
                                     <th>Periode</th>
-                                    <th>Bruto Rendement</th>
+                                    <th title="Rendement op de totale portefeuille (incl. lening), vóór belasting en kosten">Bruto Rendement</th>
                                     <th>Belasting</th>
                                     <th>Rente</th>
-                                    <th>Aflossing</th>
-                                    <th>Kosten</th>
-                                    <th>Efficiëntie</th>
+                                    <th>Vaste Kosten</th>
+                                    <th title="(Bruto − Belasting − Rente − Kosten) / Bruto">Netto Marge</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -748,7 +824,6 @@ export class WaterfallFeature {
                                         <td>${this.formatCurrency(period.totals.bruttoOpbrengst || 0)}</td>
                                         <td class="negative">${this.formatCurrency(period.totals.belasting || 0)}</td>
                                         <td class="negative">${this.formatCurrency(period.totals.rente || 0)}</td>
-                                        <td class="negative">${this.formatCurrency(period.totals.aflossing || 0)}</td>
                                         <td class="negative">${this.formatCurrency(period.totals.kosten || 0)}</td>
                                         <td class="${period.efficiency > 50 ? 'positive' : period.efficiency < 20 ? 'negative' : ''}">${period.efficiency.toFixed(1)}%</td>
                                     </tr>
@@ -835,9 +910,8 @@ export class WaterfallFeature {
         const bruttoInkomsten = totals.bruttoOpbrengst || 0;
         const belasting = totals.belasting || 0;
         const rente = totals.rente || 0;
-        const aflossing = totals.aflossing || 0;
         const kosten = totals.kosten || 0;
-        const netto = bruttoInkomsten - belasting - rente - aflossing - kosten;
+        const netto = bruttoInkomsten - belasting - rente - kosten;
 
         return {
             efficiency: bruttoInkomsten > 0 ? (netto / bruttoInkomsten) * 100 : 0,

@@ -1,7 +1,10 @@
 <section id="waterfall" class="tab-pane" role="tabpanel">
     <h2>💧 Cashflow Waterfall Analyse</h2>
-    <p class="tab-description">Gedetailleerd overzicht van alle geldstromen per periode met visuele breakdown</p>
-    
+    <p class="tab-description">
+        Van <strong>Start Kapitaal</strong> via <strong>Bruto Rendement</strong>, minus belasting, rente en vaste kosten,
+        naar <strong>Eindvermogen</strong>. De componenten tellen exact op tot de verandering in eigen vermogen over de periode.
+    </p>
+
     <!-- Controls Section -->
     <div class="waterfall-controls">
         <div class="period-selector-group">
@@ -23,51 +26,51 @@
             </button>
         </div>
     </div>
-    
+
     <!-- Summary Cards -->
     <div class="waterfall-summary">
         <div class="summary-card positive">
             <div class="summary-icon">📈</div>
             <div class="summary-content">
-                <div class="summary-label">Totale Inkomsten</div>
-                <div class="summary-value" id="wfTotaleInkomsten">€ 0</div>
-                <div class="summary-detail" id="wfInkomstenDetail">Bruto: € 0 | Belasting: € 0</div>
+                <div class="summary-label">Bruto Rendement</div>
+                <div class="summary-value" id="wfBrutoRendement">€ 0</div>
+                <div class="summary-detail" id="wfBrutoRendementDetail">Vóór belasting, rente en kosten</div>
             </div>
         </div>
-        
+
         <div class="summary-card negative">
             <div class="summary-icon">📉</div>
             <div class="summary-content">
-                <div class="summary-label">Totale Uitgaven</div>
-                <div class="summary-value" id="wfTotaleUitgaven">€ 0</div>
-                <div class="summary-detail" id="wfUitgavenDetail">Rente: € 0 | Aflossing: € 0 | Kosten: € 0</div>
+                <div class="summary-label">Kosten (rente + vaste kosten)</div>
+                <div class="summary-value" id="wfKostenTotaal">€ 0</div>
+                <div class="summary-detail" id="wfKostenDetail">Rente: € 0 | Vaste kosten: € 0</div>
             </div>
         </div>
-        
+
         <div class="summary-card primary">
             <div class="summary-icon">💰</div>
             <div class="summary-content">
-                <div class="summary-label">Netto Cashflow</div>
-                <div class="summary-value" id="wfNettoCashflow">€ 0</div>
-                <div class="summary-detail" id="wfCashflowDetail">0% van bruto inkomsten</div>
+                <div class="summary-label">Netto Resultaat</div>
+                <div class="summary-value" id="wfNettoResultaat">€ 0</div>
+                <div class="summary-detail" id="wfNettoResultaatDetail">0% van bruto · verandert het eigen vermogen</div>
             </div>
         </div>
-        
+
         <div class="summary-card info">
             <div class="summary-icon">📊</div>
             <div class="summary-content">
                 <div class="summary-label">Effectief Belastingtarief</div>
                 <div class="summary-value" id="wfBelastingTarief">0%</div>
-                <div class="summary-detail" id="wfBelastingDetail">Op bruto rendement</div>
+                <div class="summary-detail" id="wfBelastingDetail">Belasting € 0 op bruto rendement</div>
             </div>
         </div>
     </div>
-    
+
     <!-- Main Waterfall Chart -->
     <div class="chart-container tall mt-4">
         <canvas id="waterfallChart"></canvas>
     </div>
-    
+
     <!-- Analysis Section -->
     <div class="waterfall-analysis mt-4">
         <h3>📊 Cashflow Breakdown</h3>
@@ -76,7 +79,7 @@
             <button type="button" class="analysis-tab" data-analysis="trends" role="tab" aria-selected="false">Trends</button>
             <button type="button" class="analysis-tab" data-analysis="ratios" role="tab" aria-selected="false">Ratio's</button>
         </div>
-        
+
         <div class="analysis-content" id="analysisContent">
             <!-- Components Table (default view) -->
             <div class="analysis-panel active" data-analysis-panel="components">
@@ -86,8 +89,7 @@
                             <tr>
                                 <th>Component</th>
                                 <th>Bedrag</th>
-                                <th>% van Bruto</th>
-                                <th>% van Totaal</th>
+                                <th title="Aandeel van het bruto rendement">% van Bruto</th>
                                 <th>Impact</th>
                             </tr>
                         </thead>
@@ -97,19 +99,19 @@
                     </table>
                 </div>
             </div>
-            
+
             <!-- Trends Panel -->
             <div class="analysis-panel" data-analysis-panel="trends" id="trendsPanel">
                 <!-- Dynamically populated on first activation -->
             </div>
-            
+
             <!-- Ratios Panel -->
             <div class="analysis-panel" data-analysis-panel="ratios" id="ratiosPanel">
                 <!-- Dynamically populated on first activation -->
             </div>
         </div>
     </div>
-    
+
     <!-- Insights Section -->
     <div class="waterfall-insights mt-4">
         <h3>💡 Inzichten & Aanbevelingen</h3>
@@ -117,7 +119,7 @@
             <!-- Dynamically populated insights -->
         </div>
     </div>
-    
+
     <!-- Mobile Hint -->
     <div class="mobile-table-hint mt-2">
         💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
