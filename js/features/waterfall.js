@@ -172,12 +172,12 @@ export class WaterfallFeature {
 
         const mockData = {
             data: [
-                { label: 'Eigen Vermogen (start)', value: 100000, type: 'start', description: 'Eigen vermogen aan het begin: je eigen inbreng.' },
-                { label: 'Bruto Rendement', value: 15000, type: 'positive', description: 'Rendement op de totale portefeuille, vóór belasting en kosten.' },
-                { label: 'Belasting', value: -3750, type: 'negative', description: 'Belasting over het rendement.' },
-                { label: 'Rentelasten', value: -2500, type: 'negative', description: 'Rente betaald op de lening.' },
-                { label: 'Vaste Kosten', value: -1200, type: 'negative', description: 'Doorlopende vaste kosten.' },
-                { label: 'Eigen Vermogen (eind)', value: 107550, type: 'total', description: 'Eigen vermogen aan het einde van de periode.' }
+                { label: 'Eigen Vermogen (start)', value: 100000, type: 'start' },
+                { label: 'Bruto Rendement', value: 15000, type: 'positive' },
+                { label: 'Belasting', value: -3750, type: 'negative' },
+                { label: 'Rentelasten', value: -2500, type: 'negative' },
+                { label: 'Vaste Kosten', value: -1200, type: 'negative' },
+                { label: 'Eigen Vermogen (eind)', value: 107550, type: 'total' }
             ],
             totals: {
                 bruttoOpbrengst: 15000,
@@ -225,11 +225,10 @@ export class WaterfallFeature {
         this.updateElement('wfKostenDetail', `Rente: ${this.formatCurrency(rente)} | Vaste kosten: ${this.formatCurrency(kosten)}`);
 
         this.updateElement('wfNettoResultaat', this.formatCurrency(nettoResultaat));
-        this.updateElement('wfNettoResultaatDetail',
-            `${efficientie.toFixed(1)}% van bruto · verandert het eigen vermogen`);
+        this.updateElement('wfNettoResultaatDetail', `${efficientie.toFixed(1)}% van bruto rendement`);
 
         this.updateElement('wfBelastingTarief', `${belastingTarief.toFixed(1)}%`);
-        this.updateElement('wfBelastingDetail', `Belasting ${this.formatCurrency(belasting)} op bruto rendement`);
+        this.updateElement('wfBelastingDetail', `Op bruto rendement`);
     }
 
     updateWaterfallChart(waterfallData) {
@@ -322,10 +321,7 @@ export class WaterfallFeature {
                         },
                         tooltip: {
                             callbacks: {
-                                title: (items) => {
-                                    if (!items || !items.length) return '';
-                                    return items[0].label || '';
-                                },
+                                title: (items) => (items && items.length ? items[0].label || '' : ''),
                                 label: (context) => {
                                     const current = this.currentWaterfallData;
                                     const item = current && current.data
@@ -339,13 +335,6 @@ export class WaterfallFeature {
 
                                     const sign = item.value >= 0 ? '+' : '−';
                                     return `${sign} ${this.formatCurrency(Math.abs(item.value))}`;
-                                },
-                                afterLabel: (context) => {
-                                    const current = this.currentWaterfallData;
-                                    const item = current && current.data
-                                        ? current.data[context.dataIndex]
-                                        : null;
-                                    return item && item.description ? item.description : '';
                                 }
                             }
                         }
@@ -369,19 +358,11 @@ export class WaterfallFeature {
 
         const totals = waterfallData.totals || {};
         const bruto = Math.max(totals.bruttoOpbrengst || 0, 0);
-
-        // Use bruto rendement as the reference for share-of calculations. It
-        // represents the income that is being divided over tax, interest,
-        // costs and what is left as net equity growth.
         const referenceValue = bruto > 0 ? bruto : 1;
 
-        // Labels come from localized rows so we keep them in one place
-        // instead of sprinkling strings through the template.
-        const colLabels = {
-            bedrag: 'Bedrag',
-            shareBruto: '% van Bruto',
-            impact: 'Impact'
-        };
+        // data-label values double as the column name in the mobile
+        // stacked-card layout (see waterfall.css).
+        const colLabels = { bedrag: 'Bedrag', shareBruto: '% van Bruto', impact: 'Impact' };
 
         let html = '';
 
@@ -399,50 +380,18 @@ export class WaterfallFeature {
                 </div>
             `;
 
-            const description = item.description
-                ? `<div class="component-description">${item.description}</div>`
-                : '';
-            const labelBlock = `
-                <div class="component-label">${item.label}</div>
-                ${description}
-            `;
-
             const valueClass = item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : '';
-            const amountText = this.formatCurrency(item.value);
             const shareText = bruto > 0 ? percentageOfBruto.toFixed(1) + '%' : '—';
 
             html += `
                 <tr>
-                    <td>${labelBlock}</td>
-                    <td class="${valueClass}" data-label="${colLabels.bedrag}">
-                        ${amountText}
-                    </td>
+                    <td><div class="component-label">${item.label}</div></td>
+                    <td class="${valueClass}" data-label="${colLabels.bedrag}">${this.formatCurrency(item.value)}</td>
                     <td data-label="${colLabels.shareBruto}">${shareText}</td>
                     <td data-label="${colLabels.impact}">${impactBar}</td>
                 </tr>
             `;
         });
-
-        // Append a summary row that makes the equity identity explicit so
-        // readers can verify that the components balance to the change in
-        // eigen vermogen for the selected period.
-        const startValue = waterfallData.startValue;
-        const finalValue = waterfallData.finalValue;
-        if (typeof startValue === 'number' && typeof finalValue === 'number') {
-            const delta = finalValue - startValue;
-            const deltaClass = delta >= 0 ? 'positive' : 'negative';
-            html += `
-                <tr class="summary-row">
-                    <td>
-                        <div class="component-label">Δ Eigen Vermogen</div>
-                        <div class="component-description">Eigen Vermogen (eind) − Eigen Vermogen (start). Per definitie gelijk aan Bruto Rendement − Belasting − Rentelasten − Vaste Kosten.</div>
-                    </td>
-                    <td class="${deltaClass}" data-label="${colLabels.bedrag}">${this.formatCurrency(delta)}</td>
-                    <td data-label="${colLabels.shareBruto}">—</td>
-                    <td data-label="${colLabels.impact}"></td>
-                </tr>
-            `;
-        }
 
         tbody.innerHTML = html;
     }
@@ -473,34 +422,23 @@ export class WaterfallFeature {
 
         container.hidden = false;
         container.innerHTML = `
-            <h4 class="loan-context-title">🏦 Lening in deze periode</h4>
-            <p class="loan-context-intro">
-                De lening staat niet als losse balk in de waterfall: geleend geld verhoogt je
-                bezit én je schuld met hetzelfde bedrag, en heeft dus geen direct effect op je
-                eigen vermogen. Een eventuele aflossing verschuift alleen geld van je cashpositie
-                naar de schuld. Wat wél invloed heeft op het eigen vermogen is de rente — die is
-                al opgenomen als &quot;Rentelasten&quot; in de waterfall. Hieronder zie je hoe de
-                lening zich in deze periode ontwikkelt.
-            </p>
+            <h4 class="loan-context-title">🏦 Lening</h4>
             <div class="loan-context-grid">
                 <div class="loan-context-item">
-                    <div class="loan-context-label">Openstaande lening begin</div>
+                    <div class="loan-context-label">Lening begin</div>
                     <div class="loan-context-value">${this.formatCurrency(leningStart)}</div>
                 </div>
                 <div class="loan-context-item">
-                    <div class="loan-context-label">Aflossingen in periode</div>
+                    <div class="loan-context-label">Aflossingen</div>
                     <div class="loan-context-value">${this.formatCurrency(aflossing)}</div>
                 </div>
                 <div class="loan-context-item">
-                    <div class="loan-context-label">Openstaande lening eind</div>
+                    <div class="loan-context-label">Lening eind</div>
                     <div class="loan-context-value">${this.formatCurrency(leningEnd)}</div>
                 </div>
                 <div class="loan-context-item">
                     <div class="loan-context-label">Rente betaald</div>
-                    <div class="loan-context-value loan-context-value--negative">
-                        ${this.formatCurrency(rente)}
-                        <span class="loan-context-note">(in waterfall opgenomen)</span>
-                    </div>
+                    <div class="loan-context-value loan-context-value--negative">${this.formatCurrency(rente)}</div>
                 </div>
             </div>
         `;
