@@ -787,31 +787,34 @@ input:checked + .toggle-slider:before {
         min-width: fit-content;
     }
     
-    /* On phones the 4-column component table simply does not fit, so we
-       convert each row into a stacked card. The cell labels we set via
-       data-label become inline labels so values stay readable without
-       any horizontal scrolling. */
-    .table-wrapper {
+    /* Stacked card layout for the waterfall components table. These
+       rules are intentionally scoped to `.waterfall-analysis` to beat
+       the generic `.cashflow-table` rules from components/tables.css
+       and responsive.css (which otherwise force a 500px min-width
+       and white-space: nowrap, causing horizontal scrolling). */
+    .waterfall-analysis .table-wrapper {
         overflow-x: visible;
         border: none;
         border-radius: 0;
+        margin-top: 10px;
+        background: transparent;
     }
 
-    .cashflow-table,
-    .cashflow-table thead,
-    .cashflow-table tbody,
-    .cashflow-table th,
-    .cashflow-table td,
-    .cashflow-table tr {
+    .waterfall-analysis .cashflow-table,
+    .waterfall-analysis .cashflow-table thead,
+    .waterfall-analysis .cashflow-table tbody,
+    .waterfall-analysis .cashflow-table th,
+    .waterfall-analysis .cashflow-table td,
+    .waterfall-analysis .cashflow-table tr {
         display: block;
         width: 100%;
-    }
-
-    .cashflow-table {
         min-width: 0;
+        white-space: normal;
+        position: static;
+        box-shadow: none;
     }
 
-    .cashflow-table thead {
+    .waterfall-analysis .cashflow-table thead {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -819,7 +822,7 @@ input:checked + .toggle-slider:before {
         clip: rect(0 0 0 0);
     }
 
-    .cashflow-table tbody tr {
+    .waterfall-analysis .cashflow-table tbody tr {
         background: white;
         border: 1px solid #e9ecef;
         border-radius: 10px;
@@ -828,26 +831,25 @@ input:checked + .toggle-slider:before {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
-    .cashflow-table tbody tr:hover {
+    .waterfall-analysis .cashflow-table tbody tr:hover {
         background: white;
     }
 
-    .cashflow-table td {
+    .waterfall-analysis .cashflow-table td {
         padding: 4px 0;
         border-bottom: none;
         text-align: left;
         font-size: var(--font-sm);
     }
 
-    .cashflow-table td:first-child {
+    .waterfall-analysis .cashflow-table td:first-child {
         padding-bottom: 8px;
         margin-bottom: 6px;
         border-bottom: 1px solid #e9ecef;
-        min-width: 0;
         font-size: var(--font-base);
     }
 
-    .cashflow-table td[data-label]::before {
+    .waterfall-analysis .cashflow-table td[data-label]::before {
         content: attr(data-label) ":";
         display: inline-block;
         min-width: 110px;
@@ -856,7 +858,7 @@ input:checked + .toggle-slider:before {
         margin-right: 8px;
     }
 
-    .impact-bar {
+    .waterfall-analysis .impact-bar {
         width: 100%;
         max-width: 180px;
         height: 14px;
@@ -979,17 +981,17 @@ input:checked + .toggle-slider:before {
     }
     
     /* Keep the stacked-card layout from the 768px breakpoint at extra
-       small sizes - any min-width here would reintroduce horizontal
-       scrolling. */
-    .cashflow-table {
+       small sizes - scoped to .waterfall-analysis to stay specific
+       enough to override responsive.css. */
+    .waterfall-analysis .cashflow-table {
         min-width: 0;
     }
 
-    .cashflow-table td {
+    .waterfall-analysis .cashflow-table td {
         font-size: var(--font-sm);
     }
 
-    .cashflow-table td[data-label]::before {
+    .waterfall-analysis .cashflow-table td[data-label]::before {
         min-width: 96px;
     }
 
