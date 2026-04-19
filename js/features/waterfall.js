@@ -133,6 +133,7 @@ export class WaterfallFeature {
         if (waterfallData && waterfallData.totals) {
             this.updateSummaryCards(waterfallData.totals);
             this.updateWaterfallChart(waterfallData);
+            this.updateLoanContext(waterfallData);
             this.updateTable(waterfallData);
             this.generateInsights(waterfallData);
         }
@@ -171,12 +172,12 @@ export class WaterfallFeature {
 
         const mockData = {
             data: [
-                { label: 'Start Kapitaal', value: 100000, type: 'start', description: 'Eigen inbreng aan het begin van de periode.' },
+                { label: 'Eigen Vermogen (start)', value: 100000, type: 'start', description: 'Eigen vermogen aan het begin: je eigen inbreng.' },
                 { label: 'Bruto Rendement', value: 15000, type: 'positive', description: 'Rendement op de totale portefeuille, vóór belasting en kosten.' },
                 { label: 'Belasting', value: -3750, type: 'negative', description: 'Belasting over het rendement.' },
                 { label: 'Rentelasten', value: -2500, type: 'negative', description: 'Rente betaald op de lening.' },
                 { label: 'Vaste Kosten', value: -1200, type: 'negative', description: 'Doorlopende vaste kosten.' },
-                { label: 'Eindvermogen', value: 107550, type: 'total', description: 'Eigen vermogen aan het einde van de periode.' }
+                { label: 'Eigen Vermogen (eind)', value: 107550, type: 'total', description: 'Eigen vermogen aan het einde van de periode.' }
             ],
             totals: {
                 bruttoOpbrengst: 15000,
@@ -187,7 +188,12 @@ export class WaterfallFeature {
             },
             startValue: 100000,
             finalValue: 107550,
-            loanInfo: { lening: 50000, aflossingTotaal: 10000 },
+            loanInfo: {
+                leningStart: 50000,
+                leningEnd: 40000,
+                aflossingTotaal: 10000,
+                renteTotaal: 2500
+            },
             period: period
         };
 
@@ -369,6 +375,14 @@ export class WaterfallFeature {
         // costs and what is left as net equity growth.
         const referenceValue = bruto > 0 ? bruto : 1;
 
+        // Labels come from localized rows so we keep them in one place
+        // instead of sprinkling strings through the template.
+        const colLabels = {
+            bedrag: 'Bedrag',
+            shareBruto: '% van Bruto',
+            impact: 'Impact'
+        };
+
         let html = '';
 
         waterfallData.data.forEach(item => {
@@ -388,18 +402,23 @@ export class WaterfallFeature {
             const description = item.description
                 ? `<div class="component-description">${item.description}</div>`
                 : '';
+            const labelBlock = `
+                <div class="component-label">${item.label}</div>
+                ${description}
+            `;
+
+            const valueClass = item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : '';
+            const amountText = this.formatCurrency(item.value);
+            const shareText = bruto > 0 ? percentageOfBruto.toFixed(1) + '%' : '—';
 
             html += `
                 <tr>
-                    <td>
-                        <div class="component-label">${item.label}</div>
-                        ${description}
+                    <td>${labelBlock}</td>
+                    <td class="${valueClass}" data-label="${colLabels.bedrag}">
+                        ${amountText}
                     </td>
-                    <td class="${item.value < 0 ? 'negative' : item.value > 0 ? 'positive' : ''}">
-                        ${this.formatCurrency(item.value)}
-                    </td>
-                    <td>${bruto > 0 ? percentageOfBruto.toFixed(1) + '%' : '—'}</td>
-                    <td>${impactBar}</td>
+                    <td data-label="${colLabels.shareBruto}">${shareText}</td>
+                    <td data-label="${colLabels.impact}">${impactBar}</td>
                 </tr>
             `;
         });
@@ -416,16 +435,75 @@ export class WaterfallFeature {
                 <tr class="summary-row">
                     <td>
                         <div class="component-label">Δ Eigen Vermogen</div>
-                        <div class="component-description">Eindvermogen − Beginvermogen (moet gelijk zijn aan bruto − belasting − rente − kosten).</div>
+                        <div class="component-description">Eigen Vermogen (eind) − Eigen Vermogen (start). Per definitie gelijk aan Bruto Rendement − Belasting − Rentelasten − Vaste Kosten.</div>
                     </td>
-                    <td class="${deltaClass}">${this.formatCurrency(delta)}</td>
-                    <td>—</td>
-                    <td></td>
+                    <td class="${deltaClass}" data-label="${colLabels.bedrag}">${this.formatCurrency(delta)}</td>
+                    <td data-label="${colLabels.shareBruto}">—</td>
+                    <td data-label="${colLabels.impact}"></td>
                 </tr>
             `;
         }
 
         tbody.innerHTML = html;
+    }
+
+    /**
+     * Render a small panel that explains how the loan moves through the
+     * period. The waterfall chart intentionally leaves lening and aflossing
+     * out of the flow (they do not change equity), so users need a separate
+     * context view to see why the lening is not a bar on the chart.
+     */
+    updateLoanContext(waterfallData) {
+        const container = document.getElementById('waterfallLoanContext');
+        if (!container) return;
+
+        const info = waterfallData.loanInfo || {};
+        const leningStart = Number(info.leningStart || 0);
+        const leningEnd = Number(info.leningEnd || 0);
+        const aflossing = Number(info.aflossingTotaal || 0);
+        const rente = Number(info.renteTotaal || 0);
+
+        // When the scenario has no leverage at all, hide the panel instead
+        // of showing four zero rows which adds clutter without information.
+        if (leningStart <= 0 && leningEnd <= 0 && aflossing <= 0 && rente <= 0) {
+            container.hidden = true;
+            container.innerHTML = '';
+            return;
+        }
+
+        container.hidden = false;
+        container.innerHTML = `
+            <h4 class="loan-context-title">🏦 Lening in deze periode</h4>
+            <p class="loan-context-intro">
+                De lening staat niet als losse balk in de waterfall: geleend geld verhoogt je
+                bezit én je schuld met hetzelfde bedrag, en heeft dus geen direct effect op je
+                eigen vermogen. Een eventuele aflossing verschuift alleen geld van je cashpositie
+                naar de schuld. Wat wél invloed heeft op het eigen vermogen is de rente — die is
+                al opgenomen als &quot;Rentelasten&quot; in de waterfall. Hieronder zie je hoe de
+                lening zich in deze periode ontwikkelt.
+            </p>
+            <div class="loan-context-grid">
+                <div class="loan-context-item">
+                    <div class="loan-context-label">Openstaande lening begin</div>
+                    <div class="loan-context-value">${this.formatCurrency(leningStart)}</div>
+                </div>
+                <div class="loan-context-item">
+                    <div class="loan-context-label">Aflossingen in periode</div>
+                    <div class="loan-context-value">${this.formatCurrency(aflossing)}</div>
+                </div>
+                <div class="loan-context-item">
+                    <div class="loan-context-label">Openstaande lening eind</div>
+                    <div class="loan-context-value">${this.formatCurrency(leningEnd)}</div>
+                </div>
+                <div class="loan-context-item">
+                    <div class="loan-context-label">Rente betaald</div>
+                    <div class="loan-context-value loan-context-value--negative">
+                        ${this.formatCurrency(rente)}
+                        <span class="loan-context-note">(in waterfall opgenomen)</span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     generateInsights(waterfallData) {
