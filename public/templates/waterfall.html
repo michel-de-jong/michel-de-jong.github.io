@@ -1,8 +1,12 @@
 <section id="waterfall" class="tab-pane" role="tabpanel">
     <h2>💧 Cashflow Waterfall Analyse</h2>
     <p class="tab-description">
-        Van <strong>Start Kapitaal</strong> via <strong>Bruto Rendement</strong>, minus belasting, rente en vaste kosten,
-        naar <strong>Eindvermogen</strong>. De componenten tellen exact op tot de verandering in eigen vermogen over de periode.
+        Van <strong>Eigen Vermogen (start)</strong> via <strong>Bruto Rendement</strong>, minus belasting,
+        rente en vaste kosten, naar <strong>Eigen Vermogen (eind)</strong>. Een eventuele lening zit niet
+        als losse balk in de waterfall omdat die tegelijk bezit én schuld is; de invloed van de lening
+        loopt via <em>Bruto Rendement</em> (rendement ook over het geleende bedrag) en
+        <em>Rentelasten</em>. De ontwikkeling van de lening zelf zie je in het blok &quot;Lening in deze
+        periode&quot; onder de grafiek.
     </p>
 
     <!-- Controls Section -->
@@ -71,6 +75,11 @@
         <canvas id="waterfallChart"></canvas>
     </div>
 
+    <!-- Loan Context Panel (hidden when there is no leverage) -->
+    <div id="waterfallLoanContext" class="loan-context mt-4" hidden>
+        <!-- Dynamically populated -->
+    </div>
+
     <!-- Analysis Section -->
     <div class="waterfall-analysis mt-4">
         <h3>📊 Cashflow Breakdown</h3>
@@ -120,8 +129,4 @@
         </div>
     </div>
 
-    <!-- Mobile Hint -->
-    <div class="mobile-table-hint mt-2">
-        💡 Tip: Swipe de tabel horizontaal om alle kolommen te zien
-    </div>
 </section>

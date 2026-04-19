@@ -403,25 +403,33 @@ export class Calculator {
 
         const finalValue = this.data.totaalVermogen[this.data.totaalVermogen.length - 1];
 
+        // Loan balances at the boundaries of the selected period. We read
+        // them straight from the yearly snapshots the calculator already
+        // stores so the numbers line up exactly with the rest of the UI.
+        const leningStart = this.data.lening.length > 0 ? this.data.lening[0] : inputs.lening;
+        const leningEnd = this.data.lening.length > 0
+            ? this.data.lening[this.data.lening.length - 1]
+            : inputs.lening;
+
         // The waterfall visualises the change of the investor's OWN equity
         // over the period. Lening (loan proceeds) and aflossingen (principal
-        // repayments) cancel out on net worth - they only shift value between
+        // repayments) cancel out on equity - they only shift value between
         // portfolio/cash and the outstanding debt. We therefore keep them in
-        // `totals` for informational use but deliberately leave them OUT of
-        // the flow so the bars add up to Eindvermogen.
+        // `totals` / `loanInfo` for context but deliberately leave them OUT
+        // of the flow so the bars add up exactly to the change in equity.
         return {
             data: [
                 {
-                    label: 'Start Kapitaal',
+                    label: 'Eigen Vermogen (start)',
                     value: inputs.startKapitaal,
                     type: 'start',
-                    description: 'Eigen inbreng aan het begin van de periode.'
+                    description: 'Eigen vermogen aan het begin: je eigen inbreng. Een eventuele lening telt hier niet mee (die is tegelijk bezit én schuld).'
                 },
                 {
                     label: 'Bruto Rendement',
                     value: totals.bruttoOpbrengst,
                     type: 'positive',
-                    description: 'Rendement op de totale portefeuille (incl. eventuele lening), vóór belasting en kosten.'
+                    description: 'Rendement op de totale portefeuille (eigen kapitaal + lening samen), vóór belasting en kosten. Leverage laat dit bedrag groter uitvallen dan rendement op alleen eigen geld.'
                 },
                 {
                     label: 'Belasting',
@@ -433,7 +441,7 @@ export class Calculator {
                     label: 'Rentelasten',
                     value: -totals.rente,
                     type: 'negative',
-                    description: 'Rente betaald op de lening gedurende de periode.'
+                    description: 'Rente die over de periode op de lening is betaald.'
                 },
                 {
                     label: 'Vaste Kosten',
@@ -442,18 +450,20 @@ export class Calculator {
                     description: 'Doorlopende vaste kosten gedurende de periode.'
                 },
                 {
-                    label: 'Eindvermogen',
+                    label: 'Eigen Vermogen (eind)',
                     value: finalValue,
                     type: 'total',
-                    description: 'Eigen vermogen aan het einde: portefeuille + cash − restschuld lening.'
+                    description: 'Eigen vermogen aan het einde: portefeuille + cash − restschuld van de lening.'
                 }
             ],
             totals,
             finalValue,
             startValue: inputs.startKapitaal,
             loanInfo: {
-                lening: inputs.lening,
-                aflossingTotaal: totals.aflossing
+                leningStart,
+                leningEnd,
+                aflossingTotaal: totals.aflossing,
+                renteTotaal: totals.rente
             }
         };
     }
@@ -483,10 +493,17 @@ export class Calculator {
 
         const endValue = this.data.totaalVermogen[year] || startValue;
 
+        const leningStart = this.data.lening[year - 1] !== undefined
+            ? this.data.lening[year - 1]
+            : inputs.lening;
+        const leningEnd = this.data.lening[year] !== undefined
+            ? this.data.lening[year]
+            : leningStart;
+
         return {
             data: [
                 {
-                    label: 'Beginvermogen',
+                    label: 'Eigen Vermogen (begin jaar)',
                     value: startValue,
                     type: 'start',
                     description: 'Eigen vermogen aan het begin van dit jaar (portefeuille + cash − restschuld lening).'
@@ -495,7 +512,7 @@ export class Calculator {
                     label: 'Bruto Rendement',
                     value: yearTotals.bruttoOpbrengst,
                     type: 'positive',
-                    description: 'Rendement op de portefeuille in dit jaar, vóór belasting en kosten.'
+                    description: 'Rendement op de portefeuille in dit jaar (eigen kapitaal + lening samen), vóór belasting en kosten.'
                 },
                 {
                     label: 'Belasting',
@@ -516,7 +533,7 @@ export class Calculator {
                     description: 'Doorlopende vaste kosten in dit jaar.'
                 },
                 {
-                    label: 'Eindvermogen',
+                    label: 'Eigen Vermogen (eind jaar)',
                     value: endValue,
                     type: 'total',
                     description: 'Eigen vermogen aan het einde van dit jaar (portefeuille + cash − restschuld lening).'
@@ -526,7 +543,10 @@ export class Calculator {
             finalValue: endValue,
             startValue,
             loanInfo: {
-                aflossingTotaal: yearTotals.aflossing
+                leningStart,
+                leningEnd,
+                aflossingTotaal: yearTotals.aflossing,
+                renteTotaal: yearTotals.rente
             }
         };
     }
