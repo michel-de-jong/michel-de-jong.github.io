@@ -419,42 +419,12 @@ export class Calculator {
         // of the flow so the bars add up exactly to the change in equity.
         return {
             data: [
-                {
-                    label: 'Eigen Vermogen (start)',
-                    value: inputs.startKapitaal,
-                    type: 'start',
-                    description: 'Eigen vermogen aan het begin: je eigen inbreng. Een eventuele lening telt hier niet mee (die is tegelijk bezit én schuld).'
-                },
-                {
-                    label: 'Bruto Rendement',
-                    value: totals.bruttoOpbrengst,
-                    type: 'positive',
-                    description: 'Rendement op de totale portefeuille (eigen kapitaal + lening samen), vóór belasting en kosten. Leverage laat dit bedrag groter uitvallen dan rendement op alleen eigen geld.'
-                },
-                {
-                    label: 'Belasting',
-                    value: -totals.belasting,
-                    type: 'negative',
-                    description: 'Belasting over het rendement (afhankelijk van het gekozen belastingregime).'
-                },
-                {
-                    label: 'Rentelasten',
-                    value: -totals.rente,
-                    type: 'negative',
-                    description: 'Rente die over de periode op de lening is betaald.'
-                },
-                {
-                    label: 'Vaste Kosten',
-                    value: -totals.kosten,
-                    type: 'negative',
-                    description: 'Doorlopende vaste kosten gedurende de periode.'
-                },
-                {
-                    label: 'Eigen Vermogen (eind)',
-                    value: finalValue,
-                    type: 'total',
-                    description: 'Eigen vermogen aan het einde: portefeuille + cash − restschuld van de lening.'
-                }
+                { label: 'Eigen Vermogen (start)', value: inputs.startKapitaal, type: 'start' },
+                { label: 'Bruto Rendement', value: totals.bruttoOpbrengst, type: 'positive' },
+                { label: 'Belasting', value: -totals.belasting, type: 'negative' },
+                { label: 'Rentelasten', value: -totals.rente, type: 'negative' },
+                { label: 'Vaste Kosten', value: -totals.kosten, type: 'negative' },
+                { label: 'Eigen Vermogen (eind)', value: finalValue, type: 'total' }
             ],
             totals,
             finalValue,
@@ -502,42 +472,12 @@ export class Calculator {
 
         return {
             data: [
-                {
-                    label: 'Eigen Vermogen (begin jaar)',
-                    value: startValue,
-                    type: 'start',
-                    description: 'Eigen vermogen aan het begin van dit jaar (portefeuille + cash − restschuld lening).'
-                },
-                {
-                    label: 'Bruto Rendement',
-                    value: yearTotals.bruttoOpbrengst,
-                    type: 'positive',
-                    description: 'Rendement op de portefeuille in dit jaar (eigen kapitaal + lening samen), vóór belasting en kosten.'
-                },
-                {
-                    label: 'Belasting',
-                    value: -yearTotals.belasting,
-                    type: 'negative',
-                    description: 'Belasting over het rendement in dit jaar.'
-                },
-                {
-                    label: 'Rentelasten',
-                    value: -yearTotals.rente,
-                    type: 'negative',
-                    description: 'Rente betaald op de lening in dit jaar.'
-                },
-                {
-                    label: 'Vaste Kosten',
-                    value: -yearTotals.kosten,
-                    type: 'negative',
-                    description: 'Doorlopende vaste kosten in dit jaar.'
-                },
-                {
-                    label: 'Eigen Vermogen (eind jaar)',
-                    value: endValue,
-                    type: 'total',
-                    description: 'Eigen vermogen aan het einde van dit jaar (portefeuille + cash − restschuld lening).'
-                }
+                { label: 'Eigen Vermogen (begin jaar)', value: startValue, type: 'start' },
+                { label: 'Bruto Rendement', value: yearTotals.bruttoOpbrengst, type: 'positive' },
+                { label: 'Belasting', value: -yearTotals.belasting, type: 'negative' },
+                { label: 'Rentelasten', value: -yearTotals.rente, type: 'negative' },
+                { label: 'Vaste Kosten', value: -yearTotals.kosten, type: 'negative' },
+                { label: 'Eigen Vermogen (eind jaar)', value: endValue, type: 'total' }
             ],
             totals: yearTotals,
             finalValue: endValue,

@@ -1,12 +1,7 @@
 <section id="waterfall" class="tab-pane" role="tabpanel">
     <h2>💧 Cashflow Waterfall Analyse</h2>
     <p class="tab-description">
-        Van <strong>Eigen Vermogen (start)</strong> via <strong>Bruto Rendement</strong>, minus belasting,
-        rente en vaste kosten, naar <strong>Eigen Vermogen (eind)</strong>. Een eventuele lening zit niet
-        als losse balk in de waterfall omdat die tegelijk bezit én schuld is; de invloed van de lening
-        loopt via <em>Bruto Rendement</em> (rendement ook over het geleende bedrag) en
-        <em>Rentelasten</em>. De ontwikkeling van de lening zelf zie je in het blok &quot;Lening in deze
-        periode&quot; onder de grafiek.
+        Gedetailleerd overzicht van alle geldstromen per periode met visuele breakdown.
     </p>
 
     <!-- Controls Section -->
@@ -45,7 +40,7 @@
         <div class="summary-card negative">
             <div class="summary-icon">📉</div>
             <div class="summary-content">
-                <div class="summary-label">Kosten (rente + vaste kosten)</div>
+                <div class="summary-label">Kosten</div>
                 <div class="summary-value" id="wfKostenTotaal">€ 0</div>
                 <div class="summary-detail" id="wfKostenDetail">Rente: € 0 | Vaste kosten: € 0</div>
             </div>
@@ -56,7 +51,7 @@
             <div class="summary-content">
                 <div class="summary-label">Netto Resultaat</div>
                 <div class="summary-value" id="wfNettoResultaat">€ 0</div>
-                <div class="summary-detail" id="wfNettoResultaatDetail">0% van bruto · verandert het eigen vermogen</div>
+                <div class="summary-detail" id="wfNettoResultaatDetail">0% van bruto rendement</div>
             </div>
         </div>
 
@@ -65,7 +60,7 @@
             <div class="summary-content">
                 <div class="summary-label">Effectief Belastingtarief</div>
                 <div class="summary-value" id="wfBelastingTarief">0%</div>
-                <div class="summary-detail" id="wfBelastingDetail">Belasting € 0 op bruto rendement</div>
+                <div class="summary-detail" id="wfBelastingDetail">Op bruto rendement</div>
             </div>
         </div>
     </div>

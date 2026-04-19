@@ -336,31 +336,9 @@ input:checked + .toggle-slider:before {
     color: #212529;
 }
 
-.cashflow-table .component-description {
-    margin-top: 4px;
-    font-size: var(--font-xs);
-    color: #6c757d;
-    font-weight: 400;
-    line-height: 1.4;
-    white-space: normal;
-    max-width: 360px;
-}
-
-.cashflow-table tr.summary-row {
-    background: #f8f9fa;
-    border-top: 2px solid #dee2e6;
-}
-
-.cashflow-table tr.summary-row td {
-    font-weight: 600;
-}
-
-.cashflow-table tr.summary-row:hover {
-    background: #f1f3f5;
-}
-
-/* Loan context panel - explains how the loan flows through the period
-   since it is deliberately not shown as a bar in the waterfall itself. */
+/* Loan context panel - surfaces the loan's development (begin/end
+   balance, repayments, interest) alongside the equity waterfall, since
+   lening and aflossingen are intentionally not shown as chart bars. */
 .loan-context {
     background: white;
     border-radius: 12px;
@@ -375,18 +353,11 @@ input:checked + .toggle-slider:before {
 
 .loan-context-title {
     color: #1e3c72;
-    margin: 0 0 10px 0;
+    margin: 0 0 15px 0;
     font-size: 18px;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-}
-
-.loan-context-intro {
-    color: #495057;
-    margin: 0 0 18px 0;
-    font-size: var(--font-sm);
-    line-height: 1.5;
 }
 
 .loan-context-grid {
@@ -414,22 +385,10 @@ input:checked + .toggle-slider:before {
     font-size: 20px;
     font-weight: 700;
     color: #1e3c72;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 6px;
 }
 
 .loan-context-value--negative {
     color: #dc3545;
-}
-
-.loan-context-note {
-    font-size: 11px;
-    font-weight: 500;
-    color: #6c757d;
-    text-transform: none;
-    letter-spacing: 0;
 }
 
 /* Impact Bar */
@@ -873,11 +832,6 @@ input:checked + .toggle-slider:before {
         background: white;
     }
 
-    .cashflow-table tbody tr.summary-row {
-        background: #f1f6ff;
-        border-color: #cfe2ff;
-    }
-
     .cashflow-table td {
         padding: 4px 0;
         border-bottom: none;
@@ -900,10 +854,6 @@ input:checked + .toggle-slider:before {
         color: #6c757d;
         font-weight: 500;
         margin-right: 8px;
-    }
-
-    .cashflow-table .component-description {
-        max-width: 100%;
     }
 
     .impact-bar {
