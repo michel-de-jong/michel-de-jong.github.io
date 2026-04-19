@@ -87,9 +87,19 @@ export class WaterfallFeature {
             });
         }
 
-        document.querySelectorAll('.analysis-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => this.switchAnalysisTab(e.currentTarget));
-        });
+        // Use delegation on the static `.analysis-tabs` container so we
+        // keep working even if the tab buttons are re-rendered. We also
+        // call .closest('.analysis-tab') so taps on a child element of
+        // the button (whitespace, icon, text node) still resolve to the
+        // right tab.
+        const analysisTabs = document.querySelector('.waterfall-analysis .analysis-tabs');
+        if (analysisTabs) {
+            analysisTabs.addEventListener('click', (e) => {
+                const tab = e.target.closest('.analysis-tab');
+                if (!tab || !analysisTabs.contains(tab)) return;
+                this.switchAnalysisTab(tab);
+            });
+        }
 
         this.handlersAttached = true;
     }
