@@ -151,6 +151,26 @@ export class ChartManager {
                     font: {
                         size: 16
                     }
+                },
+                tooltip: {
+                    ...this.defaultOptions.plugins.tooltip,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y;
+                            if (value === null || value === undefined) {
+                                return label;
+                            }
+                            const isPercent = context.dataset.yAxisID === 'y1';
+                            const formatted = isPercent
+                                ? new Intl.NumberFormat('nl-NL', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                }).format(value) + '%'
+                                : formatNumber(value);
+                            return label + ': ' + formatted;
+                        }
+                    }
                 }
             },
             scales: {
@@ -185,7 +205,10 @@ export class ChartManager {
                     },
                     ticks: {
                         callback: function(value) {
-                            return value + '%';
+                            return new Intl.NumberFormat('nl-NL', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0
+                            }).format(value) + '%';
                         }
                     }
                 }
